@@ -216,25 +216,20 @@ cat.levels <-
              "Every day",
              "Other"))
 
+variables <- fread(file.variables)
+decomposed.question <- stri_match_first_regex(variables$name, "^(.+?)(\\[(.*)\\]|$)")
 
-desc.limesurvey <- names(survey.raw[,..q.idx])
-decomposed <- stri_match_all_regex(desc.limesurvey, "(^.+?)($|\\.\\s(.*))")
-question.name <- unlist(lapply(decomposed, \(x) x[,2]))
-question.text <- unlist(lapply(decomposed, \(x) x[,4]))
-decomposed.question <- stri_match_first_regex(question.name, "^(.+?)(\\[(.*)\\]|$)")
-
-questions <- data.table(id = q.idx,
-                        name = question.name,
-                        main = decomposed.question[,2],
-                        sub = decomposed.question[,4],
-                        text = question.text,
-                        desc.limesurvey = desc.limesurvey)
-questions[grep("provinces", name),
+variables[,
+          `:=`(main = decomposed.question[,2],
+               sub = decomposed.question[,4])]
+variables[grep("provinces", name),
           `:=`(main = "provinces",
                sub = unlist(lapply(stri_match_all_regex(name, "^.*?_(.+)$"),
-                                   \(x) x[,2])),
-               text = "Please indicate the province(s) and/or territory(ies) where your woodlots are located."
+                                   \(x) x[,2]))
                )]
+
+questions <- variables[id %in% q.idx]
+
 questions[id <= 70, section := "A"]
 questions[id > 70 & id <= 112, section := "B"]
 questions[id > 112 & id <= 149, section := "D"]
@@ -250,12 +245,14 @@ questions[name %in% var.qual,
           `:=`(type = "qualitative",
                cat.scale = NA)]
 
-questions$name <-
-  questions$name |>
-  stri_replace(fixed = "[", replacement = "_") |>
-  stri_replace(fixed = "]", replacement = "")
-
-
+setcolorder(questions, c("id", "name", "main", "sub", "section",
+                         "type", "cat.scale", 
+                         "category.personal_stakes",
+                         "category.threat_appraisal",
+                         "category.coping_appraisal",
+                         "category.control",
+                         "category.adaptation",
+                         "question.main", "question.sub"))
 
 # deal with NAs and dependent questions
 dependencies <-
@@ -304,9 +301,9 @@ dependencies <-
 
 survey <-
   copy(survey.raw[, ..q.idx]) |>
-  setnames(questions$name)
+  setnames(questions[id %in% q.idx, name])
 
-names(survey)
+# Variables types
 
 names.qual <- questions[type == "qualitative", name]
 for(i in seq_along(names.qual)) {
@@ -332,8 +329,3 @@ saveRDS(survey, file.survey.proc)
 saveRDS(questions, file.questions)
 saveRDS(dependencies, file.questions.dependencies)
 
-
-lapply(survey, \(x) sum(is.na(x)))
-
-
-summary(survey)

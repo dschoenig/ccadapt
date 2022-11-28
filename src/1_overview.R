@@ -75,9 +75,6 @@ survey.mod <- cbind(y.resp[sel.obs,], survey.x)
 colnames(survey.mod) <- paste(colnames(survey.mod), "..")
 
 
-questions$name
-
-
 
 preds <- paste(names(survey.x), collapse = " + ")
 # form <- as.formula(paste("y.acc.comb ~", preds))
@@ -112,12 +109,12 @@ para.beta[(q5 > 0 & q95 > 0) | (q5 < 0 & q95 < 0)]
 
 para.beta.top <- para.beta[order(-abs(median))][1:round(0.1 * nrow(para.beta)),]
 
-for(i in 1:length(questions$name)){
-
 question.select <-
   sapply(questions$name,
          FUN = \(x) stri_detect_fixed(para.beta.top$variable, x)) |>
   apply(2, any)
 
 questions[question.select,]
+
+
 
