@@ -1,5 +1,5 @@
 id,name,type,category.personal_stakes,category.threat_appraisal,category.coping_appraisal,category.control,category.adaptation,question.main,question.sub
-5,landlord,categorical,0,0,0,1,0,Do you own a woodlot in Canada ?,
+5,landlord,categorical,NA,NA,NA,NA,NA,Do you own a woodlot in Canada ?,
 6,woodlotsNumber,categorical,1,0,0,0,0,How many woodlots do you own in Canada ?,
 7,woodlotSize_SQ001,continuous,1,0,0,0,0,What is the surface of your woodlot?  [Hectares,
 8,coOwnership,categorical,1,0,0,0,0,"Is your woodlot a joint possession (co-ownership, for instance with relatives)?",
