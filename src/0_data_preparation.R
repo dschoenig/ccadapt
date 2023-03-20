@@ -106,30 +106,30 @@ cat.levels <-
              "Yes",
              "Yes, some of my woodlots",
              "Yes, all of my woodlots"),
-       d = c("Neutral",
-             "Not at all important",
+       d = c("Not at all important",
              "Not important",
              "Rather not important",
+             "Neutral",
              "Rather important",
              "Important",
              "Extremely important"),
        e = c("No",
              "Yes",
-             "I don't know"),
+             "I do not know"),
        f = c("I have not changed anything.",
              "I have increased the share of natural regeneration.",
              "I have increased the share of planting."),
        g = c("No",
              "Yes",
              "I do not remember"),
-       h = c("It did not change",
-             "It decreased",
+       h = c("It decreased",
+             "It did not change",
              "It increased",
              "It depends on woodlots"),
-       i = c("Neutral",
-             "Absolutely disagree",
+       i = c("Absolutely disagree",
              "Disagree",
              "Somewhat disagree",
+             "Neutral",
              "Somewhat agree",
              "Agree",
              "Absolutely agree"),
@@ -139,34 +139,37 @@ cat.levels <-
              "Yes, in 6 to 10 years",
              "I do not know this action"),
        k = c(
-             "Uncertain efficacy",
              "Absolutely ineffective",
              "Ineffective",
              "Somehow ineffective",
+             "Uncertain efficacy",
              "Somehow effective",
              "Effective",
              "Very effective"),
-       l = c("Neutral",
+       l = c(
              "Not at all needed",
              "Not needed",
              "Somewhat not needed",
+             "Neutral",
              "Somewhat needed",
              "Needed",
              "Definitely needed"),
-       m = c("Neither agree or disagree",
+       m = c(
              "Strongly disagree",
              "Disagree",
              "Somewhat disagree",
+             "Neither agree or disagree",
              "Somewhat agree",
              "Agree",
              "Strongly agree"),
-       n = c("Neutral",
+       n = c(
              "Not at all",
              "No",
              "Rather no",
+             "Neutral",
              "Rather yes",
              "Yes",
-             "Yes, I'm really sure"),
+             "Yes, I’m really sure"),
        o = c("In more than 50 years",
              "In 30 to 49 years",
              "In 10 to 29 years",
@@ -181,8 +184,9 @@ cat.levels <-
              "70 years old or older",
              "I prefer not to answer"
              ),
-       q = c("Male",
+       q = c(
              "Female",
+             "Male",
              "I prefer not to answer",
              "Other"),
        r = c("No",
@@ -206,6 +210,7 @@ cat.levels <-
              "Primary sector (agriculture, livestock, fishing, forestry, mining or oil extraction, etc.)",
              "Secondary sector (food-processing, construction, production of goods and equipment, etc.)",
              "Tertiary sector (commerce, administration, education, health, etc.)",
+             "Other",
              "I prefer not to answer"),
        v = c("Never",
              "Once every five years",
@@ -216,37 +221,21 @@ cat.levels <-
              "Every day",
              "Other"))
 
+cat.ord <- c("b", "d", "i", "k", "l", "m", "n") 
+
+
 variables <- fread(file.variables)
-decomposed.question <- stri_match_first_regex(variables$name, "^(.+?)(\\[(.*)\\]|$)")
 
-variables[,
-          `:=`(main = decomposed.question[,2],
-               sub = decomposed.question[,4])]
-variables[grep("provinces", name),
-          `:=`(main = "provinces",
-               sub = unlist(lapply(stri_match_all_regex(name, "^.*?_(.+)$"),
-                                   \(x) x[,2]))
-               )]
+variables <- variables[id %in% q.idx]
 
-questions <- variables[id %in% q.idx]
+variables[type == "categorical",
+          cat.scale := var.cat[main]]
+variables[type == "categorical",
+          cat.ord := cat.scale %in% cat.ord]
 
-questions[id <= 70, section := "A"]
-questions[id > 70 & id <= 112, section := "B"]
-questions[id > 112 & id <= 149, section := "D"]
-questions[id > 149 & id <= 172, section := "C"]
-questions[id > 172 & id <= 185, section := "E"]
-questions[id > 185, section := "F"]
-
-questions[main %in% var.cont, type := "continuous"]
-questions[main %in% names(var.cat),
-          `:=`(type = "categorical",
-               cat.scale = var.cat[main])]
-questions[name %in% var.qual,
-          `:=`(type = "qualitative",
-               cat.scale = NA)]
-
-setcolorder(questions, c("id", "name", "main", "sub", "section",
-                         "type", "cat.scale", 
+setcolorder(variables, c("id", "code", "section",
+                         "name", "main", "sub",
+                         "type", "cat.scale", "cat.ord",
                          "category.personal_stakes",
                          "category.threat_appraisal",
                          "category.coping_appraisal",
@@ -263,7 +252,7 @@ dependencies <-
         "plantSelecReasons", "pastChangeCut", "pastChangeChemicals",
         "pastChangeConservati", "pastChangeReasons", "pastChangeReasonsOth",
         "futureOpportunWhy", "commentsB",
-        unique(questions[section == "D", main]),
+        unique(variables[section == "D", main]),
         "mgmtChangeACCWhyNo", "ACCIntended", "ACCEfficiency",
         "CCExperience", "CCWhen", "CCSurface",
         "professionalForester"),
@@ -273,7 +262,7 @@ dependencies <-
         "pastChangePlantSelec", "forestManager", "provinces",
         "forestManager", "forestManager", "forestManager",
         "future", "forestManager", 
-        rep("delegateMgmtLater", length(unique(questions[section == "D", main]))),
+        rep("delegateMgmtLater", length(unique(variables[section == "D", main]))),
         "mgmtChangeACC", "mgmtChangeACC", "mgmtChangeACC", 
         "climateExperience", "CCImpacts", "CCImpacts", 
         "education"),
@@ -283,7 +272,7 @@ dependencies <-
         "SQ003", NA, "Quebec",
         NA, NA, NA,
         "SQ006", NA,
-        rep(NA, length(unique(questions[section == "D", main]))),
+        rep(NA, length(unique(variables[section == "D", main]))),
         NA, NA, NA,
         NA, NA, NA,
         NA),
@@ -293,39 +282,107 @@ dependencies <-
         NA, NA, NA,
         NA, "Other `pastChange` questions", "Other `pastChange` questions",
         NA, NA,
-        rep(NA, length(unique(questions[section == "D", main]))),
+        rep(NA, length(unique(variables[section == "D", main]))),
         NA, NA, NA,
         NA, NA, NA,
         NA)
     )
 
+
 survey <-
-  copy(survey.raw[, ..q.idx]) |>
-  setnames(questions[id %in% q.idx, name])
+  copy(survey.raw[, variables$id, with = FALSE]) |>
+  setnames(variables$code)
+
 
 # Variables types
 
-names.qual <- questions[type == "qualitative", name]
-for(i in seq_along(names.qual)) {
-  survey[[names.qual[i]]] <- as.character(survey[[names.qual[i]]])
-  empty.idx <- which(survey[[names.qual[i]]] == "") 
-  survey[[names.qual[i]]][empty.idx] <- NA
+codes.qual <- variables[type == "qualitative", code]
+for(i in seq_along(codes.qual)) {
+  survey[[codes.qual[i]]] <- as.character(survey[[codes.qual[i]]])
+  empty.idx <- which(survey[[codes.qual[i]]] == "") 
+  survey[[codes.qual[i]]][empty.idx] <- NA
 }
 
-names.cont <- questions[type == "continuous", name]
-for(i in seq_along(names.cont)) {
-  survey[[names.cont[i]]] <- as.numeric(survey[[names.cont[i]]])
+codes.cont <- variables[type == "continuous", code]
+for(i in seq_along(codes.cont)) {
+  survey[[codes.cont[i]]] <- as.numeric(survey[[codes.cont[i]]])
 }
 
-names.cat <- questions[type == "categorical", name]
-scales.cat <- questions[type == "categorical", cat.scale]
-for(i in seq_along(names.cat)) {
-  survey[[names.cat[i]]] <-
-    factor(as.character(survey[[names.cat[i]]]),
-           levels = cat.levels[[scales.cat[i]]])
+codes.cat <- variables[type == "categorical", code]
+scales.cat <- variables[type == "categorical", cat.scale]
+for(i in seq_along(codes.cat)) {
+  survey[[codes.cat[i]]] <-
+    factor(as.character(survey[[codes.cat[i]]]),
+           levels = cat.levels[[scales.cat[i]]],
+           ordered = variables[code == codes.cat[i], cat.ord])
 }
+
+
+
+# For global model: Identify questions that ask for additional information given
+# specific responses to other questions
+
+var.omit <-
+  c("A43",
+    # … see conditioning below.
+    "A51",
+    # … see conditioning below.
+    variables[main == "infoSources", code],
+    # … asked depending on who takes part in decision making.
+    variables[main == "plantSelecReasons", code],
+    # … only asked if selection criteria changed.
+    variables[main == "pastChangeChemicals", code],
+    # … specific for respondants not from Québec.
+    variables[main == "pastChangeReasons", code],
+    # … only asked if changed management in the past.
+    variables[main == "futureOpportunWhy", code],
+    # … only asked if CC is seen as an opportunity.
+    variables[main == "mgmtChangeACCWhyNo", code],
+    # … only asked if no intention to implement any measures.
+    variables[main == "ACCIntended", code],
+    # … only asked if any intention to implement measures.
+    variables[main == "ACCEfficiency", code],
+    # … only asked if any intention to implement measures.
+    variables[main == "CCExperience", code],
+    # … only asked if events linked to CC have been observed.
+    variables[main == "CCWhen", code],
+    # … only asked if future impacts are expected.
+    variables[main == "CCSurface", code],
+    # … only asked if future impacts are expected.
+    variables[main == "professionalForester", code]
+    # … asked depending on education level.
+  ) 
+
+variables.full <- variables[!(code %in% var.omit)]
+
+# Of these variables, select only variables that have a category assigned
+
+var.sel <- 
+  variables.full[!(is.na(category.personal_stakes) |
+                   is.na(category.threat_appraisal) |
+                   is.na(category.coping_appraisal) |
+                   is.na(category.control) |
+                   is.na(category.adaptation))]
+
+
+# Subset responses to survey
+survey.sub <-
+  with(survey,
+       which(
+             A39 == "No" &
+             # … only respondants with managed forests.
+             A43 == "No" &
+             # … only respondants that take part in decision making.
+             A51 == "Yes"
+             # … only respondants that take part in decision making in the future.
+            ))
+
+survey.sel <-
+  survey[survey.sub, var.sel$code, with = FALSE]
+  # survey[survey.sub, var.sel$code, with = FALSE][, lapply(.SD, \(x) sum(is.na(x)))]
+
 
 saveRDS(survey, file.survey.proc)
-saveRDS(questions, file.questions)
+saveRDS(variables, file.variables.proc)
 saveRDS(dependencies, file.questions.dependencies)
 

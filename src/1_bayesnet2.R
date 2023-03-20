@@ -10,78 +10,17 @@ dependencies <- readRDS(file.questions.dependencies)
 
 
 
-## SELECT OBSERVATIONS AND VARIABLES ##########################################
-
-# For global model: Identify questions that ask for additional information given
-# specific responses to other questions
-
-var.omit <-
-  c("A43",
-    # … see conditioning below.
-    "A51",
-    # … see conditioning below.
-    variables[main == "infoSources", code],
-    # … asked depending on who takes part in decision making.
-    variables[main == "plantSelecReasons", code],
-    # … only asked if selection criteria changed.
-    variables[main == "pastChangeChemicals", code],
-    # … specific for respondants not from Québec.
-    variables[main == "pastChangeReasons", code],
-    # … only asked if changed management in the past.
-    variables[main == "futureOpportunWhy", code],
-    # … only asked if CC is seen as an opportunity.
-    variables[main == "mgmtChangeACCWhyNo", code],
-    # … only asked if no intention to implement any measures.
-    variables[main == "ACCIntended", code],
-    # … only asked if any intention to implement measures.
-    variables[main == "ACCEfficiency", code],
-    # … only asked if any intention to implement measures.
-    variables[main == "CCExperience", code],
-    # … only asked if events linked to CC have been observed.
-    variables[main == "CCWhen", code],
-    # … only asked if future impacts are expected.
-    variables[main == "CCSurface", code],
-    # … only asked if future impacts are expected.
-    variables[main == "professionalForester", code]
-    # … asked depending on education level.
-  ) 
-
-variables.full <- variables[!(code %in% var.omit)]
-
-# Of these variables, select only variables that have a category assigned
-
-var.sel <- 
-  variables.full[!(is.na(category.personal_stakes) |
-                   is.na(category.threat_appraisal) |
-                   is.na(category.coping_appraisal) |
-                   is.na(category.control) |
-                   is.na(category.adaptation))]
-
-
-# Subset responses to survey
-survey.sub <-
-  with(survey,
-       which(
-             A39 == "No" &
-             # … only respondants with managed forests.
-             A43 == "No" &
-             # … only respondants that take part in decision making.
-             A51 == "Yes"
-             # … only respondants that take part in decision making in the future.
-            ))
-
-survey.sel <-
-  survey[survey.sub, var.sel$code, with = FALSE]
-  # survey[survey.sub, var.sel$code, with = FALSE][, lapply(.SD, \(x) sum(is.na(x)))]
-
-
-
 
 ## PREPARE DATA ################################################################
 
 # Variables definition
 
-var.bn <- var.sel
+var.bn <- 
+  variables[!(is.na(category.personal_stakes) |
+              is.na(category.threat_appraisal) |
+              is.na(category.coping_appraisal) |
+              is.na(category.control) |
+              is.na(category.adaptation))]
 var.bn[, latent := FALSE]
 
 var.latent <- c("personal_stakes", 
@@ -108,7 +47,7 @@ scale.latent <- as.character(1:5)
 # Prepare data for fitting
 
 bn.data <-
-  copy(survey.sel[, var.bn[latent == FALSE, code], with = FALSE])
+  copy(survey[, var.bn[latent == FALSE, code], with = FALSE])
 
 
 # Discretize continuous variables
@@ -120,8 +59,8 @@ var.disc <-
        A19 = c(-.Machine$double.eps, 20, 40, 60, 80, 100),
        A20 = c(-.Machine$double.eps, 20, 40, 60, 80, 100),
        A21 = c(-.Machine$double.eps, 20, 40, 60, 80, 100),
-       A22 = c(-.Machine$double.eps, 20, 40, 60, 80, 100)
-       # C22 = c(-.Machine$double.eps, 20, 40, 60, 80, 100)
+       A22 = c(-.Machine$double.eps, 20, 40, 60, 80, 100),
+       C22 = c(-.Machine$double.eps, 20, 40, 60, 80, 100)
        )
 
 var.disc.labels <- 
@@ -131,8 +70,8 @@ var.disc.labels <-
        A19 = c("[0,20]", "(20,40]", "(40,60]", "(60,80]", "(80,100]"),
        A20 = c("[0,20]", "(20,40]", "(40,60]", "(60,80]", "(80,100]"),
        A21 = c("[0,20]", "(20,40]", "(40,60]", "(60,80]", "(80,100]"),
-       A22 = c("[0,20]", "(20,40]", "(40,60]", "(60,80]", "(80,100]")
-       # C22 = c("[0,20]", "(20,40]", "(40,60]", "(60,80]", "(80,100]")
+       A22 = c("[0,20]", "(20,40]", "(40,60]", "(60,80]", "(80,100]"),
+       C22 = c("[0,20]", "(20,40]", "(40,60]", "(60,80]", "(80,100]")
        )
 
 for(i in seq_along(var.disc)) {
@@ -166,13 +105,13 @@ cat.observed <- c("personal_stakes",
 
 var.latent <- var.bn[latent == TRUE, name]
 
-# Only allow links inside certain explanatory categories
+# Only allow links within certain explanatory categories, exclude links within
+# the rest, and between all categories
 bl.observed <- 
   expand.grid(cat1 = cat.observed,
               cat2 = cat.observed) |>
   as.data.table()
-bl.observed <- bl.observed[!(cat1 == cat2 & cat1 %in% cat.observed[1:3])]
-
+bl.observed <- bl.observed[!(cat1 == cat2 & cat1 %in% cat.observed[1:4])]
 bl.observed.l <- list()
 for(i in 1:nrow(bl.observed)){
   cond1 <- paste0("latent == FALSE & category.", bl.observed$cat1[i], "==1")
@@ -184,69 +123,37 @@ for(i in 1:nrow(bl.observed)){
 }
 bl.observed.dt <- rbindlist(bl.observed.l)
 
-# Disallow links from latent variables towards observed variables that are
-# not related to adaptation.
+# Disallow all incoming links to latent variables
+bl.obslat.dt <-
+  expand.grid(from = var.bn[latent == FALSE, code],
+              to = var.bn[latent == TRUE, code]) |>
+  as.data.table()
+
+# Disallow links from latent variables towards observed variables (including latent) that are not
+# in the same category
 bl.latobs <-
   expand.grid(lat = var.latent,
-              cat = var.latent) |>
+              cat = cat.observed) |>
   as.data.table()
+bl.latobs <- bl.latobs[as.character(lat) != as.character(cat)]
 bl.latobs.l <- list()
 for(i in 1:nrow(bl.latobs)){
-  cond <- paste0("latent == FALSE & category.", bl.latobs$cat[i], "== 1")
+  cond <- paste0("category.", bl.latobs$cat[i], "==1")
   bl.latobs.l[[i]] <-
     data.table(from = var.bn[latent == TRUE & name == bl.latobs$lat[i], code],
                to = var.bn[eval(parse(text = cond)), code])
 }
 bl.latobs.dt <- rbindlist(bl.latobs.l)
 
-
-# Disallow links towards latent variables from variables (including latent) that are not
-# in the same category
-bl.obslat <-
-  expand.grid(cat = cat.observed,
-              lat = var.latent) |>
-  as.data.table()
-bl.obslat <- bl.obslat[as.character(cat) != as.character(lat)]
-bl.obslat.l <- list()
-for(i in 1:nrow(bl.obslat)){
-  cond <- paste0("category.", bl.obslat$cat[i], "==1")
-  bl.obslat.l[[i]] <-
-    data.table(from = var.bn[eval(parse(text = cond)), code],
-               to = var.bn[latent == TRUE & name == bl.obslat$lat[i], code])
-}
-bl.obslat.dt <- rbindlist(bl.obslat.l)
-
-# # Disallow links between latent variables 
-# bl.lat <-
-#   expand.grid(from = var.bn[code %in% code.latent, code],
-#               to = var.bn[code %in% code.latent, code]) |>
-#   as.data.table()
-
-
-# # Disallow links from adaptation variable to latent variable (but allow the
-# # reverse)
-# bl.adplat <-
-#   data.table(cat = "adaptation",
-#              lat = var.latent)
-# bl.adplat.l <- list()
-# for(i in 1:nrow(bl.adplat)){
-#   cond <- paste0("category.", bl.adplat$cat[i], "==1")
-#   bl.adplat.l[[i]] <-
-#     data.table(from = var.bn[eval(parse(text = cond)), code],
-#                to = var.bn[latent == TRUE & name == bl.adplat$lat[i], code])
-# }
-
 # Combine blacklists
 
 arc.blacklist <- 
   rbindlist(list(bl.observed.dt, bl.latobs.dt, bl.obslat.dt))[from != to] |>
+  unique() |>
   as.matrix()
 
-arc.blacklist.nolatent <-
-  arc.blacklist[apply(arc.blacklist, 1, \(x) !any(x %in% code.latent)),]
 
-
-# ## Whitelist
+## Whitelist
 
 # # Force links from latent variables to adaptation variables
 # wl.latadp <-
@@ -254,25 +161,70 @@ arc.blacklist.nolatent <-
 #              cat = "adaptation")
 # wl.latadp.l <- list()
 # for(i in 1:nrow(wl.latadp)){
-#   cond <- paste0("category.", wl.latadp$cat[i], "==1")
+#   cond <- paste0("category.", wl.latadp$cat[i], "== 1")
 #   wl.latadp.l[[i]] <-
 #     data.table(from = var.bn[latent == TRUE & name == wl.latadp$lat[i], code],
 #                to = var.bn[eval(parse(text = cond)), code])
 # }
+# wl.latadp.dt <- rbindlist(wl.latadp.l)
+
+# Force links from latent variables to observed variables of same category
+wl.latobs <-
+  data.table(lat = var.latent,
+             cat = var.latent)
+wl.latobs.l <- list()
+for(i in 1:nrow(wl.latobs)){
+  cond <- paste0("latent == FALSE & category.", wl.latobs$cat[i], "== 1")
+  wl.latobs.l[[i]] <-
+    data.table(from = var.bn[latent == TRUE & name == wl.latobs$lat[i], code],
+               to = var.bn[eval(parse(text = cond)), code])
+}
+wl.latobs.dt <- rbindlist(wl.latobs.l)
 
 
-# arc.whitelist <- as.matrix(rbindlist(wl.latadp.l))
-
-# Force link from latent control variable to adaptation variables
-wl.latadp <-
-    data.table(from = var.bn[latent == TRUE & name == "control", code],
-               to = var.bn[category.adaptation == 1, code])
-
-
-arc.whitelist <- as.matrix(wl.latadp)
+arc.whitelist <- 
+  rbindlist(list(wl.latobs.dt)) |>
+  unique() |>
+  as.matrix()
 
 
 ## STRUCTURE LEARNING ##########################################################
+
+# Learn structure of compartments
+
+cat.fit <- c("personal_stakes",
+             "threat_appraisal",
+             "coping_appraisal")
+
+
+bn.struct.cat <- list()
+
+for(i in seq_along(cat.fit)) {
+  # i=1
+  cond.cat <-
+    parse(text = paste0("latent == FALSE & category.", cat.fit[i], " == 1"))
+  bn.data.cat <- bn.data[, var.bn[eval(cond.cat), code], with = FALSE]
+  bn.struct.cat[[i]] <-
+    structural.em(bn.data.cat,
+                  maximize = "tabu",
+                  maximize.args = list(score = "bic"),
+                  fit = "bayes",
+                  impute = "bayes-lw",
+                  debug = TRUE)
+}
+
+lapply(bn.data, \(x) sum(is.na(x)))
+
+var.bn[code == "A51"]
+
+arcs.init <- do.call(rbind, lapply(bn.struct.cat, arcs))
+
+bn.init <- empty.graph(names(bn.data))
+arcs(bn.init) <- arcs.init
+
+bn.fit(bn.init, data = bn.data, method = "hdir")
+
+graphviz.plot(bn.struct.cat[[i]])
 
 bn.data.init <- copy(bn.data)
 bn.data.init[,
@@ -295,4 +247,97 @@ bn.struct <-
                 impute = "bayes-lw",
                 debug = TRUE)
 
-graphviz.plot(bn.struct)
+which(unlist(lapply(bn.data, is.numeric)))
+
+
+
+summary(bn.data)
+
+
+
+graphviz.plot(bn.init)
+
+bn.struct.cat
+
+names(bn.data)
+
+bn.data.init <- copy(bn.data)
+code.latent <- var.bn[latent == TRUE, code]
+bn.data[, (code.latent) := as.numeric(NA)]
+bn.data.init[, (code.latent) := 0]
+
+
+# Initialization
+
+bn.empty <- empty.graph(nodes = var.bn$code)
+bn.init <- bn.fit(bn.empty, bn.data.init)
+
+bn.net(bn.init)
+
+?bnlearn:::check.args.against.assumptions
+
+bn.struct <-
+  structural.em(bn.data,
+                start = bn.init,
+                maximize.args = list(blacklist = arc.blacklist),
+                debug = TRUE)
+
+arc.whitelist
+
+survey[, lapply(.SD, \(x) sum(is.na(x)))]
+
+bnlearn:::check.arcs.against.assumptions
+
+dag.r <- random.graph(var.bn$code, method = "melancon")
+
+# Apply blacklist
+for(i in 1:nrow(arc.blacklist)) {
+  dag.r <- drop.arc(dag.r,
+                   arc.blacklist[i, 1], arc.blacklist[i, 2])
+}
+
+
+for(i in 1:nrow(arc.blacklist)) {
+  dag.r <- drop.arc(dag.r,
+                   arc.blacklist[i, 1], arc.blacklist[i, 2])
+}
+
+for(i in 1:nrow(arc.whitelist)) {
+  dag.r <- set.arc(dag.r,
+                   arc.whitelist[i, 1], arc.whitelist[i, 2])
+}
+
+
+bn.init <- bn.fit(dag.r, bn.data.init)
+
+
+data(learning.test)
+# learn with incomplete data.
+incomplete.data = learning.test
+incomplete.data[1:100, 1] = NA
+incomplete.data[101:200, 2] = NA
+incomplete.data[1:200, 5] = NA
+structural.em(incomplete.data)
+## Not run:
+# learn with a latent variable.
+incomplete.data = learning.test
+incomplete.data[seq(nrow(incomplete.data)), 1] = NA
+start = bn.fit(empty.graph(names(learning.test)), learning.test)
+wl = data.frame(from = c("A", "A"), to = c("B", "D"))
+lrnd <- structural.em(incomplete.data, start = start,
+maximize.args = list(whitelist = wl), debug = TRUE)
+## End(Not run)
+
+lrnd
+
+
+
+
+str(learning.test)
+
+
+res = cpdag(model2network("[A][C][F][B|A][D|A:C][E|B:F]"))
+res
+
+## use debug = TRUE to get more information.
+updated = set.arc(res, "A", "B")
