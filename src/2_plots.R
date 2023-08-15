@@ -376,7 +376,9 @@ for(p in seq_along(pred.scales)) {
           plot_annotation(title = var.foc,
                           subtitle = var.desc,
                           caption = paste0(var.foc, " [1/5]"),
-                          theme = plot_theme + theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "inch")))
+                          theme = plot_theme +
+                                  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5,
+                                                             unit = "inch")))
 
       print(plot.print)
 
