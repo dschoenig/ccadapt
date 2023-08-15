@@ -1,0 +1,100 @@
+
+## Variables
+
+Corresponding file: `variables.csv`
+
+`id`
+:   Integer identifier of the variable (corresponds to the column number   in the limesurvey output).
+
+code
+:   Unique alphanumeric code for each variable.
+
+name
+:   Full name of the variable (as provided in limesurvey output).
+
+main
+:   Name of the main question (substring of `name`).
+
+sub
+:   Name of the subquestion (substring of `name`). Empty if there are no subquestions.
+
+type
+:   Type of the variable. Either `categorical`, `continuous`, or `qualitative`.
+
+cat.scale
+:   If the `type` is `categorical`, `cat.scale` indicates the scale of possible answers (i.e. the levels) that correspond to the variable. More information on the scales is provided in the file `cat.levels.csv`.
+
+cat.ref
+:   If the `type` is `categorical`, `cat.ref` indicates the reference level of the variable. If, a priori, there was no natural choice for the reference level (as in the case of gender), it was chosen based on response frequency.
+
+cat.ord
+:   If the `type` is `categorical`, `cat.ord` indicates (`TRUE` or `FALSE`) whether the categories of the variable are ordered.
+
+cont.mean
+:   If the `type` is `continuous`, `cont.mean` indicates the mean of the responses over the sample.
+
+cont.sd
+:   If the `type` is `continuous`, `cont.sd` indicates the standard deviation of the responses over the sample.
+
+category.personal_stakes, category.threat_appraisal, category.coping_appraisal, category.control, category.adaptation
+:   Indicates whether the variable belongs, respectively, to the group of variables related to *personal stakes*, *threat appraisal*, *coping appraisal*, *control*, or *adaptation*. The groups *personal stakes*, *threat appraisal*, and *coping appraisal* are not mutually exclusive (one variable can belong to several groups). However, if a variable belongs to either either the group `control` or `adaptation`, it cannot be part of another group. The `control` variables correspond to demographic control variables, and the `adaptation` variables correspond to adaptive behaviours. 
+
+question.main
+:   String of the main question, as formulated in the English language survey.
+
+question.sub
+:   String of the subquestion, as formulated in the English language survey.
+
+
+## Levels for categorical variables
+
+Corresponding file: `cat.levels.csv`
+
+cat.scale
+:   Identifies the scale (lower-case letter).
+
+level.id
+:   Identifies the level within the corresponding scale (integer).
+
+level
+:   String of the level, as formulated in the English language survey.
+	
+
+## Variable importance
+
+Corresponding file: `var.importance.csv`
+
+resp
+:   Identity of the binary version of the adaptation variable (used as a response variable), corresponding to the codes in the variable table. `Count` represents the sum of all ten binary adaption variables.
+
+expl
+:   Identity of the explanatory variable, corresponding to the codes in the variable table.
+
+category
+:   Group that the explanatory variable belongs to (either `personal_stakes`, `threat_appraisal`, `coping_appraisal`, `control`, `adaptation`). If an explanatory variable belongs to several groups, it will appear several times for the same adaptations variable.
+
+importance
+:   Importance score of the variable given in `expl` on the outcome given in `resp`. Importance scores as based on permutations and scaled by standard error, as in Breiman (2001).
+
+pvalue
+:   p value for the importance score, expressing the probability to obtain the observed importance score under the null hypothesis that the explanatory variable is not important. The approach of Altmann et al. (2010) is used to calculate p values based on permutations.
+
+
+## Category importance
+
+Corresponding file: `cat.importance.csv`
+
+resp
+:   Identity of the binary version of the adaptation variable (used as a response variable), corresponding to the codes in the variable table. `Count` represents the sum of all ten binary adaption variables.
+
+category
+:   Group of explanatory variables (either `personal_stakes`, `threat_appraisal`, `coping_appraisal`, `control`, `adaptation`).
+
+importance.mean
+:   Average importance score of all variable belonging to `category` on the outcome given in `resp`.
+
+importance.mean
+:   Importance score of the most important variable belonging to `category` on the outcome given in `resp`.
+
+cat.n
+:   Number of variables in the given `category` that are deemed important (based on permutation tests).

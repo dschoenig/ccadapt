@@ -221,7 +221,34 @@ cat.levels <-
              "Every day",
              "Other"))
 
+cat.ref <- c(a = "No",
+             b = "1",
+             c = "No",
+             d = "Neutral",
+             e = "No",
+             f = "I have not changed anything.",
+             g = "No",
+             h = "It did not change",
+             i = "Neutral",
+             j = "No",
+             k = "Uncertain efficacy",
+             l = "Neutral",
+             m = "Neither agree or disagree",
+             n = "Neutral",
+             o = "In more than 50 years",
+             p = "60-69 years old",
+             q = "Male",
+             r = "No",
+             s = "1 to 10 %",
+             t = "University degree or equivalent",
+             u = "Retired",
+             v = "Every week")
+
 cat.ord <- c("b", "d", "i", "k", "l", "m", "n") 
+
+cat.levels.dt <-
+  lapply(cat.levels, \(x) data.table(level.id = 1:length(x), level = x)) |>
+  rbindlist(idcol = "cat.scale")
 
 
 variables <- fread(file.variables)
@@ -232,16 +259,8 @@ variables[type == "categorical",
           cat.scale := var.cat[main]]
 variables[type == "categorical",
           cat.ord := cat.scale %in% cat.ord]
+variables[, cat.ref := cat.ref[cat.scale]]
 
-setcolorder(variables, c("id", "code", "section",
-                         "name", "main", "sub",
-                         "type", "cat.scale", "cat.ord",
-                         "category.personal_stakes",
-                         "category.threat_appraisal",
-                         "category.coping_appraisal",
-                         "category.control",
-                         "category.adaptation",
-                         "question.main", "question.sub"))
 
 # deal with NAs and dependent questions
 dependencies <-
@@ -293,6 +312,27 @@ survey <-
   copy(survey.raw[, variables$id, with = FALSE]) |>
   setnames(variables$code)
 
+var.cont.scale <-
+  survey[,
+         .(code = names(.SD),
+           cont.mean = apply(t(.SD), 1, mean, na.rm = TRUE),
+           cont.sd = apply(t(.SD), 1, sd, na.rm = TRUE)),
+         .SDcols = variables[type == "continuous", code]]
+variables <-
+  merge(variables, var.cont.scale, all = TRUE, sort = FALSE)
+
+
+setcolorder(variables, c("id", "code", "section",
+                         "name", "main", "sub",
+                         "type",
+                         "cat.scale", "cat.ref", "cat.ord",
+                         "cont.mean", "cont.sd",
+                         "category.personal_stakes",
+                         "category.threat_appraisal",
+                         "category.coping_appraisal",
+                         "category.control",
+                         "category.adaptation",
+                         "question.main", "question.sub"))
 
 # Variables types
 
@@ -316,7 +356,6 @@ for(i in seq_along(codes.cat)) {
            levels = cat.levels[[scales.cat[i]]],
            ordered = variables[code == codes.cat[i], cat.ord])
 }
-
 
 
 # For global model: Identify questions that ask for additional information given
@@ -384,5 +423,9 @@ survey.sel <-
 
 saveRDS(survey, file.survey.proc)
 saveRDS(variables, file.variables.proc)
+saveRDS(cat.levels.dt, file.cat.levels.proc)
 saveRDS(dependencies, file.questions.dependencies)
 
+
+fwrite(variables, file.variables.proc.csv)
+fwrite(cat.levels.dt, file.cat.levels.proc.csv)
