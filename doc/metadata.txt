@@ -1,7 +1,9 @@
 
-## Variables
+# Variables
 
-Corresponding file: `variables.csv`
+## Variable description
+
+File: `var/variables.csv`
 
 `id`
 :   Integer identifier of the variable (corresponds to the column number   in the limesurvey output).
@@ -48,30 +50,32 @@ question.sub
 
 ## Levels for categorical variables
 
-Corresponding file: `cat.levels.csv`
+File: `var/cat.levels.csv`
 
 cat.scale
 :   Identifies the scale (lower-case letter).
 
 level.id
-:   Identifies the level within the corresponding scale (integer).
+:   Identifies the position of the level within the corresponding scale (integer).
 
 level
 :   String of the level, as formulated in the English language survey.
 	
 
-## Variable importance
+# Results
 
-Corresponding file: `var.importance.csv`
+## Random forest: variable importance
+
+File: `rf/varimp.csv`
 
 resp
 :   Identity of the binary version of the adaptation variable (used as a response variable), corresponding to the codes in the variable table. `Count` represents the sum of all ten binary adaption variables.
 
 expl
-:   Identity of the explanatory variable, corresponding to the codes in the variable table.
+:   Identity of the explanatory variable, corresponding to the codes in `var/variables.csv`.
 
 category
-:   Group that the explanatory variable belongs to (either `personal_stakes`, `threat_appraisal`, `coping_appraisal`, `control`, `adaptation`). If an explanatory variable belongs to several groups, it will appear several times for the same adaptations variable.
+:   Group that the explanatory variable belongs to (either `personal_stakes`, `threat_appraisal`, `coping_appraisal`, `control`). If an explanatory variable belongs to several groups, it will appear several times for the same adaptations variable.
 
 importance
 :   Importance score of the variable given in `expl` on the outcome given in `resp`. Importance scores as based on permutations and scaled by standard error, as in Breiman (2001).
@@ -80,21 +84,78 @@ pvalue
 :   p value for the importance score, expressing the probability to obtain the observed importance score under the null hypothesis that the explanatory variable is not important. The approach of Altmann et al. (2010) is used to calculate p values based on permutations.
 
 
-## Category importance
+## Random forest: importance by category
 
-Corresponding file: `cat.importance.csv`
+File: `rf/catimp.csv`
+
+This table accompanies the plots of variable importance values by adaptation and category (`plots/rf/catimp.pdf`). Only variables for the p-value of the importance is < 0.05 have been used to calculate the category summaries.
 
 resp
 :   Identity of the binary version of the adaptation variable (used as a response variable), corresponding to the codes in the variable table. `Count` represents the sum of all ten binary adaption variables.
 
 category
-:   Group of explanatory variables (either `personal_stakes`, `threat_appraisal`, `coping_appraisal`, `control`, `adaptation`).
+:   Group of explanatory variables (either `personal_stakes`, `threat_appraisal`, `coping_appraisal`, `control`).
+
+importance.min
+:   Importance score of the least important variable belonging to `category` on the outcome given in `resp`.
+
+importance.median
+:   Median importance score of all variables belonging to `category` on the outcome given in `resp`.
 
 importance.mean
-:   Average importance score of all variable belonging to `category` on the outcome given in `resp`.
+:   Average importance score of all variables belonging to `category` on the outcome given in `resp`.
 
-importance.mean
+importance.max
 :   Importance score of the most important variable belonging to `category` on the outcome given in `resp`.
 
 cat.n
 :   Number of variables in the given `category` that are deemed important (based on permutation tests).
+
+
+## IRT: Marginal effects at the mean
+
+File: `irt/predictions.csv`
+
+This table accompanies the plots of the marginal effect estimates in `plots/irt/response.pdf` and `plots/irt/link.pdf`.
+
+var.code
+:   Identity of the explanatory variable for which the marginal effect is calculated. Corresponds to the codes in `var/variables.csv`.
+
+adapt.code
+:   Identity of the adaptation variable for which the marginal effect is calculated. Corresponds to the codes in `var/variables.csv`.
+
+var.level
+:   Level of the explanatory variable for which the marginal effect is calculated.
+
+linpred.median, linpred.q2.5, linpred.q25, linpred.q75, linpred.q97.5
+:   Linear predictor (i.e. log odds) for the adaptation variable if the explanatory variable is set to `var.level`. Provided are the median, as well as the 2.5th, 25th, 75th, and 97.5th percentiles. The 50% equal-tailed Bayesian credible interval is situated between the 25th and 75th percentiles. The 95% interval is situated between the 2.5th and 97.5th percentiles. These values are presented graphically in `plots/irt/linpred.pdf`.
+
+
+prob.median, prob.q2.5, prob.q25, prob.q75, prob.q97.5
+:    Predicted response (i.e. probability) for the adaptation variable if the explanatory variable is set to `var.level`. Provided are the median, as well as the 2.5th, 25th, 75th, and 97.5th percentiles. The 50% equal-tailed Bayesian credible interval is situated between the 25th and 75th percentiles. The 95% interval is situated between the 2.5th and 97.5th percentiles. These values are presented graphically in `plots/irt/prob.pdf`.
+
+n
+:   Number of responses for the given level of the explanatory variable.
+
+
+## IRT: Comparisons
+
+File: `irt/comparisons.csv`
+
+This table accompanies the plots of the comparison matrices in `plots/irt/response.pdf` and `plots/irt/link.pdf`.
+
+var.code
+:   Identity of the explanatory variable for which marginal effects are compared. Corresponds to the codes in `var/variables.csv`.
+
+adapt.code
+:   Identity of the adaptation variable for which the marginal effects are compared. Corresponds to the codes in `var/variables.csv`.
+
+var.level1
+:   The first of two levels of the explanatory variable that are compared against each other.
+
+var.level2
+:   The second of two levels of the explanatory variable that are compared against each other.
+
+prob.greater
+:   Probability that `var.level1` increases the preference for adaptation *more* than `var.level2`.
+
