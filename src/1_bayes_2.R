@@ -57,11 +57,10 @@ mod.imp.2pl <-
       warmup = 2500,
       iter = 5000,
       refresh = 25,
-      empty = TRUE,
       prior = prior.imp.2pl)
 
 
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
-saveRDS(mod.imp.2pl, paste0(path.results.brm, "mod.imp.2pl.rds"))
+saveRDS(mod.imp.2pl, paste0(path.results.irt, "mod.imp.2pl.rds"))
 
