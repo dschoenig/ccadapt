@@ -1,0 +1,120 @@
+cat.scale,level.id,level
+a,1,No
+a,2,Yes
+b,1,1
+b,2,2
+b,3,3-5
+b,4,6-10
+b,5,More than 10
+c,1,No
+c,2,Yes
+c,3,"Yes, some of my woodlots"
+c,4,"Yes, all of my woodlots"
+d,1,Not at all important
+d,2,Not important
+d,3,Rather not important
+d,4,Neutral
+d,5,Rather important
+d,6,Important
+d,7,Extremely important
+e,1,No
+e,2,Yes
+e,3,I do not know
+f,1,I have not changed anything.
+f,2,I have increased the share of natural regeneration.
+f,3,I have increased the share of planting.
+g,1,No
+g,2,Yes
+g,3,I do not remember
+h,1,It decreased
+h,2,It did not change
+h,3,It increased
+h,4,It depends on woodlots
+i,1,Absolutely disagree
+i,2,Disagree
+i,3,Somewhat disagree
+i,4,Neutral
+i,5,Somewhat agree
+i,6,Agree
+i,7,Absolutely agree
+j,1,No
+j,2,Unlikely
+j,3,"Yes, within the next 5 years"
+j,4,"Yes, in 6 to 10 years"
+j,5,I do not know this action
+k,1,Absolutely ineffective
+k,2,Ineffective
+k,3,Somehow ineffective
+k,4,Uncertain efficacy
+k,5,Somehow effective
+k,6,Effective
+k,7,Very effective
+l,1,Not at all needed
+l,2,Not needed
+l,3,Somewhat not needed
+l,4,Neutral
+l,5,Somewhat needed
+l,6,Needed
+l,7,Definitely needed
+m,1,Strongly disagree
+m,2,Disagree
+m,3,Somewhat disagree
+m,4,Neither agree or disagree
+m,5,Somewhat agree
+m,6,Agree
+m,7,Strongly agree
+n,1,Not at all
+n,2,No
+n,3,Rather no
+n,4,Neutral
+n,5,Rather yes
+n,6,Yes
+n,7,"Yes, I’m really sure"
+o,1,In more than 50 years
+o,2,In 30 to 49 years
+o,3,In 10 to 29 years
+o,4,In 0 to 9 years
+o,5,They are already apparent
+o,6,Other
+p,1,18-29 years old
+p,2,30-39 years old
+p,3,40-49 years old
+p,4,50-59 years old
+p,5,60-69 years old
+p,6,70 years old or older
+p,7,I prefer not to answer
+q,1,Female
+q,2,Male
+q,3,I prefer not to answer
+q,4,Other
+r,1,No
+r,2,Yes
+r,3,I prefer not to answer
+s,1,0 %
+s,2,1 to 10 %
+s,3,11 to 30 %
+s,4,31 to 50 %
+s,5,51 to 75 %
+s,6,76 to 100 %
+s,7,I prefer not to answer
+t,1,Primary school or equivalent
+t,2,Secondary school or equivalent
+t,3,Vocational school or equivalent
+t,4,University degree or equivalent
+t,5,I prefer not to say
+t,6,Other
+u,1,No professional activity
+u,2,Retired
+u,3,"Primary sector (agriculture, livestock, fishing, forestry, mining or oil extraction, etc.)"
+u,4,"Secondary sector (food-processing, construction, production of goods and equipment, etc.)"
+u,5,"Tertiary sector (commerce, administration, education, health, etc.)"
+u,6,Other
+u,7,I prefer not to answer
+v,1,Never
+v,2,Once every five years
+v,3,Once a year
+v,4,Several times a year
+v,5,Every month
+v,6,Every week
+v,7,Every day
+v,8,Other
