@@ -22,7 +22,7 @@ survey.irt <- readRDS(file.survey.irt)
 
 mod.irt <- readRDS(file.irt.mod)
 
-pred.scales <- c("response", "link")
+pred.scales <- c("prob", "linpred")
 
 base.size <- 9
 base.family <- "IBMPlexSansCondensed"
@@ -262,10 +262,10 @@ for(p in seq_along(pred.scales)) {
     # ref.line <- list()
     # plim <- list()
 
-    if(pred.scale == "response") {
+    if(pred.scale == "prob") {
       var.pred[, pred.plot := prob]
     }
-    if(pred.scale == "link") {
+    if(pred.scale == "linpred") {
       var.pred[, pred.plot := linpred]
     }
 
@@ -280,10 +280,10 @@ for(p in seq_along(pred.scales)) {
         stri_wrap(width = 42) |>
         paste(collapse = "\n")
 
-      if(pred.scale == "response") {
+      if(pred.scale == "prob") {
         pred.desc <- "Preference for adaptation\n(probability)"
       }
-      if(pred.scale == "link") {
+      if(pred.scale == "linpred") {
         pred.desc <- "Preference for adaptation\n(log odds)"
       }
 
