@@ -270,8 +270,8 @@ for(i in 1:nrow(rf.par)) {
 
 names(rf.mod) <- rf.par$resp
 
-# saveRDS(rf.mod, file.rf.mod)
-rf.mod <- readRDS(file.rf.mod)
+saveRDS(rf.mod, file.rf.mod)
+# rf.mod <- readRDS(file.rf.mod)
 
 
 ## VARIABLE IMPORTANCE #################################################
@@ -327,8 +327,6 @@ names(imp.l) <- names(rf.mod)
 rf.imp <- rbindlist(imp.l, idcol = "resp")
 rf.imp[, resp := factor(resp, levels = vars.y.acc)]
 
-rf.imp[, resp := factor(resp, levels = vars.y.acc)]
-
 var.sel.l <-
   melt(var.sel,
        measure.vars =
@@ -343,7 +341,7 @@ var.sel.l <-
 rf.imp.var <-
   merge(rf.imp, var.sel.l,
   # merge(rf.imp[pvalue < 0.05], var.sel.l,
-        all.x = FALSE, all.y = FALSE, by = "code")
+        all.x = TRUE, all.y = FALSE, by = "code")
         # all.x = TRUE, all.y = FALSE, by = "code")
 
 rf.imp.var[, resp := resp.code[as.character(resp)]]
@@ -351,8 +349,8 @@ setnames(rf.imp.var, "code", "expl")
 setcolorder(rf.imp.var, c("resp", "expl", "category", "importance"))
 setorder(rf.imp.var, resp, -importance)
 
-# fwrite(rf.imp.var, file.rf.varimp)
-rf.imp.var <- fread(file.rf.varimp)
+fwrite(rf.imp.var, file.rf.varimp)
+# rf.imp.var <- fread(file.rf.varimp)
 
 rf.imp.cat <-
   rf.imp.var[pvalue < 0.05] |>
@@ -372,8 +370,8 @@ rf.imp.cat <-
          importance.max,
          cat.n))
 
-# fwrite(rf.imp.cat, file.rf.catimp)
-rf.imp.cat <- fread(file.rf.catimp)
+fwrite(rf.imp.cat, file.rf.catimp)
+# rf.imp.cat <- fread(file.rf.catimp)
 
 
 items <- vars.y.acc[1:10]
@@ -405,6 +403,12 @@ if(nrow(var.cont) > 0) {
 
 survey.irt[, id := 1:.N]
 
+
+survey.irt <-
+  melt(survey.irt,
+       measure.vars = items,
+       variable.name = "item",
+       value.name = "resp")
 
 saveRDS(survey.irt, file.survey.irt)
 

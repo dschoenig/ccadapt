@@ -77,7 +77,7 @@ ggplot(rf.imp.cat,
   scale_y_discrete(limits = rev, labels = rev(cat.lab)) +
   # scale_x_continuous(trans = "sqrt", breaks = scales::breaks_pretty(6)) +
   scale_fill_brewer(type = "qual", palette = "Set1") +
-  facet_wrap(vars(resp), ncol = 2, scales = "free_x") +
+  facet_wrap(vars(resp), ncol = 3, scales = "free_x") +
   guides(fill = "none") +
   labs(y = NULL, x = "Variable importance",
        # subtitle = resp[i]
