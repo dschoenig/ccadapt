@@ -5,7 +5,6 @@ path.results <- "../results/"
 path.results.gbm <- paste0(path.results, "gbm/")
 path.results.rf <- paste0(path.results, "rf/")
 path.results.irt <- paste0(path.results, "irt/")
-path.results.brm <- paste0(path.results, "brm/")
 path.plots.irt <- paste0(path.results, "/plots/irt/")
 file.survey.raw <- paste0(path.data.raw, "results-survey845375_clean.csv")
 file.variables <- paste0(path.data.raw, "variables.csv")

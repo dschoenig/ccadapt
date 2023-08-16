@@ -45,10 +45,6 @@ prior.imp.2pl <-
   prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
   prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
 
-get_prior(form.imp.2pl,
-          data = survey.irt,
-          family = brmsfamily("bernoulli", "logit"))
-
 mod.imp.2pl <-
   brm(formula = form.imp.2pl,
       data = survey.irt,
@@ -64,6 +60,8 @@ mod.imp.2pl <-
       empty = TRUE,
       prior = prior.imp.2pl)
 
+
+dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
 saveRDS(mod.imp.2pl, paste0(path.results.brm, "mod.imp.2pl.rds"))
 
