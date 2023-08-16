@@ -9,4 +9,4 @@
 
 module load StdEnv/2020 gcc/9.3.0 r/4.2.2
 
-Rscript 1_bayes_1.R
+Rscript 1_irt_1pl.R

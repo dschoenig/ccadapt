@@ -1,15 +1,74 @@
+library(data.table)
+library(brms)
+
+source("paths.R")
+source("utilities.R")
 
 
+mod.1pl <- readRDS("../results/irt/mod.imp.1pl.rds")
+mod.2pl <- readRDS("../results/irt/mod.imp.2pl.rds")
+
+mod.1pl <- add_criterion(mod.1pl, criterion = "loo")
+
+mod.2pl <- add_criterion(mod.2pl, criterion = "loo")
 
 
+loo_compare(mod.1pl, mod.2pl)
+
+fe1 <- fixef(mod.1pl)
+fe2 <- fixef(mod.2pl)
 
 
+## MODEL VALIDATION ####################################################
+
+library(DHARMa)
+
+survey.irt <- readRDS(file.survey.irt)
+
+draw.ids <- sample(1:1e4, 1e3)
+
+mod.1pl.check <- createDHARMa(
+  simulatedResponse = t(posterior_predict(mod.1pl, draw.ids = draw.ids)),
+  observedResponse = survey.irt$resp,
+  fittedPredictedResponse = apply(t(posterior_epred(mod.1pl, draw.ids = draw.ids)), 1, mean),
+  integerResponse = TRUE)
+
+plot(mod.1pl.check)
 
 
+mod.2pl.check <- createDHARMa(
+  simulatedResponse = t(posterior_predict(mod.2pl, draw_ids = draw.ids)),
+  observedResponse = survey.irt$resp,
+  fittedPredictedResponse = apply(t(posterior_epred(mod.2pl, draw_ids = draw.ids)), 1, mean),
+  integerResponse = TRUE)
+
+plot(mod.2pl.check)
 
 
+plotResiduals(mod.1pl.check, form = as.character(survey.irt$F14))
+plotResiduals(mod.1pl.check, form = as.character(survey.irt$F11))
+
+plotResiduals(mod.2pl.check, form = as.character(survey.irt$F14))
+plotResiduals(mod.2pl.check, form = as.character(survey.irt$F11))
 
 
+library(bayesplot)
+
+survey.irt[,obs := 1:.N]
+
+y <- survey.irt[, .(p.item = mean(resp)), by = item][, p.item]
+
+y <- survey.irt$resp
+# yrep <- posterior_predict(mod.2pl, draw_ids = draw.ids)
+yrep <- posterior_predict(mod.2pl)
+group <- survey.irt$item
+
+ppc_stat_grouped(y = y, yrep = yrep, group = survey.irt$item, stat = "mean", binwidth = 0.01) +
+  theme_default()
+
+
+library(shinystan)
+launch_shinystan(mod.2pl)
 
 #################################################################################
 

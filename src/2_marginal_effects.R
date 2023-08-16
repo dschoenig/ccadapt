@@ -20,7 +20,7 @@ survey.fit <- readRDS(file.survey.rf)
 survey.irt <- readRDS(file.survey.irt)
 
 
-mod.irt <- readRDS(file.irt.mod)
+mod.irt <- readRDS(file.irt.mod.2pl)
 
 pred.scales <- c("prob", "linpred")
 
@@ -375,7 +375,7 @@ for(p in seq_along(pred.scales)) {
         wrap_plots(c(pred.p[plot.idx], prob.p[plot.idx]), byrow = FALSE, ncol = 2) +
           plot_annotation(title = var.foc,
                           subtitle = var.desc,
-                          caption = paste0(var.foc, " [1/5]"),
+                          caption = paste0(var.foc, " [", f, "/5]"),
                           theme = plot_theme +
                                   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5,
                                                              unit = "inch")))

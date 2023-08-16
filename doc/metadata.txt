@@ -38,7 +38,7 @@ cont.mean
 cont.sd
 :   If the `type` is `continuous`, `cont.sd` indicates the standard deviation of the responses over the sample.
 
-category.personal_stakes, category.threat_appraisal, category.coping_appraisal, category.control, category.adaptation
+category.*
 :   Indicates whether the variable belongs, respectively, to the group of variables related to *personal stakes*, *threat appraisal*, *coping appraisal*, *control*, or *adaptation*. The groups *personal stakes*, *threat appraisal*, and *coping appraisal* are not mutually exclusive (one variable can belong to several groups). However, if a variable belongs to either either the group `control` or `adaptation`, it cannot be part of another group. The `control` variables correspond to demographic control variables, and the `adaptation` variables correspond to adaptive behaviours. 
 
 question.main
@@ -64,7 +64,7 @@ level
 
 # Results
 
-## Random forest: variable importance
+## Random forest: Variable importance
 
 File: `rf/varimp.csv`
 
@@ -84,7 +84,7 @@ pvalue
 :   p value for the importance score, expressing the probability to obtain the observed importance score under the null hypothesis that the explanatory variable is not important. The approach of Altmann et al. (2010) is used to calculate p values based on permutations.
 
 
-## Random forest: importance by category
+## Random forest: Importance by category
 
 File: `rf/catimp.csv`
 

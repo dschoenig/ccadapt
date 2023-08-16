@@ -46,5 +46,5 @@ mod.imp.1pl <-
 
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
-saveRDS(mod.imp.1pl, paste0(path.results.irt, "mod.imp.1pl.rds"))
+saveRDS(mod.imp.1pl, file.irt.mod.1pl)
 
