@@ -260,6 +260,10 @@ variables[type == "categorical",
 variables[type == "categorical",
           cat.ord := cat.scale %in% cat.ord]
 variables[, cat.ref := cat.ref[cat.scale]]
+variables[main == "provinces" & sub == "Quebec",
+          cat.ref := "Yes"]
+variables[code %in% c("B4", "B9", "B20"),
+          cat.ref := "Yes"]
 
 
 # deal with NAs and dependent questions

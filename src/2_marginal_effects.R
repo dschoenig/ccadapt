@@ -23,6 +23,9 @@ survey.irt <- readRDS(file.survey.irt)
 mod.irt <- readRDS(file.irt.mod.2pl)
 
 pred.scales <- c("prob", "linpred")
+ci.et.width <- 0.9
+q.ci.l <- (1-ci.et.width)/2
+q.ci.u <- 1-q.ci.l
 
 base.size <- 9
 base.family <- "IBMPlexSansCondensed"
@@ -194,17 +197,25 @@ for(p in seq_along(pred.scales)) {
 
       var.lev.comp <-
         merge(var.pred[lev ==  var.comb[j, lev1],
-                       .(item.code, draw, lev1 = lev, prob1 = prob)],
+                       .(item.code, draw, lev1 = lev,
+                         prob1 = prob, linpred1 = linpred)],
               var.pred[lev ==  var.comb[j, lev2],
-                       .(item.code, draw, lev2 = lev, prob2 = prob)],
+                       .(item.code, draw, lev2 = lev,
+                         prob2 = prob, linpred2 = linpred)],
               by = c("item.code", "draw"))
 
       var.comp.l[[j]] <-
         var.lev.comp[,
                      .(lev1 = var.comb[j, lev1],
                        lev2 = var.comb[j, lev2],
-                       prob.greater = sum(prob1 > prob2)/.N,
-                       prob.smaller = sum(prob1 < prob2)/.N),
+                       prob.diff.median = median(prob1 - prob2),
+                       prob.diff.ci.l = quantile(prob1 - prob2, q.ci.l),
+                       prob.diff.ci.u = quantile(prob1 - prob2, q.ci.u),
+                       linpred.diff.median = median(linpred1 - linpred2),
+                       linpred.diff.ci.l = quantile(linpred1 - linpred2, q.ci.l),
+                       linpred.diff.ci.u = quantile(linpred1 - linpred2, q.ci.u),
+                       p.diff.pos = sum(prob1 > prob2)/.N,
+                       p.diff.neg = sum(prob1 < prob2)/.N),
                      by = "item.code"]
 
     }
@@ -233,23 +244,31 @@ for(p in seq_along(pred.scales)) {
       var.pred[order(code.mar, item.code, lev),
                .(
                     linpred.median = median(linpred),
-                    linpred.q2.5 = quantile(linpred, 0.025),
+                    linpred.q5 = quantile(linpred, 0.05),
                     linpred.q25 = quantile(linpred, 0.25),
                     linpred.q75 = quantile(linpred, 0.75),
-                    linpred.q97.5 = quantile(linpred, 0.975),
+                    linpred.q95 = quantile(linpred, 0.95),
                     prob.median = median(prob),
-                    prob.q2.5 = quantile(prob, 0.025),
+                    prob.q5 = quantile(prob, 0.05),
                     prob.q25 = quantile(prob, 0.25),
                     prob.q75 = quantile(prob, 0.75),
-                    prob.q97.5 = quantile(prob, 0.975)),
+                    prob.q95 = quantile(prob, 0.95)),
                by = c("code.mar", "item.code", "lev")
                ]
 
     comp.sum.l[[i]] <-
       var.comp.dt[,
                   .(code.mar = var.foc,
-                    item.code, lev1, lev2, prob.greater)]
-   
+                    item.code, lev1, lev2,
+                    prob.diff.median,
+                    prob.diff.ci.l,
+                    prob.diff.ci.u,
+                    linpred.diff.median,
+                    linpred.diff.ci.l,
+                    linpred.diff.ci.u,
+                    p.diff.pos,
+                    p.diff.neg)]
+  
     n.sum.l[[i]] <- var.n
 
     # Prepare plots
@@ -281,10 +300,10 @@ for(p in seq_along(pred.scales)) {
         paste(collapse = "\n")
 
       if(pred.scale == "prob") {
-        pred.desc <- "Preference for adaptation\n(probability)"
+        pred.desc <- "Willingness to adapt\n(probability)"
       }
       if(pred.scale == "linpred") {
-        pred.desc <- "Preference for adaptation\n(log odds)"
+        pred.desc <- "Willingness to adapt\n(log odds)"
       }
 
       q.main <-
@@ -322,7 +341,7 @@ for(p in seq_along(pred.scales)) {
       pred.p[[k]] <-
         ggplot(var.pred[item.code == item.foc]) +
           stat_halfeye(aes(x = pred.plot, y = lev),
-                            .width = c(0.5, 0.95),
+                            .width = c(0.5, 0.9),
                             fill = "grey80") +
           geom_vline(xintercept = ref.line, linewidth = 0.3, linetype = "dashed") + 
           coord_fixed(ratio = (plim[2] - plim[1])/length(var.lev),
@@ -336,9 +355,9 @@ for(p in seq_along(pred.scales)) {
 
       prob.p[[k]] <-
         ggplot(var.comp.dt[item.code == item.foc]) +
-        geom_tile(aes(y = lev1, x = lev2, fill = prob.greater), na.rm = TRUE) +
+        geom_tile(aes(y = lev1, x = lev2, fill = p.diff.pos), na.rm = TRUE) +
         geom_point(data = var.comp.dt[item.code == item.foc &
-                                      (prob.greater > 0.95 | prob.greater < 0.05)],
+                                      (p.diff.pos > 0.95 | p.diff.pos < 0.05)],
                    aes(y = lev1, x = lev2)) +
         scale_fill_binned_divergingx("Roma", rev = TRUE, mid = 0.5,
                                      breaks = c(0,0.01, 0.05, 0.1, 0.25, 0.5,
@@ -348,7 +367,7 @@ for(p in seq_along(pred.scales)) {
         # scale_x_discrete(drop = FALSE) +
         # scale_y_discrete(limits = rev, drop = FALSE) +
         # facet_wrap(vars(item), ncol = 2) +
-        labs(x = NULL, y = NULL, fill = "Prob. that\npreference\nincreases") +
+        labs(x = NULL, y = NULL, fill = "Certainty that\nwillingness\nincreases") +
         plot_theme +
         # guide_fill +
         theme(axis.text.x = element_text(color = "black",
@@ -406,8 +425,8 @@ setnames(pred.sum, c("code.mar", "item.code", "lev"), c("var.code", "adapt.code"
 setorder(pred.sum, var.code, adapt.code)
 
 setnames(comp.sum,
-         c("code.mar", "item.code", "lev1", "lev2"),
-         c("var.code", "adapt.code", "var.level.1", "var.level.2"))
+         c("code.mar", "item.code", "lev1", "lev2", "p.diff.pos", "p.diff.neg"),
+         c("var.code", "adapt.code", "var.level.1", "var.level.2", "cert.diff.pos", "cert.diff.neg"))
 setorder(comp.sum, var.code, adapt.code)
 
 fwrite(pred.sum, file.irt.pred)

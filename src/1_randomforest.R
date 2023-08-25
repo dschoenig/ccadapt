@@ -64,27 +64,26 @@ var.sel <-
                    is.na(category.control) |
                    is.na(category.adaptation))]
 
+
+# Subset responses to survey
+survey.sub <- survey[
+                     A39 == "No" &
+                     # … only respondants with managed forests.
+                     A43 == "No" &
+                     # … only respondants that take part in decision making.
+                     A51 == "Yes"
+                     # … only respondants that take part in decision making in the future.
+                     ]
+
 # Exclude variables that do not vary between respondents
 
 var.include <-
-  names(survey.sel)[survey.sel[, which(survey.sel[, lapply(.SD, \(x) length(unique(x)))] > 1)]]
+  names(survey.sub)[survey.sub[, which(survey.sub[, lapply(.SD, \(x) length(unique(x)))] > 1)]]
 
 var.sel <- var.sel[code %in% var.include]
 
-# Subset responses to survey
-survey.sub <-
-  with(survey,
-       which(
-             A39 == "No" &
-             # … only respondants with managed forests.
-             A43 == "No" &
-             # … only respondants that take part in decision making.
-             A51 == "Yes"
-             # … only respondants that take part in decision making in the future.
-            ))
-
 survey.sel <-
-  survey[survey.sub, var.sel$code, with = FALSE]
+  survey.sub[, var.sel$code, with = FALSE]
   # survey[survey.sub, var.sel$code, with = FALSE][, lapply(.SD, \(x) sum(is.na(x)))]
 
 
@@ -278,7 +277,7 @@ saveRDS(rf.mod, file.rf.mod)
 
 resp.code <- c(sel.adaptation, "Count")
 resp.code <- factor(resp.code, levels = resp.code)
-names(resp.code) <- levels(rf.imp.var$resp)
+names(resp.code) <- levels(rf.par$resp)
 
 n.perm <- 100
 imp.l <- list()
@@ -376,10 +375,12 @@ fwrite(rf.imp.cat, file.rf.catimp)
 
 items <- vars.y.acc[1:10]
 vars.pred <-
-  rf.imp.var[order(-importance),
-             .SD[1:3],
-             by = resp
-             ][, unique(expl)]
+  rf.imp.var[pvalue < 0.05
+             ][order(resp, -importance),
+               .SD[1:3],
+               by = resp
+               ][, unique(expl)]
+
 
 vars.irt <- c(items, vars.pred)
 
@@ -405,7 +406,7 @@ survey.irt[, id := 1:.N]
 
 
 survey.irt <-
-  melt(survey.irt,
+  melt(copy(survey.irt),
        measure.vars = items,
        variable.name = "item",
        value.name = "resp")

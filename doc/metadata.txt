@@ -1,4 +1,3 @@
-
 # Variables
 
 ## Variable description
@@ -127,12 +126,12 @@ adapt.code
 var.level
 :   Level of the explanatory variable for which the marginal effect is calculated.
 
-linpred.median, linpred.q2.5, linpred.q25, linpred.q75, linpred.q97.5
-:   Linear predictor (i.e. log odds) for the adaptation variable if the explanatory variable is set to `var.level`. Provided are the median, as well as the 2.5th, 25th, 75th, and 97.5th percentiles. The 50% equal-tailed Bayesian credible interval is situated between the 25th and 75th percentiles. The 95% interval is situated between the 2.5th and 97.5th percentiles. These values are presented graphically in `plots/irt/linpred.pdf`.
+linpred.median, linpred.q5, linpred.q25, linpred.q75, linpred.q95
+:   Linear predictor (i.e. log odds of the willingness to adapt) for the adaptation variable if the explanatory variable is set to `var.level`. Provided are the median, as well as the 5th, 25th, 75th, and 95th percentiles. The 50% equal-tailed Bayesian credible interval is situated between the 25th and 75th percentiles. The 90% interval is situated between the 5th and 95th percentiles. These values are presented graphically in `plots/irt/linpred.pdf`.
 
 
-prob.median, prob.q2.5, prob.q25, prob.q75, prob.q97.5
-:    Predicted response (i.e. probability) for the adaptation variable if the explanatory variable is set to `var.level`. Provided are the median, as well as the 2.5th, 25th, 75th, and 97.5th percentiles. The 50% equal-tailed Bayesian credible interval is situated between the 25th and 75th percentiles. The 95% interval is situated between the 2.5th and 97.5th percentiles. These values are presented graphically in `plots/irt/prob.pdf`.
+prob.median, prob.q5, prob.q25, prob.q75, prob.q95
+:    Predicted response (i.e. probability of the willingness to adapt) for the adaptation variable if the explanatory variable is set to `var.level`. Provided are the median, as well as the 5th, 25th, 75th, and 95th percentiles. The 50% equal-tailed Bayesian credible interval is situated between the 25th and 75th percentiles. The 90% interval is situated between the 5th and 95th percentiles. These values are presented graphically in `plots/irt/prob.pdf`.
 
 n
 :   Number of responses for the given level of the explanatory variable.
@@ -156,6 +155,27 @@ var.level1
 var.level2
 :   The second of two levels of the explanatory variable that are compared against each other.
 
-prob.greater
-:   Probability that `var.level1` increases the preference for adaptation *more* than `var.level2`.
+prob.diff.median
+:   Median difference of willingness to adapt, calculated between `var.level1` and `var.level1`. The difference is expressed in percentage points.
+
+prob.diff.ci.u
+:   Lower limit of the 90% credibility interval for the difference in willingness to adapt, between `var.level1` and `var.level1`. The difference is expressed in percentage points.
+
+prob.diff.ci.u
+:   Upper limit of the 90% credibility interval for the difference in willingness to adapt, between `var.level1` and `var.level1`. The difference is expressed in percentage points.
+
+linpred.diff.median
+:   Median difference in willingness to adapt, calculated between `var.level1` and `var.level1`. Expressed as a difference in log odds.
+
+linpred.diff.ci.l
+:   Lower limit of the 90% credibility interval for the difference in willingness to adapt, between `var.level1` and `var.level1`. Expressed as a difference in log odds.
+
+linpred.diff.ci.u
+:   Upper limit of the 90% credibility interval for the difference in willingness to adapt, between `var.level1` and `var.level1`. Expressed as a difference in log odds.
+
+cert.diff.pos
+:   Certainty that `var.level1` *increases* the willingness to adapt, compared to `var.level2`.
+
+cert.diff.neg 
+:   Certainty that `var.level1` *decreases* the willingness to adapt, compared to `var.level2`.
 

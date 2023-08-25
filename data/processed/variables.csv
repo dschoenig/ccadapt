@@ -11,7 +11,7 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 14,A10,A,provinces_Nova_Scotia,provinces,Nova_Scotia,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 15,A11,A,provinces_Nunavut,provinces,Nunavut,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 16,A12,A,provinces_Ontario,provinces,Ontario,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
-17,A13,A,provinces_Quebec,provinces,Quebec,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
+17,A13,A,provinces_Quebec,provinces,Quebec,categorical,a,Yes,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 18,A14,A,provinces_Saskatchewan,provinces,Saskatchewan,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 19,A15,A,provinces_Newfoundland_and_Labrador,provinces,Newfoundland_and_Labrador,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 20,A16,A,provinces_Northwest_Territories,provinces,Northwest_Territories,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
@@ -68,12 +68,12 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 71,B1,B,pastChangeRegen,pastChangeRegen,,categorical,f,I have not changed anything.,FALSE,,,1,0,0,0,0,How has the regeneration of your forests changed since 2010?,""
 72,B2,B,pastChangeSpecies_SQ001,pastChangeSpecies,SQ001,categorical,a,No,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have tried to increase the diversity of species in my forests
 73,B3,B,pastChangeSpecies_SQ002,pastChangeSpecies,SQ002,categorical,a,No,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have modified part of my woodlot to favor a single species
-74,B4,B,pastChangeSpecies_SQ003,pastChangeSpecies,SQ003,categorical,a,No,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have not changed anything
+74,B4,B,pastChangeSpecies_SQ003,pastChangeSpecies,SQ003,categorical,a,Yes,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have not changed anything
 75,B5,B,pastChangePlantSelec_SQ001,pastChangePlantSelec,SQ001,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,This question does not concern me as I have not planted any trees since 2010
 76,B6,B,pastChangePlantSelec_SQ002,pastChangePlantSelec,SQ002,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,I have chosen my seedlings based on wood productivity
 77,B7,B,pastChangePlantSelec_SQ003,pastChangePlantSelec,SQ003,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,"I have chosen my seedlings as to anticipate various risks (drought, insects, etc)"
 78,B8,B,pastChangePlantSelec_SQ005,pastChangePlantSelec,SQ005,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,"I wish I could find or buy seedlings from new species, but I cannot"
-79,B9,B,pastChangePlantSelec_SQ004,pastChangePlantSelec,SQ004,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,I have not changed my criteria
+79,B9,B,pastChangePlantSelec_SQ004,pastChangePlantSelec,SQ004,categorical,a,Yes,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,I have not changed my criteria
 80,B10,B,pastChangePlantSelec_other,pastChangePlantSelec,other,qualitative,,,,,,,,,,,Have you changed your species selection criteria for planting trees since 2010?,Other
 81,B11,B,plantSelecReasons_SQ001,plantSelecReasons,SQ001,categorical,g,No,FALSE,,,1,0,0,0,0,Have you chosen your seedlings to …,Introduce exotic species?
 82,B12,B,plantSelecReasons_SQ002,plantSelecReasons,SQ002,categorical,g,No,FALSE,,,1,0,0,0,0,Have you chosen your seedlings to …,Introduce local species coming from southern populations (assisted migration)?
@@ -84,7 +84,7 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 87,B17,B,pastChangeChemicals_SQ003,pastChangeChemicals,SQ003,categorical,a,No,FALSE,,,1,0,0,0,0,How has your use of fertilizers and pesticides changed since 2010?,I stopped using fertilizers and/or liming
 88,B18,B,pastChangeChemicals_SQ004,pastChangeChemicals,SQ004,categorical,a,No,FALSE,,,1,0,0,0,0,How has your use of fertilizers and pesticides changed since 2010?,I started using pesticides
 89,B19,B,pastChangeChemicals_SQ005,pastChangeChemicals,SQ005,categorical,a,No,FALSE,,,1,0,0,0,0,How has your use of fertilizers and pesticides changed since 2010?,I stopped using pesticides
-90,B20,B,pastChangeChemicals_SQ006,pastChangeChemicals,SQ006,categorical,a,No,FALSE,,,1,0,0,0,0,How has your use of fertilizers and pesticides changed since 2010?,I have not changed anything
+90,B20,B,pastChangeChemicals_SQ006,pastChangeChemicals,SQ006,categorical,a,Yes,FALSE,,,1,0,0,0,0,How has your use of fertilizers and pesticides changed since 2010?,I have not changed anything
 91,B21,B,pastChangeConservati_SQ001,pastChangeConservati,SQ001,categorical,h,It did not change,FALSE,,,1,0,0,0,0,Have you made changes related to conservation in your woodlots since 2010?,Retention of old or dead trees
 92,B22,B,pastChangeConservati_SQ002,pastChangeConservati,SQ002,categorical,h,It did not change,FALSE,,,1,0,0,0,0,Have you made changes related to conservation in your woodlots since 2010?,"Classification of some or all of my woodlot as a protected area (private nature reserve, conservation easement, gift, purchase or lease to a land conservation organism, )"
 93,B23,B,pastChangeReasons_SQ002,pastChangeReasons,SQ002,categorical,d,Neutral,TRUE,,,1,0,0,0,0,How important were these aspects regarding your decision to change at least one of your management practices?,To achieve the goals of my forest management plan
