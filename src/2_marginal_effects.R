@@ -401,19 +401,13 @@ for(p in seq_along(pred.scales)) {
 
       print(plot.print)
 
-      # dev.off()
-
     }
-
 
   }
 
-
  dev.off()
 
-
 }
-
 
 
 pred.sum <- rbindlist(pred.sum.l)

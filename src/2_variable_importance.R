@@ -6,7 +6,8 @@ library(ggdist)
 source("paths.R")
 source("utilities.R")
 
-rf.imp.cat <- fread(file.rf.varimp)
+rf.imp.cat <- fread(file.rf.catimp)
+rf.imp.var <- fread(file.rf.varimp)
 
 
 base.size <- 10
@@ -56,29 +57,90 @@ cat.lab <- c("Personal stakes", "Threat appraisal", "Coping appraisal", "Control
 rf.imp.cat[, category := factor(category, levels = cat.lev)]
 rf.imp.cat[, resp := factor(resp, levels = resp.var)]
 
+
+# cairo_pdf(file.plot.catimp, width = 8.5, height = 11)
+
+# ggplot(rf.imp.cat,
+#        aes(x = category)) +
+#   geom_bar(aes(x = importance.max,
+#                y = category,
+#                fill = category),
+#            stat = "identity",
+#            alpha = 0.6) +
+#   geom_bar(aes(x = importance.median,
+#                y = category,
+#                fill = category),
+#            stat = "identity") +
+#   geom_bar(aes(x = importance.min,
+#                y = category),
+#            fill = "black",
+#            stat = "identity",
+#            alpha = 0.2) +
+#   scale_y_discrete(limits = rev, labels = rev(cat.lab)) +
+#   # scale_x_continuous(trans = "sqrt", breaks = scales::breaks_pretty(6)) +
+#   scale_fill_brewer(type = "qual", palette = "Set1") +
+#   facet_wrap(vars(resp), ncol = 3, scales = "free_x") +
+#   guides(fill = "none") +
+#   labs(y = NULL, x = "Variable importance",
+#        # subtitle = resp[i]
+#        ) +
+#   plot_theme +
+#   theme(aspect.ratio = 0.65) +
+#   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "inch"))
+
+# dev.off()
+
+
+
+rf.imp.cat[, cat.n.lab := paste0("[", cat.n, "]   ")]
+
 cairo_pdf(file.plot.catimp, width = 8.5, height = 11)
 
-ggplot(rf.imp.cat,
-       aes(x = category)) +
-  geom_bar(aes(x = importance.max,
-               y = category,
-               fill = category),
-           stat = "identity",
-           alpha = 0.6) +
-  geom_bar(aes(x = importance.median,
-               y = category,
-               fill = category),
-           stat = "identity") +
-  geom_bar(aes(x = importance.min,
-               y = category),
-           fill = "black",
-           stat = "identity",
-           alpha = 0.2) +
+
+ggplot(rf.imp.cat) +
+  geom_text(aes(x = importance.min,
+                y = category,
+                label = cat.n.lab),
+            hjust = 1,
+            family = "IBMPlexSansCondensed",
+            size = 2.5) +
+  geom_segment(aes(x = importance.min,
+                   xend = importance.max,
+                   y = category,
+                   yend = category,
+                   colour = category),
+               linewidth = 0.75) +
+  geom_segment(aes(x = importance.min,
+                   xend = importance.min,
+                   y = (5-as.integer(category))-0.25,
+                   yend = (5-as.integer(category))+0.25,
+                   colour = category),
+               linewidth = 0.7) +
+  geom_segment(aes(x = importance.max,
+                   xend = importance.max,
+                   y = (5-as.integer(category))-0.25,
+                   yend = (5-as.integer(category))+0.25,
+                   colour = category),
+               linewidth = 0.7) +
+  geom_point(aes(x = importance.median,
+                  y = category,
+                  colour = category),
+             shape = 21, stroke = 1, size = 2,
+             fill = "white"
+             ) +
+  # geom_point(aes(x = importance.median,
+  #                 y = category,
+  #                 colour = category,
+  #                 size = as.numeric(cat.n)),
+  #            shape = 21, stroke = 1, fill = "white") +
   scale_y_discrete(limits = rev, labels = rev(cat.lab)) +
+  scale_x_continuous(limits = c(0, NA), expand = expansion(0.1, 0)) +
   # scale_x_continuous(trans = "sqrt", breaks = scales::breaks_pretty(6)) +
-  scale_fill_brewer(type = "qual", palette = "Set1") +
+  scale_colour_brewer(type = "qual", palette = "Set1") +
   facet_wrap(vars(resp), ncol = 3, scales = "free_x") +
-  guides(fill = "none") +
+  # facet_wrap(vars(resp), ncol = 3) +
+  scale_size(range = c(1, 5)) +
+  guides(colour = "none") +
   labs(y = NULL, x = "Variable importance",
        # subtitle = resp[i]
        ) +
