@@ -273,72 +273,149 @@ saveRDS(rf.mod, file.rf.mod)
 # rf.mod <- readRDS(file.rf.mod)
 
 
+
+## VARIABLE SELECTION ##################################################
+
+
+# Progressively eliminating the least important variables
+
+n.var.imp <- 3
+rf.mod.sel <- list()
+mod.error.i <- list()
+mod.drop.i <- list()
+
+for(i in seq_along(rf.mod)) {
+ 
+  message(paste0("Variable selection for model ", i, "/", length(rf.mod), " …"))
+
+  rf.foc <- rf.mod[[i]]
+  var.fit <- mod.preds
+  survey.drop <- survey.fit
+
+  iter <- length(mod.preds) - n.var.imp
+
+  mod.error.j <- numeric(0)
+  mod.drop.j <- numeric(0)
+
+  for(j in 1:iter) {
+ 
+    message(paste0("Iteration ", j, "/", iter, " …"))
+    
+    mod.imp <- sort(importance(rf.foc))
+    var.drop <- names(mod.imp)[1]
+    var.fit <- var.fit[var.fit != var.drop]
+    survey.drop <- survey.drop[, -var, env = list(var = I(var.drop))]
+    
+    mod.resp <- rf.par$resp[i]
+    form <- 
+      as.formula(paste(mod.resp, "~",
+                       paste(var.fit, collapse = "+")))
+
+    if(rf.par$type[i] == "probability") {
+      rf.foc <-
+        ranger(form,
+               data = survey.drop,
+               num.trees = rf.par$num.trees[i],
+               mtry = min(rf.par$mtry[i], length(var.fit)),
+               min.node.size = rf.par$min.node.size[i],
+               splitrule = rf.par$splitrule[i],
+               respect.unordered.factors = "order",
+               probability = TRUE,
+               scale.permutation.importance = TRUE,
+               importance = "permutation",
+               seed = rf.par$seed[i],
+               num.threads = 4)
+    }
+    if(rf.par$type[i] == "regression") {
+      rf.foc <-
+        ranger(form,
+               data = as.data.frame(survey.drop),
+               num.trees = rf.par$num.trees[i],
+               mtry = min(rf.par$mtry[i], length(var.fit)),
+               min.node.size = rf.par$min.node.size[i],
+               splitrule = rf.par$splitrule[i],
+               respect.unordered.factors = "order",
+               scale.permutation.importance = TRUE,
+               importance = "permutation",
+               seed = rf.par$seed[i],
+               num.threads = 4)
+    }
+
+    mod.error.j[j] <- rf.foc$prediction.error
+    mod.drop.j[j] <- var.drop
+
+  }
+
+  mod.error.i[[i]] <- mod.error.j
+  mod.drop.i[[i]] <- mod.drop.j
+  
+  rf.mod.sel[[i]] <- rf.foc
+
+}
+
+names(mod.error.i) <- names(rf.mod)
+mod.error <-
+  lapply(mod.error.i, \(x) data.table(iter = 1:length(x), prediction.error = x)) |>
+  rbindlist(idcol = "resp")
+
+names(mod.drop.i) <- names(rf.mod)
+mod.drop <-
+  lapply(mod.drop.i, \(x) data.table(iter = 1:length(x), code = x)) |>
+  rbindlist(idcol = "resp")
+ 
+mod.error <-
+  rbind(data.table(resp = names(rf.mod),
+                   iter = 0,
+                   code = NA,
+                   prediction.error = unlist(lapply(rf.mod, \(x) x$prediction.error))),
+        merge(mod.drop, mod.error))
+
+
+
+# ggplot(mod.error) +
+#   geom_line(aes(x = iter, y = prediction.error, group = resp)) +
+#   facet_wrap(vars(resp), scales = "free_y") +
+#   theme_ggdist()
+
+names(rf.mod.sel) <- names(rf.mod)
+
+saveRDS(rf.mod.sel, file.rf.mod.sel)
+saveRDS(mod.error, file.rf.mod.err)
+
+
 ## VARIABLE IMPORTANCE #################################################
 
 resp.code <- c(sel.adaptation, "Count")
 resp.code <- factor(resp.code, levels = resp.code)
 names(resp.code) <- levels(rf.par$resp)
 
-imp.l <- list()
-pg <- txtProgressBar(min = 0,
-                     max = length(rf.mod),
-                     style = 3)
+imp.full.l <- list()
 for(i in seq_along(rf.mod)) {
   mod.imp <- importance(rf.mod[[i]])
-  imp.l[[i]] <-
+  imp.full.l[[i]] <-
     data.table(code = names(mod.imp),
-               importance = mod.imp)
-  setTxtProgressBar(pg, i)
+               importance.full = mod.imp)
 }
-close(pg)
 
-
-n.perm <- 100
-imp.l <- list()
-pg <- txtProgressBar(min = 0,
-                     max = length(rf.mod),
-                     style = 3)
-for(i in seq_along(rf.mod)) {
-  mod.resp <- rf.par$resp[i]
-  form <- 
-    as.formula(paste(mod.resp, "~",
-                     paste(mod.preds, collapse = "+")))
-  if(rf.par$type[i] == "probability") {
-  imp.l[[i]] <-
-    importance_pvalues(rf.mod[[i]],
-                       num.permutations = n.perm,
-                       method = "altmann",
-                       formula = form,
-                       data = as.data.frame(survey.fit),
-                       splitrule = rf.par$splitrule[i],
-                       respect.unordered.factors = "order",
-                       probability = TRUE,
-                       scale.permutation.importance = TRUE,
-                       seed = rf.par$seed[i],
-                       num.threads = 4) |>
-    as.data.table(keep.rownames = "code")
-  }
-  if(rf.par$type[i] == "regression") {
-  imp.l[[i]] <-
-      importance_pvalues(rf.mod[[i]],
-                         num.permutations = n.perm,
-                         method = "altmann",
-                         formula = form,
-                         data = as.data.frame(survey.fit),
-                         splitrule = rf.par$splitrule[i],
-                         respect.unordered.factors = "order",
-                         scale.permutation.importance = TRUE,
-                         seed = rf.par$seed[i],
-                         num.threads = 4) |>
-      as.data.table(keep.rownames = "code")
-  }
-  setTxtProgressBar(pg, i)
+imp.sel.l <- list()
+for(i in seq_along(rf.mod.sel)) {
+  mod.imp <- importance(rf.mod.sel[[i]])
+  imp.sel.l[[i]] <-
+    data.table(code = names(mod.imp),
+               selected = TRUE,
+               importance.sel = mod.imp)
 }
-close(pg)
 
-names(imp.l) <- names(rf.mod)
-rf.imp <- rbindlist(imp.l, idcol = "resp")
+names(imp.full.l) <- names(rf.mod)
+names(imp.sel.l) <- names(rf.mod.sel)
+
+rf.imp <-
+  merge(rbindlist(imp.full.l, idcol = "resp"),
+        rbindlist(imp.sel.l, idcol = "resp"),
+        all = TRUE)
 rf.imp[, resp := factor(resp, levels = vars.y.acc)]
+rf.imp[is.na(selected), selected := FALSE]
+
 
 var.sel.l <-
   melt(var.sel,
@@ -359,8 +436,8 @@ rf.imp.var <-
 
 rf.imp.var[, resp := resp.code[as.character(resp)]]
 setnames(rf.imp.var, "code", "expl")
-setcolorder(rf.imp.var, c("resp", "expl", "category", "importance"))
-setorder(rf.imp.var, resp, -importance)
+setcolorder(rf.imp.var, c("resp", "expl", "category"))
+setorder(rf.imp.var, resp, -importance.sel, -importance.full, na.last = TRUE)
 
 fwrite(rf.imp.var, file.rf.varimp)
 # rf.imp.var <- fread(file.rf.varimp)
@@ -371,17 +448,21 @@ rf.imp.cat <-
   rf.imp.var |>
   DT(order(resp, category)
      , .(resp = resp.code[as.character(resp)],
-         importance.min = min(importance),
-         importance.median = median(importance),
-         importance.mean = mean(importance),
-         importance.max = max(importance),
-         cat.n = length(importance)),
+         importance.min = min(importance.full),
+         importance.q25 = quantile(importance.full, 0.25),
+         importance.median = median(importance.full),
+         importance.mean = mean(importance.full),
+         importance.q75 = quantile(importance.full, 0.75),
+         importance.max = max(importance.full),
+         cat.n = length(importance.full)),
      by = c("resp", "category")) |>
   DT(, .(resp,
          category,
          importance.min,
+         importance.q25,
          importance.median,
          importance.mean,
+         importance.q75,
          importance.max,
          cat.n))
 
@@ -391,24 +472,22 @@ fwrite(rf.imp.cat, file.rf.catimp)
 
 items <- vars.y.acc[1:10]
 vars.pred <-
-  rf.imp.var[pvalue < 0.05
-             ][order(resp, -importance),
-               .SD[1:3],
-               by = resp
-               ][, unique(expl)]
-
+  variables[code %in% rf.imp.var[selected == TRUE, stri_sort(unique(expl))],
+            code]
 
 vars.irt <- c(items, vars.pred)
 
 survey.irt <- survey.fit[, ..vars.irt]
 
-var.cat <- var.sel[code %in% vars.pred & type == "categorical", .(code, cat.ref)]
+var.cat <- var.sel[code %in% vars.pred & type == "categorical",
+                   .(code, cat.ref)]
 for(i in 1:nrow(var.cat)) {
   survey.irt[[var.cat$code[i]]] <-
     relevel(survey.irt[[var.cat$code[i]]], var.cat$cat.ref[i])
 }
 
-var.cont <- var.sel[code %in% vars.pred & type == "continuous", .(code, cat.ref)]
+var.cont <- var.sel[code %in% vars.pred & type == "continuous",
+                    .(code, cont.mean, cont.sd)]
 # var.cont <- var.sel[type == "continuous", .(code, cont.mean, cont.sd)]
 if(nrow(var.cont) > 0) {
   for(i in 1:nrow(var.cont)) {
@@ -418,8 +497,9 @@ if(nrow(var.cont) > 0) {
   }
 }
 
-survey.irt[, id := 1:.N]
+survey.irt <- copy(survey.irt)
 
+survey.irt[, id := 1:.N]
 
 survey.irt <-
   melt(copy(survey.irt),
