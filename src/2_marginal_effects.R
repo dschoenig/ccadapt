@@ -18,11 +18,13 @@ dependencies <- readRDS(file.questions.dependencies)
 
 survey.fit <- readRDS(file.survey.rf)
 survey.irt <- readRDS(file.survey.irt)
-
+# survey.irt <- survey.irt[, .SD[1], by = item]
 
 mod.irt <- readRDS(file.irt.mod.2pl)
 
 pred.scales <- c("prob", "linpred")
+# mar.type <- "cf"
+mar.type <- "mem"
 ci.et.width <- 0.9
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
@@ -113,168 +115,208 @@ comp.sum.l <- list()
 n.sum.l <- list()
 
 for(p in seq_along(pred.scales)) {
-
-  pred.scale <- pred.scales[p]
-
-  plot.file <- paste0(path.plots.irt, pred.scale, ".pdf")
+  plot.file <- paste0(path.plots.irt, pred.scales[p], ".", mar.type, ".pdf")
   cairo_pdf(plot.file, onefile = TRUE, width = 8.5, height = 11)
+}
+
+# vars.irt <- vars.irt[1]
+# vars.irt <- "F14"
+
+for(i in seq_along(vars.irt)) {
+  
+  message(paste0("Processing variable ", i, "/", length(vars.irt), " …"))
+
+  var.foc <- vars.irt[i]
+
+  var.lev <- 
+    survey.irt[,
+               factor(levels(var.sel), levels = levels(var.sel)),
+               env = list(var.sel = var.foc)]
 
 
-  for(i in seq_along(vars.irt)) {
-    var.foc <- vars.irt[i]
+  if(mar.type == "cf") {
+    var.dt <- 
+      survey.irt[rep(1:.N, times = length(var.lev))]
+    var.dt[,
+           var.sel := rep(var.lev, each = nrow(survey.irt)),
+           env = list(var.sel = var.foc)]
+  }
 
-    var.lev <- 
-      survey.irt[,
-                 factor(levels(var.sel), levels = levels(var.sel)),
-                 env = list(var.sel = var.foc)]
-
+  if(mar.type == "mem") {
     var.dt <-
       vars.ref[rep(1:.N, times = length(var.lev)),
                -var.sel,
                env = list(var.sel = I(var.foc))]
-
     var.dt[,
            var.sel := rep(var.lev, each = nrow(vars.ref)),
            env = list(var.sel = var.foc)]
-
-    var.dt[,
-           `:=`(id.mar = i,
-                code.mar = var.foc)]
-
-    pred.l[[i]] <- var.dt
+    var.dt[, id := NA]
   }
 
-  pred.dt <- rbindlist(pred.l, use.names = TRUE)
-  pred.dt[, obs := 1:.N]
-  pred.dt[, id := NA]
+  var.dt[,
+         `:=`(obs = 1:.N,
+              id.mar = i,
+              code.mar = var.foc)]
 
-  pred.mod <-
-    t(posterior_epred(mod.irt, pred.dt))
+  pred.var.l <- list()
 
-  colnames(pred.mod) <- paste0("draw_", 1:ncol(pred.mod))
-
-  pred.dt <-
-    as.data.table(as.data.frame(pred.mod)) |>
-    _[, obs := 1:.N] |>
-    melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
-         value.name = "prob") |>
-    _[, linpred := qlogis(prob)] |>
-    merge(pred.dt,
-          all = TRUE,
-          by = "obs")
-  pred.dt[, draw := as.integer(draw)]
-  pred.dt[, item.code := items.code[as.character(item)]]
+  # Predictions per level
 
 
-  for(i in seq_along(vars.irt)) {
+  for(j in seq_along(var.lev)) {
+    # For loop to keep memory footprint lower
 
-    var.foc <- vars.irt[i]
+    message(paste0("Level ", j , "/", length(var.lev), " …"))
 
-    var.pred <-
-      pred.dt[code.mar == var.foc,
-      ][,
-      c("draw", "item.code", "code.mar", var.foc, "linpred", "prob"),
-      with = FALSE]
+    var.lev.foc <- var.lev[j]
+    var.lev.dt <- var.dt[var.sel == var.lev.foc,
+                         env = list(var.sel = var.foc)]
 
-    var.lev <-
-      cat.levels[cat.scale == vars.pred[code == var.foc, cat.scale]
-                 ][order(level.id), level]
-
-    var.cat.ref <- variables[code == var.foc, cat.ref]
-
-    var.pred[,
-             lev := factor(var.sel, levels = var.lev),
-             env = list(var.sel = var.foc)]
-
-    var.comb <- 
-      CJ(lev1 = factor(var.lev, levels = var.lev),
-         lev2 = factor(var.lev, levels = var.lev))
-    var.comb <- var.comb[lev1 != lev2]
-    var.comb[, comp.id := 1:.N]
-   
-    var.comp.l <- list()
-    for(j in 1:nrow(var.comb)) {
-
-      var.lev.comp <-
-        merge(var.pred[lev ==  var.comb[j, lev1],
-                       .(item.code, draw, lev1 = lev,
-                         prob1 = prob, linpred1 = linpred)],
-              var.pred[lev ==  var.comb[j, lev2],
-                       .(item.code, draw, lev2 = lev,
-                         prob2 = prob, linpred2 = linpred)],
-              by = c("item.code", "draw"))
-
-      var.comp.l[[j]] <-
-        var.lev.comp[,
-                     .(lev1 = var.comb[j, lev1],
-                       lev2 = var.comb[j, lev2],
-                       prob.diff.median = median(prob1 - prob2),
-                       prob.diff.ci.l = quantile(prob1 - prob2, q.ci.l),
-                       prob.diff.ci.u = quantile(prob1 - prob2, q.ci.u),
-                       linpred.diff.median = median(linpred1 - linpred2),
-                       linpred.diff.ci.l = quantile(linpred1 - linpred2, q.ci.l),
-                       linpred.diff.ci.u = quantile(linpred1 - linpred2, q.ci.u),
-                       p.diff.pos = sum(prob1 > prob2)/.N,
-                       p.diff.neg = sum(prob1 < prob2)/.N),
-                     by = "item.code"]
-
+    if(mar.type == "mem") {
+      vars.re <- names(mod.irt$data)
+      vars.re <- vars.re[vars.re %in% variables$code]
+      re.form <-
+        paste0("~ (1 + ", paste0(vars.re, collapse = " + "), " | item)") |>
+        as.formula()
+      pred.mod <- t(posterior_epred(mod.irt, var.lev.dt, re_formula = re.form))
+    }
+    if(mar.type == "cf") {
+      pred.mod <- t(posterior_epred(mod.irt, var.lev.dt))
     }
 
-    var.comp.dt <- rbindlist(var.comp.l, idcol = "comp.id")
-    setorder(var.comp.dt, item.code, comp.id)
+    colnames(pred.mod) <- paste0("draw_", 1:ncol(pred.mod))
 
+    pred.var.lev <-
+      as.data.table(as.data.frame(pred.mod)) |>
+      _[, obs := var.lev.dt$obs] |>
+      melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
+           value.name = "prob") |>
+      _[, linpred := qlogis(prob)] |>
+      merge(var.lev.dt[,.(obs, item)])
 
-    var.n <-
-      survey.irt[,
-                 .(n = .N),
-                 by = c("item", var.foc)
-                 ][,
-                   .(code.mar = var.foc,
-                     item.code = items.code[as.character(item)],
-                     lev = var.sel,
-                     n),
-                   env = list(var.sel = var.foc)
-                   ]
-    var.n[, lev := factor(lev, levels = levels(var.pred$lev))]
-    setorder(var.n, code.mar, item.code, lev)
+    pred.var.lev[, draw := as.integer(draw)]
+    pred.var.lev[, item.code := items.code[as.character(item)]]
+    pred.var.lev[, code.mar := var.foc]
+    pred.var.lev[,
+                 lev := factor(var.lev.foc, levels = var.lev),
+                 env = list(var.sel = var.foc)]
 
-    # Summarize for subsequent export
+    pred.var.l[[j]] <-
+      pred.var.lev[,
+                   .(
+                     linpred = mean(linpred),
+                     prob = mean(prob)),
+                   by = c("draw", "item.code", "code.mar", "lev")]
 
-    pred.sum.l[[i]] <-
-      var.pred[order(code.mar, item.code, lev),
-               .(
-                    linpred.median = median(linpred),
-                    linpred.q5 = quantile(linpred, 0.05),
-                    linpred.q25 = quantile(linpred, 0.25),
-                    linpred.q75 = quantile(linpred, 0.75),
-                    linpred.q95 = quantile(linpred, 0.95),
-                    prob.median = median(prob),
-                    prob.q5 = quantile(prob, 0.05),
-                    prob.q25 = quantile(prob, 0.25),
-                    prob.q75 = quantile(prob, 0.75),
-                    prob.q95 = quantile(prob, 0.95)),
-               by = c("code.mar", "item.code", "lev")
-               ]
+    gc()
 
-    comp.sum.l[[i]] <-
-      var.comp.dt[,
-                  .(code.mar = var.foc,
-                    item.code, lev1, lev2,
-                    prob.diff.median,
-                    prob.diff.ci.l,
-                    prob.diff.ci.u,
-                    linpred.diff.median,
-                    linpred.diff.ci.l,
-                    linpred.diff.ci.u,
-                    p.diff.pos,
-                    p.diff.neg)]
+  }
+
+  pred.var <- rbindlist(pred.var.l)
+
+  # Comparison between levels
+
+  var.cat.ref <- variables[code == var.foc, cat.ref]
+  var.lev <-
+        cat.levels[cat.scale == vars.pred[code == var.foc, cat.scale]
+                   ][order(level.id), level]
   
-    n.sum.l[[i]] <- var.n
+  pred.var[, lev := factor(lev, levels = var.lev)]
 
-    # Prepare plots
+  var.comb <- 
+    CJ(lev1 = factor(var.lev, levels = var.lev),
+       lev2 = factor(var.lev, levels = var.lev))
+  var.comb <- var.comb[lev1 != lev2]
+  var.comb[, comp.id := 1:.N]
+ 
+  var.comp.l <- list()
+  for(j in 1:nrow(var.comb)) {
+
+    var.lev.comp <-
+      merge(pred.var[lev ==  var.comb[j, lev1],
+                     .(item.code, draw, lev1 = lev,
+                       prob1 = prob, linpred1 = linpred)],
+            pred.var[lev ==  var.comb[j, lev2],
+                     .(item.code, draw, lev2 = lev,
+                       prob2 = prob, linpred2 = linpred)],
+            by = c("item.code", "draw"))
+
+    var.comp.l[[j]] <-
+      var.lev.comp[,
+                   .(lev1 = var.comb[j, lev1],
+                     lev2 = var.comb[j, lev2],
+                     prob.diff.median = median(prob1 - prob2),
+                     prob.diff.ci.l = quantile(prob1 - prob2, q.ci.l),
+                     prob.diff.ci.u = quantile(prob1 - prob2, q.ci.u),
+                     linpred.diff.median = median(linpred1 - linpred2),
+                     linpred.diff.ci.l = quantile(linpred1 - linpred2, q.ci.l),
+                     linpred.diff.ci.u = quantile(linpred1 - linpred2, q.ci.u),
+                     p.diff.pos = sum(prob1 > prob2)/.N,
+                     p.diff.neg = sum(prob1 < prob2)/.N),
+                   by = "item.code"]
+
+  }
+
+  var.comp.dt <- rbindlist(var.comp.l, idcol = "comp.id")
+  setorder(var.comp.dt, item.code, comp.id)
 
 
-    item.lev <- levels(var.pred$item)
+  var.n <-
+    survey.irt[,
+               .(n = .N),
+               by = c("item", var.foc)
+               ][,
+                 .(code.mar = var.foc,
+                   item.code = items.code[as.character(item)],
+                   lev = var.sel,
+                   n),
+                 env = list(var.sel = var.foc)
+                 ]
+  var.n[, lev := factor(lev, levels = levels(pred.var$lev))]
+  setorder(var.n, code.mar, item.code, lev)
+
+  # Summarize for subsequent export
+
+  pred.sum.l[[i]] <-
+    pred.var[order(code.mar, item.code, lev),
+             .(
+                  linpred.median = median(linpred),
+                  linpred.q5 = quantile(linpred, 0.05),
+                  linpred.q25 = quantile(linpred, 0.25),
+                  linpred.q75 = quantile(linpred, 0.75),
+                  linpred.q95 = quantile(linpred, 0.95),
+                  prob.median = median(prob),
+                  prob.q5 = quantile(prob, 0.05),
+                  prob.q25 = quantile(prob, 0.25),
+                  prob.q75 = quantile(prob, 0.75),
+                  prob.q95 = quantile(prob, 0.95)),
+             by = c("code.mar", "item.code", "lev")
+             ]
+
+  comp.sum.l[[i]] <-
+    var.comp.dt[,
+                .(code.mar = var.foc,
+                  item.code, lev1, lev2,
+                  prob.diff.median,
+                  prob.diff.ci.l,
+                  prob.diff.ci.u,
+                  linpred.diff.median,
+                  linpred.diff.ci.l,
+                  linpred.diff.ci.u,
+                  p.diff.pos,
+                  p.diff.neg)]
+
+  n.sum.l[[i]] <- var.n
+
+  # Prepare plots
+
+  for(p in seq_along(pred.scales)) {
+   
+    dev.set(dev.list()[[p]])
+
+    pred.scale <- pred.scales[p]
+   
+    item.lev <- levels(pred.var$item)
 
     pred.p <- list()
     prob.p <- list()
@@ -282,10 +324,10 @@ for(p in seq_along(pred.scales)) {
     # plim <- list()
 
     if(pred.scale == "prob") {
-      var.pred[, pred.plot := prob]
+      pred.var[, pred.plot := prob]
     }
     if(pred.scale == "linpred") {
-      var.pred[, pred.plot := linpred]
+      pred.var[, pred.plot := linpred]
     }
 
     for(k in seq_along(item.lev)) {
@@ -323,11 +365,11 @@ for(p in seq_along(pred.scales)) {
       var.desc <- paste(c(q.main, q.sub), collapse = "\n")
 
       ref.line <-
-        var.pred[item.code == item.foc & lev == var.cat.ref,
+        pred.var[item.code == item.foc & lev == var.cat.ref,
                  median(pred.plot)]
       
       plim <-
-        var.pred[item.code == item.foc,
+        pred.var[item.code == item.foc,
                  .(q.l = quantile(pred.plot, 0.01),
                    q.u = quantile(pred.plot, 0.99)),
                  by = "lev"
@@ -339,10 +381,11 @@ for(p in seq_along(pred.scales)) {
               paste0(lev, " (", n, ")")]
 
       pred.p[[k]] <-
-        ggplot(var.pred[item.code == item.foc]) +
+        ggplot(pred.var[item.code == item.foc]) +
           stat_halfeye(aes(x = pred.plot, y = lev),
                             .width = c(0.5, 0.9),
-                            fill = "grey80") +
+                            fill = "grey80",
+                            scale = 0.8) +
           geom_vline(xintercept = ref.line, linewidth = 0.3, linetype = "dashed") + 
           coord_fixed(ratio = (plim[2] - plim[1])/length(var.lev),
                       xlim = plim) +
@@ -376,17 +419,14 @@ for(p in seq_along(pred.scales)) {
                                          vjust = 1),
               legend.key.size = unit(2*base.size, "pt"),
               plot.margin = margin(base.size, base.size, base.size, base.size))
-
-
     }
 
     # plot.path <- paste0(path.plots.irt, pred.scale, "/")
     # dir.create(plot.path, recursive = TRUE, showWarnings = FALSE)
     # files <- paste0(plot.path, var.foc, "_", 1:5, ".pdf")
 
-    for(f in 1:5) { 
 
-      # cairo_pdf(files[f], width = 8.5, height = 11)
+    for(f in 1:5) { 
 
       plot.idx <- (1:2)+((f-1)*2)
 
@@ -403,12 +443,12 @@ for(p in seq_along(pred.scales)) {
 
     }
 
-  }
 
- dev.off()
+  }
 
 }
 
+graphics.off()
 
 pred.sum <- rbindlist(pred.sum.l)
 comp.sum <- rbindlist(comp.sum.l)
@@ -423,8 +463,8 @@ setnames(comp.sum,
          c("var.code", "adapt.code", "var.level.1", "var.level.2", "cert.diff.pos", "cert.diff.neg"))
 setorder(comp.sum, var.code, adapt.code)
 
-fwrite(pred.sum, file.irt.pred)
-fwrite(comp.sum, file.irt.comp)
+fwrite(pred.sum, file.irt.pred.mem)
+fwrite(comp.sum, file.irt.comp.mem)
       
 
 

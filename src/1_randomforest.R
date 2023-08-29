@@ -279,6 +279,20 @@ resp.code <- c(sel.adaptation, "Count")
 resp.code <- factor(resp.code, levels = resp.code)
 names(resp.code) <- levels(rf.par$resp)
 
+imp.l <- list()
+pg <- txtProgressBar(min = 0,
+                     max = length(rf.mod),
+                     style = 3)
+for(i in seq_along(rf.mod)) {
+  mod.imp <- importance(rf.mod[[i]])
+  imp.l[[i]] <-
+    data.table(code = names(mod.imp),
+               importance = mod.imp)
+  setTxtProgressBar(pg, i)
+}
+close(pg)
+
+
 n.perm <- 100
 imp.l <- list()
 pg <- txtProgressBar(min = 0,
@@ -350,9 +364,11 @@ setorder(rf.imp.var, resp, -importance)
 
 fwrite(rf.imp.var, file.rf.varimp)
 # rf.imp.var <- fread(file.rf.varimp)
+# rf.imp.var2 <- fread(file.rf.varimp)
 
 rf.imp.cat <-
-  rf.imp.var[pvalue < 0.05] |>
+  # rf.imp.var[pvalue < 0.05] |>
+  rf.imp.var |>
   DT(order(resp, category)
      , .(resp = resp.code[as.character(resp)],
          importance.min = min(importance),
