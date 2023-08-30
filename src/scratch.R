@@ -1,3 +1,13 @@
+library(mgcv)
+
+length(unique(survey$A19)) -1
+
+mod <-
+  gam(resp ~ s(A19, k = 29, by = item),
+      data = survey.irt, family=binomial, method = "REML")
+
+plot(mod, pages = 1)
+
 library(data.table)
 library(brms)
 

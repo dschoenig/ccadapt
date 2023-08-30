@@ -10,31 +10,23 @@ survey.irt <- readRDS(file.survey.irt)
 variables <- readRDS(file.variables.proc)
 dependencies <- readRDS(file.questions.dependencies)
 
-vars.pred <- variables[code %in% names(survey.irt), code]
+vars.pred.cat <- variables[code %in% names(survey.irt) & type == "categorical", code]
+vars.pred.cont <- variables[code %in% names(survey.irt) & type == "continuous", code]
 
-
-## VARIABLE TREATMENT #################################################
-
-# Treat A19 as categorical variable (due to limited number of distinct
-# responses)
-
-A19.mean <- variables[code == "A19", cont.mean]
-A19.sd <- variables[code == "A19", cont.sd]
-breaks <- c(-Inf, seq(0, 100, 10))
-labels <-
-  c("0", paste0(paste0("(", breaks[2:(length(breaks)-1)], ","),
-                paste0(breaks[3:length(breaks)], "]")))
-survey.irt[,
-           A19 := cut(((A19 * A19.sd) + A19.mean),
-                      breaks = breaks, labels = labels)]
 
 ## ITEM-RESPONSE MODEL 2PL ############################################
 
+vars.pred.cont.term <- character(0)
+for(i in seq_along(vars.pred.cont)) {
+  var.k <- min(length(unique(survey.irt[[vars.pred.cont[i]]])), 50)
+  vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i],
+                                   ", by = item, k = ", k, ", bs = 'tp')")
+}
 
 form.eta <- 
   paste0("eta ~ ",
-         paste0(vars.pred, collapse = " + "),
-         " + (1 + ", paste0(vars.pred, collapse = " + "), " |i| item)",
+         paste0(c(vars.pred.cont.term, vars.pred.cat), collapse = " + "),
+         " + (1 + ", paste0(vars.pred.cat, collapse = " + "), " |i| item)",
          " + (1 | id)") |>
   as.formula()
 
@@ -58,6 +50,7 @@ prior.imp.2pl <-
   prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
   prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
   prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
+  prior("normal(0, 3)", class = "sds", nlpar = "eta") +
   prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
 
 mod.imp.2pl <-

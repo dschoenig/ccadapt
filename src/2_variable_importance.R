@@ -6,6 +6,7 @@ library(ggdist)
 source("paths.R")
 source("utilities.R")
 
+variables <- fread(file.variables)
 rf.imp.cat <- fread(file.rf.catimp)
 rf.imp.var <- fread(file.rf.varimp)
 
@@ -76,7 +77,7 @@ ggplot(rf.imp.var) +
                outlier.size = 2,
                outlier.stroke = 0.8,
                outlier.shape = 21,
-               outlier.fill = "#FFFFFF55",
+               outlier.fill = NA,
                width = 0.5) +
   # geom_jitter(aes(x = importance.full,
   #                 y = category,
@@ -193,20 +194,25 @@ dev.off()
 
 cairo_pdf(file.plot.catimp.sel, width = 8.5, height = 11)
 
-ggplot(rf.imp.var[selected == TRUE]) +
+ggplot(rf.imp.var[selected == TRUE & importance.sel >= 0]) +
   geom_point(aes(x = importance.sel,
                y = category,
                colour = category),
              shape = 21, fill = "white", size = 2, stroke = 1) +
+  # geom_point(aes(x = importance.sel,
+  #              y = category,
+  #              colour = category,
+  #              fill = category),
+  #            shape = 21, size = 2, stroke = 1) +
   scale_y_discrete(limits = rev, labels = rev(cat.lab)) +
-  scale_x_continuous(limits = c(NA, NA), expand = expansion(0.1, 0)) +
+  scale_x_continuous(limits = c(0, NA), expand = expansion(c(0, 0.2), 0)) +
   # scale_x_continuous(trans = "sqrt", breaks = scales::breaks_pretty(6)) +
-  scale_colour_brewer(type = "qual", palette = "Set1") +
-  # facet_wrap(vars(resp), ncol = 3, scales = "free_x") +
-  facet_wrap(vars(resp), ncol = 3) +
+  scale_colour_brewer(type = "qual", palette = "Set1", aesthetics = c("colour", "fill")) +
+  facet_wrap(vars(resp), ncol = 3, scales = "free_x") +
+  # facet_wrap(vars(resp), ncol = 3) +
   scale_size(range = c(1, 5)) +
   guides(colour = "none") +
-  labs(y = NULL, x = "Variable importance",
+  labs(y = NULL, x = "Variable importance\n(percentage change in prediction error)",
        # subtitle = resp[i]
        ) +
   plot_theme +
@@ -214,3 +220,67 @@ ggplot(rf.imp.var[selected == TRUE]) +
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "inch"))
 
 dev.off()
+
+
+rf.imp.counts <-
+  variables[code %in% var.sel,
+            lapply(.SD, sum),
+            .SDcols = c("category.personal_stakes",
+                        "category.threat_appraisal",
+                        "category.coping_appraisal",
+                        "category.control")] |>
+  melt(measure.vars = measure(category = \(x) factor(x, levels = levels(rf.imp.var$category)),
+                              pattern = "category\\.(.*)"))
+
+
+
+ggplot(rf.imp.var.h[selected == TRUE & importance.sel > 0]) +
+  # stat_boxplot(aes(x = importance.sel,
+  #                  y = category,
+  #                  color = category),
+  #              coef = 1.5,
+  #              outlier.size = 2,
+  #              outlier.stroke = 0.8,
+  #              outlier.shape = NA,
+  #              outlier.fill = NA,
+  #              width = 0.5) +
+  # geom_point(aes(x = importance.sel,
+  #                y = category,
+  #                colour = category,
+  #                group = expl),
+  #            shape = 16, alpha = 0.5, size = 2, stroke = 1,
+  #            position = position_dodge2(width = 0.75)) +
+  geom_point(aes(x = importance.sel,
+                 y = category,
+                 colour = category,
+                 group = expl),
+             shape = 21, fill = NA, size = 2, stroke = 1,
+             position = position_dodge2(width = 0.75)) +
+  # geom_bar(aes(x = importance.sel,
+  #              y = category,
+  #              fill = category,
+  #              group = expl),
+  #          stat = "identity",
+  #          width = 0.5,
+  #          position = position_dodge2(preserve = "total")) +
+  # geom_point(aes(x = importance.sel,
+  #              y = category,
+  #              colour = category,
+  #              fill = category),
+  #            shape = 21, size = 2, stroke = 1) +
+  # geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.3) +
+  scale_y_discrete(limits = rev, labels = rev(cat.lab)) +
+  scale_x_continuous(limits = c(0, NA), expand = expansion(c(0, 0.25), 0)) +
+  # scale_x_continuous(trans = "sqrt", breaks = scales::breaks_pretty(6)) +
+  scale_colour_brewer(type = "qual", palette = "Set1", aesthetics = c("colour", "fill")) +
+  # facet_wrap(vars(resp), ncol = 3, scales = "free_x") +
+  # facet_wrap(vars(resp), ncol = 3) +
+  scale_size(range = c(1, 5)) +
+  guides(colour = "none") +
+  labs(y = NULL, x = "Variable importance\n(percentage change in prediction error)",
+       # subtitle = resp[i]
+       ) +
+  plot_theme +
+  theme(aspect.ratio = 0.65) +
+  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "inch"))
+

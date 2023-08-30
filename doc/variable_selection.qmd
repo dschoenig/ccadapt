@@ -1,0 +1,47 @@
+---
+title: Variable selection and importance
+date: last-modified
+citeproc: true
+bibliography: /home/danielschoenig/cloud/phd/literature/bibliographies/phd_all.json
+csl: /home/danielschoenig/cloud/phd/literature/styles/apa.csl
+format:
+  pdf: 
+    fig-pos: H
+    fig-width: 7
+    fig-dpi: 150
+    fig-format: png
+    documentclass: scrartcl
+    papersize: letter
+    mainfont: IBM Plex Serif
+    sansfont: IBM Plex Sans
+    monofont: IBM Plex Mono
+    latex-tinytex: false
+    pdf-engine: xelatex
+    header-includes:
+      - \usepackage{setspace}
+      - \onehalfspacing
+      - \usepackage{eulervm}
+      - \usepackage{unicode-math}
+      - \usepackage[format=plain]{caption}
+      - \setkomafont{caption}{\footnotesize}
+      - \setkomafont{captionlabel}{\footnotesize\bfseries}
+---
+
+# Variable importance in random forests
+
+## Calculating variable importance
+
+## Problem: Variable importance for correlated variables
+
+## Proposed selection procedure
+
+# Selection results
+
+# Visualization of results
+
+## Full random forest models (before variable selection)
+
+## Small random forest models (after variable selection)
+
+
+

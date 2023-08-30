@@ -92,7 +92,8 @@ var.cat <-
     "education" = "t",
     "professionalForester" = "a",
     "job" = "u",
-    "woodlotVisit" = "v")
+    "woodlotVisit" = "v"
+  )
 
 cat.levels <-
   list(a = c("No",
@@ -219,7 +220,18 @@ cat.levels <-
              "Every month",
              "Every week",
              "Every day",
-             "Other"))
+             "Other"),
+       w = c("0",
+             "(0,10]",
+             "(10,20]",
+             "(20,30]",
+             "(30,40]",
+             "(40,50]",
+             "(50,60]",
+             "(60,70]",
+             "(70,80]",
+             "(80,90]",
+             "(90,100]"))
 
 cat.ref <- c(a = "No",
              b = "1",
@@ -242,9 +254,10 @@ cat.ref <- c(a = "No",
              s = "1 to 10 %",
              t = "University degree or equivalent",
              u = "Retired",
-             v = "Every week")
+             v = "Every week",
+             w = "0")
 
-cat.ord <- c("b", "d", "i", "k", "l", "m", "n") 
+cat.ord <- c("b", "d", "i", "k", "l", "m", "n", "w") 
 
 cat.levels.dt <-
   lapply(cat.levels, \(x) data.table(level.id = 1:length(x), level = x)) |>
@@ -264,6 +277,9 @@ variables[main == "provinces" & sub == "Quebec",
           cat.ref := "Yes"]
 variables[code %in% c("B4", "B9", "B20"),
           cat.ref := "Yes"]
+variables[code == "A19",
+          `:=`(cat.scale = "w",
+               cat.ref = "0")]
 
 
 # deal with NAs and dependent questions
