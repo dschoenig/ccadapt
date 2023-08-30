@@ -4,6 +4,169 @@ library(brms)
 source("paths.R")
 source("utilities.R")
 
+survey.rf <- readRDS(file.survey.rf)
+
+breaks <- c(-Inf, seq(0, 100, 10))
+labels <-
+  c("0",
+    paste0(paste0("(", breaks[2:(length(breaks)-1)], ","),
+           paste0(breaks[3:length(breaks)], "]")))
+
+survey.rf2 <- copy(survey.rf)
+survey.rf2$A19 <- cut(survey.rf$A19, breaks = breaks, labels = labels)
+
+tune.grid <- fread(file.rf.parameters)
+tune.grid[, resp := factor(resp, levels = vars.y.acc)]
+rf.par <- tune.grid[, .SD[which.min(score)], by = resp]
+
+
+rf.mod2 <- list()
+for(i in 1:nrow(rf.par)) {
+    mod.resp <- rf.par$resp[i]
+    form <- 
+      as.formula(paste(mod.resp, "~",
+                       paste(mod.preds, collapse = "+")))
+  if(rf.par$type[i] == "probability") {
+    rf.mod2[[i]] <-
+      ranger(form,
+             data = as.data.frame(survey.rf2),
+             num.trees = rf.par$num.trees[i],
+             mtry = rf.par$mtry[i],
+             min.node.size = rf.par$min.node.size[i],
+             splitrule = rf.par$splitrule[i],
+             respect.unordered.factors = "order",
+             probability = TRUE,
+             scale.permutation.importance = TRUE,
+             importance = "permutation",
+             seed = rf.par$seed[i],
+             num.threads = 4)
+  }
+  if(rf.par$type[i] == "regression") {
+    rf.mod2[[i]] <-
+      ranger(form,
+             data = as.data.frame(survey.rf2),
+             num.trees = rf.par$num.trees[i],
+             mtry = rf.par$mtry[i],
+             min.node.size = rf.par$min.node.size[i],
+             splitrule = rf.par$splitrule[i],
+             respect.unordered.factors = "order",
+             scale.permutation.importance = TRUE,
+             importance = "permutation",
+             seed = rf.par$seed[i],
+             num.threads = 4)
+  }
+}
+
+names(rf.mod2) <- rf.par$resp
+
+unlist(lapply(rf.mod2, \(x) x$prediction.error))
+unlist(lapply(rf.mod, \(x) x$prediction.error))
+
+rf.mod <- rf.mod2
+
+n.var.imp <- 3
+rf.mod.sel <- list()
+mod.error.i <- list()
+mod.drop.i <- list()
+
+for(i in seq_along(rf.mod)) {
+ 
+  message(paste0("Variable selection for model ", i, "/", length(rf.mod), " …"))
+
+  rf.foc <- rf.mod[[i]]
+  var.fit <- mod.preds
+  survey.drop <- survey.fit
+
+  iter <- length(mod.preds) - n.var.imp
+
+  mod.error.j <- numeric(0)
+  mod.drop.j <- numeric(0)
+
+  for(j in 1:iter) {
+ 
+    message(paste0("Iteration ", j, "/", iter, " …"))
+    
+    mod.imp <- sort(importance(rf.foc))
+    var.drop <- names(mod.imp)[1]
+    var.fit <- var.fit[var.fit != var.drop]
+    survey.drop <- survey.drop[, -var, env = list(var = I(var.drop))]
+    
+    mod.resp <- rf.par$resp[i]
+    form <- 
+      as.formula(paste(mod.resp, "~",
+                       paste(var.fit, collapse = "+")))
+
+    if(rf.par$type[i] == "probability") {
+      rf.foc <-
+        ranger(form,
+               data = survey.drop,
+               num.trees = rf.par$num.trees[i],
+               mtry = min(rf.par$mtry[i], length(var.fit)),
+               min.node.size = rf.par$min.node.size[i],
+               splitrule = rf.par$splitrule[i],
+               respect.unordered.factors = "order",
+               probability = TRUE,
+               scale.permutation.importance = TRUE,
+               importance = "permutation",
+               seed = rf.par$seed[i],
+               num.threads = 4)
+    }
+    if(rf.par$type[i] == "regression") {
+      rf.foc <-
+        ranger(form,
+               data = as.data.frame(survey.drop),
+               num.trees = rf.par$num.trees[i],
+               mtry = min(rf.par$mtry[i], length(var.fit)),
+               min.node.size = rf.par$min.node.size[i],
+               splitrule = rf.par$splitrule[i],
+               respect.unordered.factors = "order",
+               scale.permutation.importance = TRUE,
+               importance = "permutation",
+               seed = rf.par$seed[i],
+               num.threads = 4)
+    }
+
+    mod.error.j[j] <- rf.foc$prediction.error
+    mod.drop.j[j] <- var.drop
+
+  }
+
+  mod.error.i[[i]] <- mod.error.j
+  mod.drop.i[[i]] <- mod.drop.j
+  
+  rf.mod.sel[[i]] <- rf.foc
+
+}
+
+
+
+
+
+
+
+mod.2plo <- readRDS("../results/irt/mod.imp.2pl.oldsel.rds")
+mod.2pl <- readRDS("../results/irt/mod.imp.2pl.rds")
+
+mod.2plo <- add_criterion(mod.2plo, criterion = "loo")
+mod.2pl <- add_criterion(mod.2pl, criterion = "loo")
+
+
+loo_compare(mod.2plo, mod.2pl)
+
+fe1 <- fixef(mod.1pl)
+fe2 <- fixef(mod.2pl)
+
+
+summary(mod.2pl)
+
+
+
+library(data.table)
+library(brms)
+
+source("paths.R")
+source("utilities.R")
+
 
 mod.1pl <- readRDS("../results/irt/mod.imp.1pl.rds")
 mod.2pl <- readRDS("../results/irt/mod.imp.2pl.rds")

@@ -13,6 +13,21 @@ dependencies <- readRDS(file.questions.dependencies)
 vars.pred <- variables[code %in% names(survey.irt), code]
 
 
+## VARIABLE TREATMENT #################################################
+
+# Treat A19 as categorical variable (due to limited number of distinct
+# responses)
+
+A19.mean <- variables[code == "A19", cont.mean]
+A19.sd <- variables[code == "A19", cont.sd]
+breaks <- c(-Inf, seq(0, 100, 10))
+labels <-
+  c("0", paste0(paste0("(", breaks[2:(length(breaks)-1)], ","),
+                paste0(breaks[3:length(breaks)], "]")))
+survey.irt[,
+           A19 := cut(((A19 * A19.sd) + A19.mean),
+                      breaks = breaks, labels = labels)]
+
 ## ITEM-RESPONSE MODEL 2PL ############################################
 
 
