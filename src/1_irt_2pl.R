@@ -20,7 +20,7 @@ vars.pred.cont.term <- character(0)
 for(i in seq_along(vars.pred.cont)) {
   var.k <- min(length(unique(survey.irt[[vars.pred.cont[i]]])), 50)
   vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i],
-                                   ", by = item, k = ", k, ", bs = 'tp')")
+                                   ", by = item, k = ", var.k, ", bs = 'tp')")
 }
 
 form.eta <- 
