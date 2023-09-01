@@ -475,6 +475,14 @@ vars.pred <-
 
 vars.irt <- c(items, vars.pred)
 
+# Remove ordering from factor variables
+var.ord <- names(which(unlist(lapply(survey.fit, is.ordered))))
+survey.fit[, (var.ord) := lapply(.SD,
+                                 \(x) factor(x,
+                                             ordered = FALSE,
+                                             levels = levels(x))),
+           .SDcols = var.ord]
+
 survey.irt <- survey.fit[, ..vars.irt]
 
 var.cat <- var.sel[code %in% vars.pred & type == "categorical",
