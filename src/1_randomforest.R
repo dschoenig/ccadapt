@@ -6,7 +6,7 @@ library(pROC)
 source("paths.R")
 source("utilities.R")
 
-unordered.factors <- "partition"
+unordered.factors <- "order"
 n.threads <- 32
 
 survey <- readRDS(file.survey.proc)
