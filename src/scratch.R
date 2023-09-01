@@ -1,10 +1,44 @@
+library(data.table)
+library(stringi)
+library(brms)
+
+source("paths.R")
+source("utilities.R")
+
+
+survey.irt <- readRDS(file.survey.irt)
+variables <- readRDS(file.variables.proc)
+dependencies <- readRDS(file.questions.dependencies)
+
+vars.pred.cat <- variables[code %in% names(survey.irt) & type == "categorical", code]
+vars.pred.cont <- variables[code %in% names(survey.irt) & type == "continuous", code]
+
+
+form <-
+  bf(resp ~ exp(logalpha) * eta,
+     eta ~ s(A3, by = item, k = 30) + (1|i|item) + (1|id),
+     logalpha ~ 1 + (1 |i| item),
+     nl = TRUE)
+
+prior.mod <-
+  prior("normal(0, 5)", class = "b", nlpar = "eta") +
+  prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
+  prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
+  prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
+  prior("normal(0, 3)", class = "sds", nlpar = "eta") +
+  prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
+
+
+
 library(mgcv)
 
 length(unique(survey$A19)) -1
 
 mod <-
-  gam(resp ~ s(A19, k = 29, by = item),
-      data = survey.irt, family=binomial, method = "REML")
+  bam(resp ~ F19 +
+      s(item, bs = "re") +
+      s(id, bs = "re"),
+      data = survey.irt, family=binomial, method = "fREML", discrete = TRUE)
 
 plot(mod, pages = 1)
 

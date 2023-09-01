@@ -233,29 +233,35 @@ rf.imp.counts <-
                               pattern = "category\\.(.*)"))
 
 
+rf.imp.var.sel <- rf.imp.var[selected == TRUE]
 
-ggplot(rf.imp.var.h[selected == TRUE & importance.sel > 0]) +
-  # stat_boxplot(aes(x = importance.sel,
-  #                  y = category,
-  #                  color = category),
-  #              coef = 1.5,
-  #              outlier.size = 2,
-  #              outlier.stroke = 0.8,
-  #              outlier.shape = NA,
-  #              outlier.fill = NA,
-  #              width = 0.5) +
-  # geom_point(aes(x = importance.sel,
-  #                y = category,
-  #                colour = category,
-  #                group = expl),
-  #            shape = 16, alpha = 0.5, size = 2, stroke = 1,
-  #            position = position_dodge2(width = 0.75)) +
+rf.imp.var.sel[, y.resp := as.numeric(rev(resp))]
+
+setorder(rf.imp.var.sel, y.resp, -importance.sel)
+rf.imp.var.sel[,
+               y.lp := y.resp + c(0.2, 0, -0.2),
+               by = y.resp]
+
+sel.labels <- unique(rf.imp.var.sel[, .(y.resp, resp)])
+
+
+cairo_pdf(file.plot.catimp, width = 8.5, height = 11)
+
+ggplot(rf.imp.var.sel) +
+  geom_segment(aes(x = 0,
+                   xend = importance.sel,
+                   y = y.lp,
+                   yend = y.lp,
+                   colour = category,
+                   group = expl),
+               linewidth = 0.3) +
   geom_point(aes(x = importance.sel,
-                 y = category,
-                 colour = category,
-                 group = expl),
-             shape = 21, fill = NA, size = 2, stroke = 1,
-             position = position_dodge2(width = 0.75)) +
+                 y = y.lp,
+                 colour = category), size = 1.5) +
+  # geom_text(aes(x = importance.sel + 5,
+  #               y = y.lp,
+  #               label = paste0("[", expl, "]")),
+  #           hjust = 0, family = "IBMPlexSans", size = base.size/5) +
   # geom_bar(aes(x = importance.sel,
   #              y = category,
   #              fill = category,
@@ -269,18 +275,70 @@ ggplot(rf.imp.var.h[selected == TRUE & importance.sel > 0]) +
   #              fill = category),
   #            shape = 21, size = 2, stroke = 1) +
   # geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.3) +
-  scale_y_discrete(limits = rev, labels = rev(cat.lab)) +
-  scale_x_continuous(limits = c(0, NA), expand = expansion(c(0, 0.25), 0)) +
+  # scale_y_discrete(limits = rev) +
+  scale_y_continuous(breaks = 1:11,
+                     labels = c("Count", 10:1)) +
+  scale_x_continuous(expand = expansion(c(0, 0.2), 0)) +
   # scale_x_continuous(trans = "sqrt", breaks = scales::breaks_pretty(6)) +
   scale_colour_brewer(type = "qual", palette = "Set1", aesthetics = c("colour", "fill")) +
   # facet_wrap(vars(resp), ncol = 3, scales = "free_x") +
   # facet_wrap(vars(resp), ncol = 3) +
   scale_size(range = c(1, 5)) +
   guides(colour = "none") +
-  labs(y = NULL, x = "Variable importance\n(percentage change in prediction error)",
+  labs(y = "Adaptation action", x = "Variable importance\n(percentage change in prediction error)",
        # subtitle = resp[i]
        ) +
   plot_theme +
-  theme(aspect.ratio = 0.65) +
-  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "inch"))
+  theme(aspect.ratio = 1.5) +
+  theme(plot.margin = margin(2.5, 2.5, 2.5, 2.5, unit = "inch"))
 
+dev.off()
+
+
+rf.imp.var.sel <- rf.imp.var[selected == TRUE]
+
+rf.imp.var.sel[, x.resp := as.numeric(resp)]
+
+setorder(rf.imp.var.sel, y.resp, -importance.sel)
+rf.imp.var.sel[,
+               x.lp := x.resp + c(-0.2, 0, 0.2),
+               by = x.resp]
+
+sel.labels <- unique(rf.imp.var.sel[, .(x.resp, resp)])
+
+
+cairo_pdf(file.plot.varimp.sel, width = 8.5, height = 11)
+
+ggplot(rf.imp.var.sel) +
+  geom_segment(aes(y = 0,
+                   yend = importance.sel,
+                   x = x.lp,
+                   xend = x.lp,
+                   colour = category,
+                   group = expl),
+               linewidth = 0.3) +
+  geom_point(aes(y = importance.sel,
+                 x = x.lp,
+                 colour = category), size = 1.5) +
+  # geom_text(aes(x = importance.sel + 5,
+  #               y = y.lp,
+  #               label = paste0("[", expl, "]")),
+  #           hjust = 0, family = "IBMPlexSans", size = base.size/5) +
+  scale_x_continuous(breaks = 1:11,
+                     labels = c(1:10, "Count")) +
+  scale_y_continuous(expand = expansion(c(0, 0.2), 0)) +
+  # scale_x_continuous(trans = "sqrt", breaks = scales::breaks_pretty(6)) +
+  scale_colour_brewer(type = "qual",
+                      labels = cat.lab,
+                      palette = "Set1",
+                      aesthetics = c("colour", "fill")) +
+  # facet_wrap(vars(resp), ncol = 3, scales = "free_x") +
+  # facet_wrap(vars(resp), ncol = 3) +
+  guides(color = guide_legend(override.aes=list(linewidth = NA))) +
+  labs(x = "Adaptation action", y = "Variable importance\n(percentage change in prediction error)",
+       colour = "Category") +
+  plot_theme +
+  theme(aspect.ratio = 1/2) +
+  theme(plot.margin = margin(2.5, 1, 2.5, 1, unit = "inch"))
+
+dev.off()

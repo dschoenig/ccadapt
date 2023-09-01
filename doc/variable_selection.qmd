@@ -29,19 +29,123 @@ format:
 
 # Variable importance in random forests
 
-## Calculating variable importance
+## Variable importance for correlated variables
 
-## Problem: Variable importance for correlated variables
+We use permutation variable importance [@Breiman2011], which measures
+how much the prediction error of a random forest model increases, if
+that specific variable is rendered meaningless. The performance of a
+random forest can be expressed by how far, on average, the model
+predictions are off from the observed truth. For example, if we observed
+1, and the model predicts 0.8, the error for this observation will be
+0.2. Averaging all these errors for the random forest gives the
+*prediction error*. Now we can take a variable we are interested in and
+shuffle its values (also called *permuting* or *noising* a variable).
+The permuted variable does not carry any information, and we can feed it
+to the model to generate predictions based on the permuted
+variable[footnote]. As a result of the permutation, the prediction error
+may change, and this change can be expressed as a percentage. For
+example, if permuting a variable increases the prediction error from 0.2
+to 0.3, it constitutes a 50% increase in prediction error. This
+percentage increase in prediction error is the classic *variable
+importance* measure of @Breiman2011. If a variable has a variable
+importance of 10, it means that permuting the variable (i.e. removing
+its information content) results in a 10% increase in prediction error.
+Negative variable importance means that permuting the variable actually
+reduces the prediction error, that is it improves the model.
 
-## Proposed selection procedure
+A problem with variable importance measures arises if two (or more)
+strongly correlated variables are present in the random forest. If
+variables are strongly correlated, they present partly duplicated
+information: once one of the variables is included in the model, the
+second adds little additional information. This has consequences for
+variable importance measures: We can imagine two variables that carry
+very important information, but that are also highly correlated. If one
+of the correlated variables is permuted, the predictions of the model
+are not strongly affected, because the same information is still present
+as within the other, remaining variable. This leads, for both variables,
+to a low importance score. Only once both variables are removed
+together, does the prediction error increase substantially. Now if the
+goal is to select a small number of variables from all the variables in the
+random forest, this creates a problem: if there is a group of correlated
+variables, they have little chance of being selected even though the
+information they carry may be more important than the information
+containted in the variables with very high importance measures.
 
-# Selection results
+There are two possible solutions to this problem: The first option is
+the approach of @Altmann2010 allows to calculate p-values for the
+importance scores. All variables with a p-value below a defined
+significance threshold (usually 0.05) are then deemed important. If
+applying this to our case, we end up with 67 variables (out of 105) for
+a threshold of 0.05; and with 38 variables when applying a 0.01
+threshold. Both are far away from our original goal to reduce the number
+of variables to about 20% of the original number. It also adds the
+problem that a reviewer who is not familiar with the methods may point
+out that the use of null-hypothesis significance testing (even if it is
+permutation-based) is not in line with using a Bayesian approach at the
+next stage. 
 
-# Visualization of results
+The second option (which I have chosen) consists in progressively
+eliminating the least important variable and then refitting the model,
+until there is only a specified number of variables (for example three)
+left in each random forest. In this way, we will end up with the
+variables that are actually the most important ones, because the
+correlated variables have been removed. While I would never do this for
+a regression model, it seems to be a valid approach for a machine
+learning model, especially since we are using a Bayesian model to
+estimate effect sizes and uncertainty, rather than the random forests. 
 
-## Full random forest models (before variable selection)
 
-## Small random forest models (after variable selection)
+# Interpretation and visualization of results
+
+## Variable importance, before and after
+
+The following table shows some of the variable importance measures
+before and after variable selection (all results are included in
+`varimp.csv`)
+
+```{r}
+#| echo: false
+library(data.table)
+rf.imp.var <- fread(file.rf.varimp)
+rf.imp.var[1:20]
+```
+
+The table contains the following information:
+
+- `resp`: The adapation action (for each adaptation action, a seperate
+  random forest is built);
+- `expl`: The explanatory variable (the "full" random forests include
+  all explanatory variables, the final random forests for selection
+  include only three each);
+- `category`: Category of the explanatory variable;
+- `importance.full`: Importance value determined in the "full" random
+  forest, that is with all other variables present.
+- `selected`: Whether the variable "survived" variable selection and is
+  present in the final random forest for the given response variable.
+- `importance.sel`: Importance value determined in the final random
+  forest.
+
+As importance values in the full random forests (`importance.full`)
+interpreting them can be misleading. While the first two variables
+(`B38` and `D33`) would have been selected anyways, `A19` has the
+third-highest importance after selection, even though it only was the
+9th most important variable in the full forest. For `A19`, there are
+probably less slightly less important but correlated variables that have
+been eliminated, resulting in it outperforming other variables.
+
+In short, interpretation should be based on whether a variable was
+selected or not, and how high its importance score is after selection.
+**I believe we should not interpret** (and maybe not even report) the
+importance values in a full model.
 
 
+## Visualization
+
+Visualizing the importance values of the selected variables seperately by
+adaptation action and variable category is not very informative, as each
+plot would only include three variables. Instead I suggest pooling the
+importance values across the models in a single plot. I tried two different ways to do
+that: (1) Differentiating only by variable category (using colour and
+position); (2) Differentiating by adaptation action (using position
+along the y-axis) and by variable category (using colour).
 

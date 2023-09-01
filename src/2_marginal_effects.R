@@ -16,7 +16,6 @@ variables <- readRDS(file.variables.proc)
 cat.levels <- readRDS(file.cat.levels.proc)
 dependencies <- readRDS(file.questions.dependencies)
 
-survey.fit <- readRDS(file.survey.rf)
 survey.irt <- readRDS(file.survey.irt)
 # survey.irt <- survey.irt[, .SD[1], by = item]
 
@@ -25,7 +24,10 @@ mod.irt <- readRDS(file.irt.mod.2pl)
 pred.scales <- c("prob", "linpred")
 # mar.type <- "cf"
 mar.type <- "mem"
+cont.pred.n <- 11 
+cont.diff.frac <- 100
 ci.et.width <- 0.9
+var.log <- c("A3")
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
 
@@ -73,26 +75,8 @@ guide_fill <-
 
 
 
-## VARIABLE TREATMENT #################################################
 
-# Treat A19 as categorical variable (due to limited number of distinct
-# responses)
-
-variables[code == "A19", type := "categorical"]
-
-A19.mean <- variables[code == "A19", cont.mean]
-A19.sd <- variables[code == "A19", cont.sd]
-breaks <- c(-Inf, seq(0, 100, 10))
-labels <-
-  c("0", paste0(paste0("(", breaks[2:(length(breaks)-1)], ","),
-                paste0(breaks[3:length(breaks)], "]")))
-survey.irt[,
-           A19 := cut(((A19 * A19.sd) + A19.mean),
-                      breaks = breaks, labels = labels)]
-
-
-vars.irt <- names(survey.irt)
-vars.irt <- sort(vars.irt[vars.irt %in% variables$code])
+vars.irt <- variables[code %in% names(survey.irt), code]
 
 vars.pred <-
   variables[code %in% vars.irt,
@@ -138,17 +122,36 @@ for(p in seq_along(pred.scales)) {
 
 # vars.irt <- vars.irt[1]
 # vars.irt <- "F14"
+vars.irt <- vars.irt[1]
 
 for(i in seq_along(vars.irt)) {
   
   message(paste0("Processing variable ", i, "/", length(vars.irt), " …"))
 
   var.foc <- vars.irt[i]
+  var.type <- variables[code == var.foc, type]
 
-  var.lev <- 
-    survey.irt[,
-               factor(levels(var.sel), levels = levels(var.sel)),
-               env = list(var.sel = var.foc)]
+  if(var.type == "continuous") {
+    if(var.foc %in% var.log) {
+      var.mean <- variables[code == var.foc, cont.mean]
+      var.sd <- variables[code == var.foc, cont.sd]
+      var.val.org <- var.mean + (var.sd * survey.irt[[var.foc]])
+      var.lev <- exp(seq(log(min(var.val.org)),
+                         log(max(var.val.org)),
+                         length.out = cont.pred.n))
+      var.lev <- (var.lev - var.mean) / var.sd
+    } else {
+      var.lev <- seq(min(survey.irt[[var.foc]]),
+                     max(survey.irt[[var.foc]]),
+                     length.out = cont.pred.n)
+    }
+  }
+  if(var.type == "categorical") {
+    var.lev <- 
+      survey.irt[,
+                 factor(levels(var.sel), levels = levels(var.sel)),
+                 env = list(var.sel = var.foc)]
+  }
 
 
   if(mar.type == "cf") {
@@ -179,6 +182,7 @@ for(i in seq_along(vars.irt)) {
 
   # Predictions per level
 
+  message("Generating predictions …")
 
   for(j in seq_along(var.lev)) {
     # For loop to keep memory footprint lower
@@ -214,9 +218,17 @@ for(i in seq_along(vars.irt)) {
     pred.var.lev[, draw := as.integer(draw)]
     pred.var.lev[, item.code := items.code[as.character(item)]]
     pred.var.lev[, code.mar := var.foc]
-    pred.var.lev[,
-                 lev := factor(var.lev.foc, levels = var.lev),
-                 env = list(var.sel = var.foc)]
+
+    if(var.type == "continuous") {
+      pred.var.lev[,
+                   lev := var.lev.foc,
+                   env = list(var.sel = var.foc)]
+    }
+    if(var.type == "categorical") {
+      pred.var.lev[,
+                   lev := factor(var.lev.foc, levels = var.lev),
+                   env = list(var.sel = var.foc)]
+    }
 
     pred.var.l[[j]] <-
       pred.var.lev[,
@@ -231,99 +243,280 @@ for(i in seq_along(vars.irt)) {
 
   pred.var <- rbindlist(pred.var.l)
 
-  # Comparison between levels
+  pred.var[linpred == Inf, linpred := qlogis(1-sqrt(.Machine$double.eps))]
+  pred.var[linpred == -Inf, linpred := qlogis(sqrt(.Machine$double.eps))]
+  pred.var[prob == 1, linpred := qlogis(1-sqrt(.Machine$double.eps))]
+  pred.var[prob == 0, linpred := qlogis(sqrt(.Machine$double.eps))]
 
-  var.cat.ref <- variables[code == var.foc, cat.ref]
-  var.lev <-
-        cat.levels[cat.scale == vars.pred[code == var.foc, cat.scale]
-                   ][order(level.id), level]
-  
-  pred.var[, lev := factor(lev, levels = var.lev)]
+  if(var.type == "categorical") {
 
-  var.comb <- 
-    CJ(lev1 = factor(var.lev, levels = var.lev),
-       lev2 = factor(var.lev, levels = var.lev))
-  var.comb <- var.comb[lev1 != lev2]
-  var.comb[, comp.id := 1:.N]
- 
-  var.comp.l <- list()
-  for(j in 1:nrow(var.comb)) {
+    message("Comparing levels …")
 
-    var.lev.comp <-
-      merge(pred.var[lev ==  var.comb[j, lev1],
-                     .(item.code, draw, lev1 = lev,
-                       prob1 = prob, linpred1 = linpred)],
-            pred.var[lev ==  var.comb[j, lev2],
-                     .(item.code, draw, lev2 = lev,
-                       prob2 = prob, linpred2 = linpred)],
-            by = c("item.code", "draw"))
+    # Comparison between levels
 
-    var.comp.l[[j]] <-
-      var.lev.comp[,
-                   .(lev1 = var.comb[j, lev1],
-                     lev2 = var.comb[j, lev2],
-                     prob.diff.median = median(prob1 - prob2),
-                     prob.diff.ci.l = quantile(prob1 - prob2, q.ci.l),
-                     prob.diff.ci.u = quantile(prob1 - prob2, q.ci.u),
-                     linpred.diff.median = median(linpred1 - linpred2),
-                     linpred.diff.ci.l = quantile(linpred1 - linpred2, q.ci.l),
-                     linpred.diff.ci.u = quantile(linpred1 - linpred2, q.ci.u),
-                     p.diff.pos = sum(prob1 > prob2)/.N,
-                     p.diff.neg = sum(prob1 < prob2)/.N),
-                   by = "item.code"]
+    var.cat.ref <- variables[code == var.foc, cat.ref]
+    var.lev <-
+          cat.levels[cat.scale == vars.pred[code == var.foc, cat.scale]
+                     ][order(level.id), level]
+    
+    pred.var[, lev := factor(lev, levels = var.lev)]
+
+    var.comb <- 
+      CJ(lev1 = factor(var.lev, levels = var.lev),
+         lev2 = factor(var.lev, levels = var.lev))
+    var.comb <- var.comb[lev1 != lev2]
+    var.comb[, comp.id := 1:.N]
+   
+    var.comp.l <- list()
+    for(j in 1:nrow(var.comb)) {
+
+      var.lev.comp <-
+        merge(pred.var[lev ==  var.comb[j, lev1],
+                       .(item.code, draw, lev1 = lev,
+                         prob1 = prob, linpred1 = linpred)],
+              pred.var[lev ==  var.comb[j, lev2],
+                       .(item.code, draw, lev2 = lev,
+                         prob2 = prob, linpred2 = linpred)],
+              by = c("item.code", "draw"))
+
+      var.comp.l[[j]] <-
+        var.lev.comp[,
+                     .(lev1 = var.comb[j, lev1],
+                       lev2 = var.comb[j, lev2],
+                       prob.diff.median = median(prob1 - prob2),
+                       prob.diff.ci.l = quantile(prob1 - prob2, q.ci.l),
+                       prob.diff.ci.u = quantile(prob1 - prob2, q.ci.u),
+                       linpred.diff.median = median(linpred1 - linpred2),
+                       linpred.diff.ci.l = quantile(linpred1 - linpred2, q.ci.l),
+                       linpred.diff.ci.u = quantile(linpred1 - linpred2, q.ci.u),
+                       p.diff.pos = sum(prob1 > prob2)/.N,
+                       p.diff.neg = sum(prob1 < prob2)/.N),
+                     by = "item.code"]
+
+    }
+
+    var.comp.dt <- rbindlist(var.comp.l, idcol = "comp.id")
+    setorder(var.comp.dt, item.code, comp.id)
+  }
+
+  if(var.type == "continuous") {
+
+    message("Calculating slope (central difference) …")
+
+    diff.h <-
+      (max(survey.irt[[var.foc]]) - min(survey.irt[[var.foc]])) / cont.diff.frac
+
+
+    slope.var.l <- list()
+
+    for(j in seq_along(var.lev)) {
+      # For loop to keep memory footprint lower
+
+      message(paste0("Level ", j , "/", length(var.lev), " …"))
+
+      var.lev.foc <- var.lev[j]
+
+      var.lev.dt <- 
+        var.dt[var.sel == var.lev.foc,
+               env = list(var.sel = var.foc)]
+
+      var.lev.fw <- copy(var.lev.dt)
+      var.lev.bw <- copy(var.lev.dt)
+
+      var.lev.fw[,
+                 var.sel := var.lev.foc + diff.h/2,
+                 env = list(var.sel = var.foc)]
+      var.lev.bw[,
+                 var.sel := var.lev.foc - diff.h/2,
+                 env = list(var.sel = var.foc)]
+
+
+      if(mar.type == "mem") {
+        vars.re <- names(mod.irt$data)
+        vars.re <- vars.re[vars.re %in% variables$code]
+        re.form <-
+          paste0("~ (1 + ", paste0(vars.re, collapse = " + "), " | item)") |>
+          as.formula()
+        pred.mod.fw <- t(posterior_epred(mod.irt, var.lev.fw, re_formula = re.form))
+        pred.mod.bw <- t(posterior_epred(mod.irt, var.lev.bw, re_formula = re.form))
+      }
+      if(mar.type == "cf") {
+        pred.mod.fw <- t(posterior_epred(mod.irt, var.lev.fw))
+        pred.mod.bw <- t(posterior_epred(mod.irt, var.lev.bw))
+      }
+
+      pred.mod.prob <- (pred.mod.fw - pred.mod.bw) / diff.h
+      colnames(pred.mod.prob) <- paste0("draw_", 1:ncol(pred.mod.prob))
+
+      mat.fw.lp <- qlogis(pred.mod.fw)
+      mat.fw.lp[mat.fw.lp == Inf] <- 1-sqrt(.Machine$double.eps)
+      mat.fw.lp[mat.fw.lp == -Inf] <- sqrt(.Machine$double.eps)
+      mat.bw.lp <- qlogis(pred.mod.bw)
+      mat.bw.lp[mat.bw.lp == Inf] <- 1-sqrt(.Machine$double.eps)
+      mat.bw.lp[mat.bw.lp == -Inf] <- sqrt(.Machine$double.eps)
+
+      pred.mod.linpred <- (mat.fw.lp - mat.bw.lp) / diff.h
+
+      colnames(pred.mod.linpred) <- paste0("draw_", 1:ncol(pred.mod.linpred))
+
+      slope.var.lev.prob <-
+        as.data.table(as.data.frame(pred.mod.prob)) |>
+        _[, obs := var.lev.dt$obs] |>
+        melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
+             value.name = "prob.slope") |>
+        merge(var.lev.dt[,.(obs, item)])
+
+      slope.var.lev.linpred <-
+        as.data.table(as.data.frame(pred.mod.linpred)) |>
+        _[, obs := var.lev.dt$obs] |>
+        melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
+             value.name = "linpred.slope") |>
+        merge(var.lev.dt[,.(obs, item)])
+
+      slope.var.lev <- merge(slope.var.lev.linpred,
+                             slope.var.lev.prob,
+                             by = c("obs", "draw", "item"))
+
+
+      slope.var.lev[, draw := as.integer(draw)]
+      slope.var.lev[, item.code := items.code[as.character(item)]]
+      slope.var.lev[, code.mar := var.foc]
+
+      slope.var.lev[,
+                   lev := var.lev.foc,
+                   env = list(var.sel = var.foc)]
+
+      slope.var.l[[j]] <-
+        slope.var.lev[,
+                     .(prob.slope = mean(prob.slope),
+                       linpred.slope = mean(linpred.slope)),
+                     by = c("draw", "item.code", "code.mar", "lev")]
+
+      gc()
+
+    }
+
+    slope.var <- rbindlist(slope.var.l)
+
+    var.comp.dt <-
+
+      slope.var[,
+                .(prob.slope.median = median(prob.slope),
+                  prob.slop.ci.l = quantile(prob.slope, q.ci.l),
+                  prob.slop.ci.u = quantile(prob.slope, q.ci.u),
+                  linpred.slope.median = median(linpred.slope),
+                  linpred.slop.ci.l = quantile(linpred.slope, q.ci.l),
+                  linpred.slop.ci.u = quantile(linpred.slope, q.ci.u),
+                  p.diff.pos = sum(prob.slope > 0)/.N,
+                  p.diff.neg = sum(prob.slope < 0)/.N),
+                by = c("item.code", "code.mar", "lev")]
 
   }
 
-  var.comp.dt <- rbindlist(var.comp.l, idcol = "comp.id")
-  setorder(var.comp.dt, item.code, comp.id)
-
-
-  var.n <-
-    survey.irt[,
-               .(n = .N),
-               by = c("item", var.foc)
-               ][,
-                 .(code.mar = var.foc,
-                   item.code = items.code[as.character(item)],
-                   lev = var.sel,
-                   n),
-                 env = list(var.sel = var.foc)
-                 ]
-  var.n[, lev := factor(lev, levels = levels(pred.var$lev))]
-  setorder(var.n, code.mar, item.code, lev)
 
   # Summarize for subsequent export
 
-  pred.sum.l[[i]] <-
-    pred.var[order(code.mar, item.code, lev),
-             .(
-                  linpred.median = median(linpred),
-                  linpred.q5 = quantile(linpred, 0.05),
-                  linpred.q25 = quantile(linpred, 0.25),
-                  linpred.q75 = quantile(linpred, 0.75),
-                  linpred.q95 = quantile(linpred, 0.95),
-                  prob.median = median(prob),
-                  prob.q5 = quantile(prob, 0.05),
-                  prob.q25 = quantile(prob, 0.25),
-                  prob.q75 = quantile(prob, 0.75),
-                  prob.q95 = quantile(prob, 0.95)),
-             by = c("code.mar", "item.code", "lev")
-             ]
 
-  comp.sum.l[[i]] <-
-    var.comp.dt[,
-                .(code.mar = var.foc,
-                  item.code, lev1, lev2,
-                  prob.diff.median,
-                  prob.diff.ci.l,
-                  prob.diff.ci.u,
-                  linpred.diff.median,
-                  linpred.diff.ci.l,
-                  linpred.diff.ci.u,
-                  p.diff.pos,
-                  p.diff.neg)]
+  if(var.type == "categorical") {
 
-  n.sum.l[[i]] <- var.n
+    var.n <-
+      survey.irt[,
+                 .(n = .N),
+                 by = c("item", var.foc)
+                 ][,
+                   .(code.mar = var.foc,
+                     item.code = items.code[as.character(item)],
+                     lev = var.sel,
+                     n),
+                   env = list(var.sel = var.foc)
+                   ]
+    var.n[, lev := factor(lev, levels = levels(pred.var$lev))]
+    setorder(var.n, code.mar, item.code, lev)
+
+
+    pred.sum.l[[i]] <-
+      pred.var[order(code.mar, item.code, lev),
+               .(
+                    linpred.median = median(linpred),
+                    linpred.q5 = quantile(linpred, 0.05),
+                    linpred.q25 = quantile(linpred, 0.25),
+                    linpred.q75 = quantile(linpred, 0.75),
+                    linpred.q95 = quantile(linpred, 0.95),
+                    prob.median = median(prob),
+                    prob.q5 = quantile(prob, 0.05),
+                    prob.q25 = quantile(prob, 0.25),
+                    prob.q75 = quantile(prob, 0.75),
+                    prob.q95 = quantile(prob, 0.95)),
+               by = c("code.mar", "item.code", "lev")
+               ]
+
+    comp.sum.l[[i]] <-
+      var.comp.dt[,
+                  .(code.mar = var.foc,
+                    item.code,
+                    lev1,
+                    lev2,
+                    prob.diff.median,
+                    prob.diff.ci.l,
+                    prob.diff.ci.u,
+                    linpred.diff.median,
+                    linpred.diff.ci.l,
+                    linpred.diff.ci.u,
+                    p.diff.pos,
+                    p.diff.neg)]
+
+    n.sum.l[[i]] <- var.n
+
+  }
+
+  if(var.type == "continuous") {
+
+    var.mean <- variables[code == var.foc, cont.mean]
+    var.sd <- variables[code == var.foc, cont.sd]
+
+    pred.var[, lev := (lev*var.sd) + var.mean]
+    slope.var[, lev := (lev*var.sd) + var.mean]
+    var.comp.dt[, lev := (lev*var.sd) + var.mean]
+
+    pred.sum.l[[i]] <-
+      pred.var[order(code.mar, item.code, lev),
+               .(
+                    linpred.median = median(linpred),
+                    linpred.q5 = quantile(linpred, 0.05),
+                    linpred.q25 = quantile(linpred, 0.25),
+                    linpred.q75 = quantile(linpred, 0.75),
+                    linpred.q95 = quantile(linpred, 0.95),
+                    prob.median = median(prob),
+                    prob.q5 = quantile(prob, 0.05),
+                    prob.q25 = quantile(prob, 0.25),
+                    prob.q75 = quantile(prob, 0.75),
+                    prob.q95 = quantile(prob, 0.95)),
+               by = c("code.mar", "item.code", "lev")
+               ]
+
+    comp.sum.l[[i]] <-
+      var.comp.dt[order(code.mar, item.code, lev)]
+
+    var.n <-
+      survey.irt[,
+                 .(var.sel,
+                   item,
+                   lev = (var.lev[which.min(abs(var.sel - var.lev))] * var.sd) + var.mean),
+                 by = .I,
+                 env = list(var.sel = var.foc)
+                 ][,
+                   .(n = .N),
+                   by = c("item", "lev")
+                   ][,
+                     .(code.mar = var.foc,
+                       item.code = items.code[as.character(item)],
+                       lev,
+                       n),
+                     ]
+
+    n.sum.l[[i]] <- var.n
+
+  }
 
   # Prepare plots
 
@@ -332,116 +525,275 @@ for(i in seq_along(vars.irt)) {
     dev.set(dev.list()[[p]])
 
     pred.scale <- pred.scales[p]
-   
-    item.lev <- levels(pred.var$item)
+  
 
-    pred.p <- list()
-    prob.p <- list()
-    # ref.line <- list()
-    # plim <- list()
+    if(var.type == "categorical") {
 
-    if(pred.scale == "prob") {
-      pred.var[, pred.plot := prob]
-    }
-    if(pred.scale == "linpred") {
-      pred.var[, pred.plot := linpred]
-    }
+      item.lev <- levels(pred.var$item)
 
-    for(k in seq_along(item.lev)) {
-
-      item.foc <- item.lev[k]
-
-      # item.foc.code <- items.code[as.character(item.foc)]
-
-      item.desc <- 
-        variables[code == item.foc, paste0(code, ": ", question.sub)] |>
-        stri_wrap(width = 42) |>
-        paste(collapse = "\n")
+      pred.p <- list()
+      prob.p <- list()
+      # ref.line <- list()
+      # plim <- list()
 
       if(pred.scale == "prob") {
-        pred.desc <- "Willingness to adapt\n(probability)"
+        pred.var[, pred.plot := prob]
       }
       if(pred.scale == "linpred") {
-        pred.desc <- "Willingness to adapt\n(log odds)"
+        pred.var[, pred.plot := linpred]
       }
 
-      q.main <-
-        variables[code == var.foc,
-                  paste0("Main question: ", question.main)] |>
-        stri_wrap(width = 96)
-      q.sub <-
-        variables[code == var.foc,
-                  paste0("Sub-question or option: ", question.sub)] |>
-        stri_wrap(width = 96)
-      if(variables[code == var.foc, main] == "provinces") {
+      for(k in seq_along(item.lev)) {
+
+        item.foc <- item.lev[k]
+
+        # item.foc.code <- items.code[as.character(item.foc)]
+
+        item.desc <- 
+          variables[code == item.foc, paste0(code, ": ", question.sub)] |>
+          stri_wrap(width = 42) |>
+          paste(collapse = "\n")
+
+        if(pred.scale == "prob") {
+          pred.desc <- "Willingness to adapt\n(probability)"
+        }
+        if(pred.scale == "linpred") {
+          pred.desc <- "Willingness to adapt\n(log odds)"
+        }
+
+        q.main <-
+          variables[code == var.foc,
+                    paste0("Main question: ", question.main)] |>
+          stri_wrap(width = 96)
         q.sub <-
           variables[code == var.foc,
-                    paste0("Sub-question or option: ", sub)] |>
+                    paste0("Sub-question or option: ", question.sub)] |>
           stri_wrap(width = 96)
-      }
-      var.desc <- paste(c(q.main, q.sub), collapse = "\n")
+        if(variables[code == var.foc, main] == "provinces") {
+          q.sub <-
+            variables[code == var.foc,
+                      paste0("Sub-question or option: ", sub)] |>
+            stri_wrap(width = 96)
+        }
+        var.desc <- paste(c(q.main, q.sub), collapse = "\n")
 
-      ref.line <-
-        pred.var[item.code == item.foc & lev == var.cat.ref,
-                 median(pred.plot)]
-      
-      plim <-
-        pred.var[item.code == item.foc,
-                 .(q.l = quantile(pred.plot, 0.01),
-                   q.u = quantile(pred.plot, 0.99)),
-                 by = "lev"
-                 ][,
-                   c(min(q.l), q.u = max(q.u))]
+        ref.line <-
+          pred.var[item.code == item.foc & lev == var.cat.ref,
+                   median(pred.plot)]
+        
+        plim <-
+          pred.var[item.code == item.foc,
+                   .(q.l = quantile(pred.plot, 0.01),
+                     q.u = quantile(pred.plot, 0.99)),
+                   by = "lev"
+                   ][,
+                     c(min(q.l), q.u = max(q.u))]
 
-      ylab <-
-        var.n[item.code == item.foc,
-              paste0(lev, " (", n, ")")]
+        ylab <-
+          var.n[item.code == item.foc,
+                paste0(lev, " (", n, ")")]
 
-      pred.p[[k]] <-
-        ggplot(pred.var[item.code == item.foc]) +
-          stat_halfeye(aes(x = pred.plot, y = lev),
-                            .width = c(0.5, 0.9),
-                            fill = "grey80",
-                            scale = 0.8) +
-          geom_vline(xintercept = ref.line, linewidth = 0.3, linetype = "dashed") + 
-          coord_fixed(ratio = (plim[2] - plim[1])/length(var.lev),
-                      xlim = plim) +
-          scale_y_discrete(labels = ylab) +
-          labs(y = NULL, x = pred.desc,
-               subtitle = item.desc) +
+        pred.p[[k]] <-
+          ggplot(pred.var[item.code == item.foc]) +
+            stat_halfeye(aes(x = pred.plot, y = lev),
+                              .width = c(0.5, 0.9),
+                              fill = "grey80",
+                              scale = 0.8) +
+            geom_vline(xintercept = ref.line, linewidth = 0.3, linetype = "dashed") + 
+            coord_fixed(ratio = (plim[2] - plim[1])/length(var.lev),
+                        xlim = plim) +
+            scale_y_discrete(labels = ylab) +
+            labs(y = NULL, x = pred.desc,
+                 subtitle = item.desc) +
+            plot_theme +
+            theme(plot.margin = margin(base.size, base.size, base.size, base.size))
+
+
+        prob.p[[k]] <-
+          ggplot(var.comp.dt[item.code == item.foc]) +
+          geom_tile(aes(y = lev1, x = lev2, fill = p.diff.pos), na.rm = TRUE) +
+          geom_point(data = var.comp.dt[item.code == item.foc &
+                                        (p.diff.pos > 0.95 | p.diff.pos < 0.05)],
+                     aes(y = lev1, x = lev2)) +
+          scale_fill_binned_divergingx("Roma", rev = TRUE, mid = 0.5,
+                                       breaks = c(0,0.01, 0.05, 0.1, 0.25, 0.5,
+                                                  0.75, 0.9, 0.95, 0.99, 1),
+                                       limits = c(0, 1)) +
+          coord_fixed() +
+          # scale_x_discrete(drop = FALSE) +
+          # scale_y_discrete(limits = rev, drop = FALSE) +
+          # facet_wrap(vars(item), ncol = 2) +
+          labs(x = NULL, y = NULL, fill = "Certainty that\nwillingness\nincreases") +
           plot_theme +
-          theme(plot.margin = margin(base.size, base.size, base.size, base.size))
+          # guide_fill +
+          theme(axis.text.x = element_text(color = "black",
+                                           angle = 45,
+                                           hjust = 1,
+                                           vjust = 1),
+                legend.key.size = unit(2*base.size, "pt"),
+                plot.margin = margin(base.size, base.size, base.size, base.size))
+      }
+
+      # plot.path <- paste0(path.plots.irt, pred.scale, "/")
+      # dir.create(plot.path, recursive = TRUE, showWarnings = FALSE)
+      # files <- paste0(plot.path, var.foc, "_", 1:5, ".pdf")
+
+    } # end categorical
 
 
-      prob.p[[k]] <-
-        ggplot(var.comp.dt[item.code == item.foc]) +
-        geom_tile(aes(y = lev1, x = lev2, fill = p.diff.pos), na.rm = TRUE) +
-        geom_point(data = var.comp.dt[item.code == item.foc &
-                                      (p.diff.pos > 0.95 | p.diff.pos < 0.05)],
-                   aes(y = lev1, x = lev2)) +
-        scale_fill_binned_divergingx("Roma", rev = TRUE, mid = 0.5,
-                                     breaks = c(0,0.01, 0.05, 0.1, 0.25, 0.5,
-                                                0.75, 0.9, 0.95, 0.99, 1),
-                                     limits = c(0, 1)) +
-        coord_fixed() +
-        # scale_x_discrete(drop = FALSE) +
-        # scale_y_discrete(limits = rev, drop = FALSE) +
-        # facet_wrap(vars(item), ncol = 2) +
-        labs(x = NULL, y = NULL, fill = "Certainty that\nwillingness\nincreases") +
-        plot_theme +
-        # guide_fill +
-        theme(axis.text.x = element_text(color = "black",
-                                         angle = 45,
-                                         hjust = 1,
-                                         vjust = 1),
-              legend.key.size = unit(2*base.size, "pt"),
-              plot.margin = margin(base.size, base.size, base.size, base.size))
-    }
+    if(var.type == "continuous") {
 
-    # plot.path <- paste0(path.plots.irt, pred.scale, "/")
-    # dir.create(plot.path, recursive = TRUE, showWarnings = FALSE)
-    # files <- paste0(plot.path, var.foc, "_", 1:5, ".pdf")
+      item.lev <- levels(pred.var$item)
 
+      pred.p <- list()
+      prob.p <- list()
+      # ref.line <- list()
+      # plim <- list()
+
+      if(pred.scale == "prob") {
+        pred.var[, pred.plot := prob]
+        slope.var[, slope.plot := prob.slope]
+      }
+      if(pred.scale == "linpred") {
+        pred.var[, pred.plot := linpred]
+        slope.var[, slope.plot := linpred.slope]
+      }
+
+      for(k in seq_along(item.lev)) {
+
+        item.foc <- item.lev[k]
+
+        # item.foc.code <- items.code[as.character(item.foc)]
+
+        item.desc <- 
+          variables[code == item.foc, paste0(code, ": ", question.sub)] |>
+          stri_wrap(width = 42) |>
+          paste(collapse = "\n")
+
+        if(pred.scale == "prob") {
+          pred.desc <- "Willingness to adapt\n(probability)"
+        }
+        if(pred.scale == "linpred") {
+          pred.desc <- "Willingness to adapt\n(log odds)"
+        }
+
+        slope.desc <- "Slope\n(change in willingness)"
+
+        q.main <-
+          variables[code == var.foc,
+                    paste0("Main question: ", question.main)] |>
+          stri_wrap(width = 96)
+        q.sub <-
+          variables[code == var.foc,
+                    paste0("Sub-question or option: ", question.sub)] |>
+          stri_wrap(width = 96)
+        if(variables[code == var.foc, main] == "provinces") {
+          q.sub <-
+            variables[code == var.foc,
+                      paste0("Sub-question or option: ", sub)] |>
+            stri_wrap(width = 96)
+        }
+        var.desc <- paste(c(q.main, q.sub), collapse = "\n")
+
+        plim <-
+          pred.var[,
+                   .(q.l = quantile(pred.plot, 0.01),
+                     q.u = quantile(pred.plot, 0.99)),
+                   by = "lev"
+                   ][,
+                     c(min(q.l), q.u = max(q.u))]
+
+        slim <-
+          slope.var[,
+                   .(q.l = quantile(slope.plot, 0.01),
+                     q.u = quantile(slope.plot, 0.99)),
+                   by = "lev"
+                   ][,
+                     c(min(q.l), q.u = max(q.u))]
+
+        vlim <-
+          pred.var[,
+                   .(q.l = min(lev),
+                     q.u = max(lev))
+                   ][,
+                     c(min(q.l), q.u = max(q.u))]
+
+
+        
+        pred.p[[k]] <-
+          ggplot(pred.var[item.code == item.foc]) +
+            stat_lineribbon(aes(x = lev, y = pred.plot),
+                            .width = c(0.5, 0.9, 0.95),
+                            linewidth = 0.5) +
+            geom_rug(data = data.table(rug = var.mean + (var.sd * survey.irt[[var.foc]])),
+                     mapping = aes(x = rug, y = 1),
+                     sides = "b",
+                     # position = position_jitter(width = (vlim[2] - vlim[1])/100, height = 0),
+                     alpha = 0.1) +
+            # scale_fill_discrete_divergingx("Roma", nmax = 5, order = 1:3) +
+            scale_fill_brewer(palette = 1) +
+            coord_fixed(ratio = (vlim[2] - vlim[1])/(plim[2] - plim[1]),
+                        ylim = plim) +
+            labs(x = var.foc, y = pred.desc,
+                 subtitle = item.desc,
+                 fill = "Credible\ninterval") +
+            plot_theme +
+            theme(plot.margin = margin(base.size, base.size, base.size, base.size))
+          
+
+        prob.p[[k]] <-
+          ggplot(slope.var[item.code == item.foc]) +
+            stat_lineribbon(aes(x = lev, y = slope.plot),
+                            .width = c(0.5, 0.9, 0.95),
+                            linewidth = 0.5) +
+            geom_rug(data = data.table(rug = var.mean + (var.sd * survey.irt[[var.foc]])),
+                     mapping = aes(x = rug, y = 1),
+                     sides = "b",
+                     # position = position_jitter(width = (vlim[2] - vlim[1])/100, height = 0),
+                     alpha = 0.1) +
+            geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.3) +
+            # scale_fill_discrete_divergingx("Roma", nmax = 5, order = 1:3) +
+            scale_fill_brewer(palette = "Purples") +
+            coord_fixed(ratio = (vlim[2] - vlim[1])/(slim[2] - slim[1]),
+                        ylim = slim) +
+            labs(x = var.foc,
+                 y = slope.desc,
+                 fill = "Credible\ninterval") +
+            plot_theme +
+            theme(plot.margin = margin(base.size, base.size, base.size, base.size))
+
+
+
+        if(var.foc %in% var.log) {
+          pred.p[[k]] <-
+            pred.p[[k]] +
+              scale_x_continuous(trans = "log",
+                                 breaks = scales::breaks_log(),
+                                 # labels = scales::label_log()
+                                 ) +
+              coord_fixed(ratio = (log(vlim[2]) - log(vlim[1]))/(slim[2] - slim[1]),
+                          ylim = slim)
+          prob.p[[k]] <-
+            prob.p[[k]] +
+              scale_x_continuous(trans = "log",
+                                 breaks = scales::breaks_log(),
+                                 # labels = scales::label_log()
+                                 ) +
+              coord_fixed(ratio = (log(vlim[2]) - log(vlim[1]))/(slim[2] - slim[1]),
+                          ylim = slim)
+        }
+
+
+      }
+
+      # plot.path <- paste0(path.plots.irt, pred.scale, "/")
+      # dir.create(plot.path, recursive = TRUE, showWarnings = FALSE)
+      # files <- paste0(plot.path, var.foc, "_", 1:5, ".pdf")
+
+
+
+      
+    } # end continuous
 
     for(f in 1:5) { 
 
@@ -458,26 +810,29 @@ for(i in seq_along(vars.irt)) {
 
       print(plot.print)
 
-    }
+    } # end printing plots
 
-
-  }
+  } # end looping over predictor scales
 
 }
 
 graphics.off()
 
-pred.sum <- rbindlist(pred.sum.l)
-comp.sum <- rbindlist(comp.sum.l)
-n.sum <- rbindlist(n.sum.l)
+pred.sum <- rbindlist(pred.sum.l, fill = TRUE)
+comp.sum <- rbindlist(comp.sum.l, fill = TRUE)
+n.sum <- rbindlist(n.sum.l, fill = TRUE)
 
 pred.sum <- merge(pred.sum, n.sum, all.x = TRUE, sort = FALSE)
 setnames(pred.sum, c("code.mar", "item.code", "lev"), c("var.code", "adapt.code", "var.level"))
 setorder(pred.sum, var.code, adapt.code)
 
 setnames(comp.sum,
-         c("code.mar", "item.code", "lev1", "lev2", "p.diff.pos", "p.diff.neg"),
-         c("var.code", "adapt.code", "var.level.1", "var.level.2", "cert.diff.pos", "cert.diff.neg"))
+         c("code.mar", "item.code",
+           "lev", "lev1", "lev2",
+           "p.diff.pos", "p.diff.neg"),
+         c("var.code", "adapt.code",
+           "level", "var.level.1", "var.level.2",
+           "cert.diff.pos", "cert.diff.neg"))
 setorder(comp.sum, var.code, adapt.code)
 
 fwrite(pred.sum, file.irt.pred.mem)
