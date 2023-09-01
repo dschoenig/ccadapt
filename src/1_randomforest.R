@@ -9,7 +9,8 @@ library(iml)
 source("paths.R")
 source("utilities.R")
 
-options(mc.cores = 4)
+unordered.factors <- "partition"
+n.threads <- 4
 
 survey <- readRDS(file.survey.proc)
 variables <- readRDS(file.variables.proc)
@@ -119,12 +120,12 @@ survey.fit <-
         survey.sel)
 
 # Remove ordering from factor variables
-var.ord <- names(which(unlist(lapply(survey.fit, is.ordered))))
-survey.fit[, (var.ord) := lapply(.SD,
-                                 \(x) factor(x,
-                                             ordered = FALSE,
-                                             levels = levels(x))),
-           .SDcols = var.ord]
+# var.ord <- names(which(unlist(lapply(survey.fit, is.ordered))))
+# survey.fit[, (var.ord) := lapply(.SD,
+#                                  \(x) factor(x,
+#                                              ordered = FALSE,
+#                                              levels = levels(x))),
+#            .SDcols = var.ord]
 
 
 
@@ -190,12 +191,12 @@ for(i in 1:nrow(tune.grid)) {
              mtry = tune.grid$mtry[i],
              min.node.size = tune.grid$min.node.size[i],
              splitrule = tune.grid$splitrule[i],
-             respect.unordered.factors = "order",
+             respect.unordered.factors = unordered.factors,
              probability = TRUE,
              scale.permutation.importance = TRUE,
              importance = "permutation",
              seed = tune.grid$seed[i],
-             num.threads = 4)
+             num.threads = n.threads)
     tune.grid$score[i] <- rf$prediction.error
     tune.grid$auc[i] <-
       roc(survey.fit[[as.character(mod.resp)]], rf$predictions[,1])$auc |>
@@ -210,11 +211,11 @@ for(i in 1:nrow(tune.grid)) {
              mtry = tune.grid$mtry[i],
              min.node.size = tune.grid$min.node.size[i],
              splitrule = tune.grid$splitrule[i],
-             respect.unordered.factors = "order",
+             respect.unordered.factors = unordered.factors,
              scale.permutation.importance = TRUE,
              importance = "permutation",
              seed = tune.grid$seed[i],
-             num.threads = 4)
+             num.threads = n.threads)
     tune.grid$score[i] <- rf$prediction.error
     tune.grid$r2[i] <- rf$r.squared
   }
@@ -244,12 +245,12 @@ for(i in 1:nrow(rf.par)) {
              mtry = rf.par$mtry[i],
              min.node.size = rf.par$min.node.size[i],
              splitrule = rf.par$splitrule[i],
-             respect.unordered.factors = "order",
+             respect.unordered.factors = unordered.factors,
              probability = TRUE,
              scale.permutation.importance = TRUE,
              importance = "permutation",
              seed = rf.par$seed[i],
-             num.threads = 4)
+             num.threads = n.threads)
   }
   if(rf.par$type[i] == "regression") {
     rf.mod[[i]] <-
@@ -259,11 +260,11 @@ for(i in 1:nrow(rf.par)) {
              mtry = rf.par$mtry[i],
              min.node.size = rf.par$min.node.size[i],
              splitrule = rf.par$splitrule[i],
-             respect.unordered.factors = "order",
+             respect.unordered.factors = unordered.factors,
              scale.permutation.importance = TRUE,
              importance = "permutation",
              seed = rf.par$seed[i],
-             num.threads = 4)
+             num.threads = n.threads)
   }
 }
 
@@ -319,12 +320,12 @@ for(i in seq_along(rf.mod)) {
                mtry = min(rf.par$mtry[i], length(var.fit)),
                min.node.size = rf.par$min.node.size[i],
                splitrule = rf.par$splitrule[i],
-               respect.unordered.factors = "order",
+               respect.unordered.factors = unordered.factors,
                probability = TRUE,
                scale.permutation.importance = TRUE,
                importance = "permutation",
                seed = rf.par$seed[i],
-               num.threads = 4)
+               num.threads = n.threads)
     }
     if(rf.par$type[i] == "regression") {
       rf.foc <-
@@ -334,11 +335,11 @@ for(i in seq_along(rf.mod)) {
                mtry = min(rf.par$mtry[i], length(var.fit)),
                min.node.size = rf.par$min.node.size[i],
                splitrule = rf.par$splitrule[i],
-               respect.unordered.factors = "order",
+               respect.unordered.factors = unordered.factors,
                scale.permutation.importance = TRUE,
                importance = "permutation",
                seed = rf.par$seed[i],
-               num.threads = 4)
+               num.threads = n.threads)
     }
 
     mod.error.j[j] <- rf.foc$prediction.error
