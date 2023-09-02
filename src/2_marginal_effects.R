@@ -24,12 +24,12 @@ mod.irt <- readRDS(file.irt.mod.2pl.nl)
 pred.scales <- c("prob", "linpred")
 mar.type <- "cf"
 # mar.type <- "mem"
-cont.pred.n <- 5
+cont.pred.n <- 11
 cont.diff.frac <- 100
-var.log <- NULL
+# var.log <- NULL
 var.log <- c("A3")
-# n.draws <- NULL
-n.draws <- 50
+n.draws <- NULL
+# n.draws <- 50
 ci.et.width <- 0.9
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
@@ -123,7 +123,7 @@ for(p in seq_along(pred.scales)) {
   cairo_pdf(plot.file, onefile = TRUE, width = 8.5, height = 11)
 }
 
-vars.irt <- vars.irt[1:2]
+# vars.irt <- vars.irt[1:2]
 # vars.irt <- "F14"
 # vars.irt <- "A3"
 
