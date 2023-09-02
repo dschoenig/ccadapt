@@ -85,7 +85,7 @@ prior.imp.2pl <-
   prior(horseshoe(df = 3, par_ratio = 0.1), class = "b", nlpar = "eta") +
   prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
   prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
-  prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
+  prior(horseshoe(df = 3, par.ratio = 0.1), class = "sd", group = "item", nlpar = "eta") +
   prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
 
 
