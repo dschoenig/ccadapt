@@ -22,12 +22,17 @@ survey.irt <- readRDS(file.survey.irt)
 mod.irt <- readRDS(file.irt.mod.2pl)
 
 pred.scales <- c("prob", "linpred")
-# mar.type <- "cf"
-mar.type <- "mem"
-cont.pred.n <- 11 
+mar.type <- "cf"
+# mar.type <- "mem"
+cont.pred.n <- 2 
 cont.diff.frac <- 100
 ci.et.width <- 0.9
-var.log <- c("A3")
+var.log <- NULL
+# var.log <- c("A3")
+var.show.log <- NULL
+var.show.log <- "A3"
+# n.draws <- NULL
+n.draws <- 100
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
 
@@ -109,6 +114,24 @@ vars.ref <-
            item = factor(items.ref, levels = items.ref)),
         by = "id.mar")
 
+if(!is.null(var.log)) {
+  var.log.mean <- numeric(0)
+  var.log.sd <- numeric(0)
+  for(i in seq_along(var.log)) {
+    var.mean <- variables[code == var.log[i], cont.mean]
+    var.sd <- variables[code == var.log[i], cont.sd]
+    var.org <- var.mean + (var.sd * survey.irt[[var.log[i]]])
+    var.trans <- log(var.org)
+    var.log.mean[i] <- mean(var.trans)
+    var.log.sd[i] <- sd(var.trans)
+    var.trans.std <- (var.trans - var.log.mean[i]) / var.log.sd[i]
+    survey.irt[, var.sel := var.trans.std, env = list(var.sel = var.log[i])]
+  }
+  names(var.log.mean) <- var.log
+  names(var.log.sd) <- var.log
+}
+
+
 
 pred.l <- list()
 pred.sum.l <- list()
@@ -120,9 +143,9 @@ for(p in seq_along(pred.scales)) {
   cairo_pdf(plot.file, onefile = TRUE, width = 8.5, height = 11)
 }
 
-# vars.irt <- vars.irt[1]
+vars.irt <- vars.irt[1:2]
 # vars.irt <- "F14"
-vars.irt <- vars.irt[1]
+# vars.irt <- "A3"
 
 for(i in seq_along(vars.irt)) {
   
@@ -133,18 +156,15 @@ for(i in seq_along(vars.irt)) {
 
   if(var.type == "continuous") {
     if(var.foc %in% var.log) {
+      var.mean <- var.log.mean[var.foc]
+      var.sd <- var.log.sd[var.foc]
+    } else {
       var.mean <- variables[code == var.foc, cont.mean]
       var.sd <- variables[code == var.foc, cont.sd]
-      var.val.org <- var.mean + (var.sd * survey.irt[[var.foc]])
-      var.lev <- exp(seq(log(min(var.val.org)),
-                         log(max(var.val.org)),
-                         length.out = cont.pred.n))
-      var.lev <- (var.lev - var.mean) / var.sd
-    } else {
-      var.lev <- seq(min(survey.irt[[var.foc]]),
-                     max(survey.irt[[var.foc]]),
-                     length.out = cont.pred.n)
     }
+    var.lev <- seq(min(survey.irt[[var.foc]]),
+                   max(survey.irt[[var.foc]]),
+                   length.out = cont.pred.n)
   }
   if(var.type == "categorical") {
     var.lev <- 
@@ -199,10 +219,10 @@ for(i in seq_along(vars.irt)) {
       re.form <-
         paste0("~ (1 + ", paste0(vars.re, collapse = " + "), " | item)") |>
         as.formula()
-      pred.mod <- t(posterior_epred(mod.irt, var.lev.dt, re_formula = re.form))
+      pred.mod <- t(posterior_epred(mod.irt, var.lev.dt, re_formula = re.form, ndraws = n.draws))
     }
     if(mar.type == "cf") {
-      pred.mod <- t(posterior_epred(mod.irt, var.lev.dt))
+      pred.mod <- t(posterior_epred(mod.irt, var.lev.dt, ndraws = n.draws))
     }
 
     colnames(pred.mod) <- paste0("draw_", 1:ncol(pred.mod))
@@ -337,12 +357,12 @@ for(i in seq_along(vars.irt)) {
         re.form <-
           paste0("~ (1 + ", paste0(vars.re, collapse = " + "), " | item)") |>
           as.formula()
-        pred.mod.fw <- t(posterior_epred(mod.irt, var.lev.fw, re_formula = re.form))
-        pred.mod.bw <- t(posterior_epred(mod.irt, var.lev.bw, re_formula = re.form))
+        pred.mod.fw <- t(posterior_epred(mod.irt, var.lev.fw, re_formula = re.form, ndraws = n.draws))
+        pred.mod.bw <- t(posterior_epred(mod.irt, var.lev.bw, re_formula = re.form, ndraws = n.draws))
       }
       if(mar.type == "cf") {
-        pred.mod.fw <- t(posterior_epred(mod.irt, var.lev.fw))
-        pred.mod.bw <- t(posterior_epred(mod.irt, var.lev.bw))
+        pred.mod.fw <- t(posterior_epred(mod.irt, var.lev.fw, ndraws = n.draws))
+        pred.mod.bw <- t(posterior_epred(mod.irt, var.lev.bw, ndraws = n.draws))
       }
 
       pred.mod.prob <- (pred.mod.fw - pred.mod.bw) / diff.h
@@ -399,7 +419,6 @@ for(i in seq_along(vars.irt)) {
     slope.var <- rbindlist(slope.var.l)
 
     var.comp.dt <-
-
       slope.var[,
                 .(prob.slope.median = median(prob.slope),
                   prob.slop.ci.l = quantile(prob.slope, q.ci.l),
@@ -471,12 +490,16 @@ for(i in seq_along(vars.irt)) {
 
   if(var.type == "continuous") {
 
-    var.mean <- variables[code == var.foc, cont.mean]
-    var.sd <- variables[code == var.foc, cont.sd]
-
     pred.var[, lev := (lev*var.sd) + var.mean]
     slope.var[, lev := (lev*var.sd) + var.mean]
     var.comp.dt[, lev := (lev*var.sd) + var.mean]
+
+
+    if(var.foc %in% var.log) {
+      pred.var[, lev := exp(lev)]
+      slope.var[, lev := exp(lev)]
+      var.comp.dt[, lev := exp(lev)]
+    }
 
     pred.sum.l[[i]] <-
       pred.var[order(code.mar, item.code, lev),
