@@ -111,6 +111,7 @@ mod.imp.2pl <-
       warmup = 2500,
       iter = 5000,
       refresh = 25,
+      control = list(adapt_delta = 0.9),
       prior = prior.imp.2pl)
 
 
