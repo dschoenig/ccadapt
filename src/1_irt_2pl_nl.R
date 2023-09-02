@@ -97,7 +97,6 @@ mod.imp.2pl <-
       warmup = 2500,
       iter = 5000,
       refresh = 25,
-      empty = TRUE,
       prior = prior.imp.2pl)
 
 
