@@ -112,5 +112,5 @@ mod.imp.2pl <-
 
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
-saveRDS(mod.imp.2pl, file.irt.mod.2pl.nl)
+saveRDS(mod.imp.2pl, file.irt.mod.2pl.hs)
 
