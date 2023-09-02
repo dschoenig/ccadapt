@@ -35,7 +35,7 @@ library(mgcv)
 length(unique(survey$A19)) -1
 
 mod <-
-  bam(resp ~ F19 +
+  bam(resp ~ s(A3, by = item, bs = "tp") +
       s(item, bs = "re") +
       s(id, bs = "re"),
       data = survey.irt, family=binomial, method = "fREML", discrete = TRUE)

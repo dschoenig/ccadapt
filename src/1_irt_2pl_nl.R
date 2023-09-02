@@ -6,7 +6,8 @@ source("paths.R")
 source("utilities.R")
 
 cont.nl <- TRUE
-# var.trans.log <- NULL
+k.max <- 10
+var.trans.log <- NULL
 # var.trans.log <- c("A3")
 
 survey.irt <- readRDS(file.survey.irt)
@@ -35,7 +36,7 @@ if(cont.nl == TRUE) {
 
   vars.pred.cont.term <- character(0)
   for(i in seq_along(vars.pred.cont)) {
-    var.k <- min(length(unique(survey.irt[[vars.pred.cont[i]]])), 50)
+    var.k <- min(length(unique(survey.irt[[vars.pred.cont[i]]])), k.max)
     vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i],
                                      ", by = item, k = ", var.k, ", bs = 'tp')")
   }
