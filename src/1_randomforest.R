@@ -7,7 +7,8 @@ source("paths.R")
 source("utilities.R")
 
 unordered.factors <- "order"
-n.threads <- 32
+# n.threads <- 32
+n.threads <- 4
 
 survey <- readRDS(file.survey.proc)
 variables <- readRDS(file.variables.proc)
@@ -116,13 +117,14 @@ survey.fit <-
         # survey.sel[, ..mod.preds])
         survey.sel)
 
-# Remove ordering from factor variables
-# var.ord <- names(which(unlist(lapply(survey.fit, is.ordered))))
-# survey.fit[, (var.ord) := lapply(.SD,
-#                                  \(x) factor(x,
-#                                              ordered = FALSE,
-#                                              levels = levels(x))),
-#            .SDcols = var.ord]
+# Remove ordering from factor variables (to let them be reordered by
+# `ranger`)
+var.ord <- names(which(unlist(lapply(survey.fit, is.ordered))))
+survey.fit[, (var.ord) := lapply(.SD,
+                                 \(x) factor(x,
+                                             ordered = FALSE,
+                                             levels = levels(x))),
+           .SDcols = var.ord]
 
 
 
