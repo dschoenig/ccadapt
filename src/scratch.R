@@ -188,13 +188,10 @@ for(i in seq_along(rf.mod)) {
 
 
 
-mod.2plo <- readRDS("../results/irt/mod.imp.2pl.oldsel.rds")
+mod.2plo <- readRDS("../results/irt/mod.imp.2pl.log.rds")
 mod.2pl <- readRDS("../results/irt/mod.imp.2pl.rds")
-
 mod.2plo <- add_criterion(mod.2plo, criterion = "loo")
 mod.2pl <- add_criterion(mod.2pl, criterion = "loo")
-
-
 loo_compare(mod.2plo, mod.2pl)
 
 fe1 <- fixef(mod.1pl)
