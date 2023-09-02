@@ -19,18 +19,18 @@ dependencies <- readRDS(file.questions.dependencies)
 survey.irt <- readRDS(file.survey.irt)
 # survey.irt <- survey.irt[, .SD[1], by = item]
 
-mod.irt <- readRDS(file.irt.mod.2pl)
+mod.irt <- readRDS(file.irt.mod.2pl.nl)
 
 pred.scales <- c("prob", "linpred")
 mar.type <- "cf"
 # mar.type <- "mem"
-cont.pred.n <- 11
-cont.diff.frac <- 50
-ci.et.width <- 0.9
+cont.pred.n <- 5
+cont.diff.frac <- 100
 var.log <- NULL
 var.log <- c("A3")
 # n.draws <- NULL
-n.draws <- 100
+n.draws <- 50
+ci.et.width <- 0.9
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
 
@@ -304,7 +304,7 @@ for(i in seq_along(vars.irt)) {
 
   if(var.type == "continuous") {
 
-    message("Calculating slope (central difference) …")
+    message("Calculating slopes (central difference) …")
 
     diff.h <-
       (max(survey.irt[[var.foc]]) - min(survey.irt[[var.foc]])) / cont.diff.frac
@@ -404,11 +404,11 @@ for(i in seq_along(vars.irt)) {
     var.comp.dt <-
       slope.var[,
                 .(prob.slope.median = median(prob.slope),
-                  prob.slop.ci.l = quantile(prob.slope, q.ci.l),
-                  prob.slop.ci.u = quantile(prob.slope, q.ci.u),
+                  prob.slope.ci.l = quantile(prob.slope, q.ci.l),
+                  prob.slope.ci.u = quantile(prob.slope, q.ci.u),
                   linpred.slope.median = median(linpred.slope),
-                  linpred.slop.ci.l = quantile(linpred.slope, q.ci.l),
-                  linpred.slop.ci.u = quantile(linpred.slope, q.ci.u),
+                  linpred.slope.ci.l = quantile(linpred.slope, q.ci.l),
+                  linpred.slope.ci.u = quantile(linpred.slope, q.ci.u),
                   p.diff.pos = sum(prob.slope > 0)/.N,
                   p.diff.neg = sum(prob.slope < 0)/.N),
                 by = c("item.code", "code.mar", "lev")]
@@ -695,7 +695,7 @@ for(i in seq_along(vars.irt)) {
         var.desc <- paste(c(q.main, q.sub), collapse = "\n")
 
         plim <-
-          pred.var[,
+          pred.var[item.code == item.foc,
                    .(q.l = quantile(pred.plot, 0.01),
                      q.u = quantile(pred.plot, 0.99)),
                    by = "lev"
@@ -703,7 +703,7 @@ for(i in seq_along(vars.irt)) {
                      c(min(q.l), q.u = max(q.u))]
 
         slim <-
-          slope.var[,
+          slope.var[item.code == item.foc,
                    .(q.l = quantile(slope.plot, 0.01),
                      q.u = quantile(slope.plot, 0.99)),
                    by = "lev"
@@ -711,7 +711,7 @@ for(i in seq_along(vars.irt)) {
                      c(min(q.l), q.u = max(q.u))]
 
         vlim <-
-          pred.var[,
+          pred.var[item.code == item.foc,
                    .(q.l = min(lev),
                      q.u = max(lev))
                    ][,
@@ -818,8 +818,8 @@ for(i in seq_along(vars.irt)) {
 graphics.off()
 
 pred.sum <- rbindlist(pred.sum.l, fill = TRUE)
-comp.sum <- rbindlist(comp.sum.l, fill = TRUE)
-n.sum <- rbindlist(n.sum.l, fill = TRUE)
+comp.sum <- rbindlist(comp.sum.l, fill = TRUE)
+n.sum <- rbindlist(n.sum.l, fill = TRUE)
 
 pred.sum <- merge(pred.sum, n.sum, all.x = TRUE, sort = FALSE)
 setnames(pred.sum, c("code.mar", "item.code", "lev"), c("var.code", "adapt.code", "var.level"))
@@ -830,9 +830,18 @@ setnames(comp.sum,
            "lev", "lev1", "lev2",
            "p.diff.pos", "p.diff.neg"),
          c("var.code", "adapt.code",
-           "level", "var.level.1", "var.level.2",
-           "cert.diff.pos", "cert.diff.neg"))
+           "var.level.cont", "var.level.1", "var.level.2",
+           "cert.pos", "cert.neg"))
 setorder(comp.sum, var.code, adapt.code)
+setcolorder(comp.sum,
+             c("adapt.code", "var.code",
+               "var.level.1", "var.level.2",
+               "prob.diff.median", "prob.diff.ci.l", "prob.diff.ci.u",
+               "var.level.cont",
+               "linpred.diff.median", "linpred.diff.ci.l", "linpred.diff.ci.u",
+               "prob.slope.median", "prob.slope.ci.l", "prob.slope.ci.u",
+               "linpred.slope.median", "linpred.slope.ci.l", "linpred.slope.ci.u",
+               "cert.pos", "cert.neg"))
 
 fwrite(pred.sum, file.irt.pred.mem)
 fwrite(comp.sum, file.irt.comp.mem)
