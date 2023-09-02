@@ -5,6 +5,8 @@ library(brms)
 source("paths.R")
 source("utilities.R")
 
+cont.nl <- TRUE
+k.max <- 10
 
 survey.fit <- readRDS(file.survey.rf)
 variables <- readRDS(file.variables.proc)
@@ -71,23 +73,49 @@ vars.pred.cont <- stri_replace_first_regex(vars.pred.cont, "^(\\w)(\\d)$", "$10$
 
 ## ITEM-RESPONSE MODEL 2PL ############################################
 
+if(cont.nl == TRUE) {
 
-form.eta <- 
-  paste0("eta ~ ",
-         paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "),
-         " + (1 + ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), " |i| item)",
-         " + (1 | id)") |>
-  as.formula()
+  vars.pred.cont.term <- character(0)
+  for(i in seq_along(vars.pred.cont)) {
+    var.k <- min(length(unique(survey.irt[[vars.pred.cont[i]]])), k.max)
+    vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i],
+                                     ", by = item, k = ", var.k, ", bs = 'tp')")
+  }
+
+  form.eta <- 
+    paste0("eta ~ ",
+           paste0(c(vars.pred.cont.term, vars.pred.cat), collapse = " + "),
+           " + (1 + ", paste0(vars.pred.cat, collapse = " + "), " |i| item)",
+           " + (1 | id)") |>
+    as.formula()
 
 
-prior.imp.2pl <-
-  prior("normal(0, 5)", class = "b", nlpar = "eta") +
-  prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
-  prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
-  prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
-  prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
+  prior.imp.2pl <-
+    prior("normal(0, 5)", class = "b", nlpar = "eta") +
+    prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
+    prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
+    prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
+    prior("normal(0, 3)", class = "sds", nlpar = "eta") +
+    prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
+
+} else {
+
+  form.eta <- 
+    paste0("eta ~ ",
+           paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "),
+           " + (1 + ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), " |i| item)",
+           " + (1 | id)") |>
+    as.formula()
 
 
+  prior.imp.2pl <-
+    prior("normal(0, 5)", class = "b", nlpar = "eta") +
+    prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
+    prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
+    prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
+    prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
+
+}
 
 
 form.logalpha <- logalpha ~ 1 + (1 |i| item)
@@ -117,5 +145,5 @@ mod.imp.2pl <-
 
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
-saveRDS(mod.imp.2pl, file.irt.mod.2pl.full)
+saveRDS(mod.imp.2pl, file.irt.mod.2pl.full.nl)
 
