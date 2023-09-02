@@ -7,8 +7,8 @@ source("paths.R")
 source("utilities.R")
 
 unordered.factors <- "order"
-# n.threads <- 32
-n.threads <- 4
+n.threads <- 32
+# n.threads <- 4
 
 survey <- readRDS(file.survey.proc)
 variables <- readRDS(file.variables.proc)
