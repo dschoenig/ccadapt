@@ -24,13 +24,11 @@ mod.irt <- readRDS(file.irt.mod.2pl)
 pred.scales <- c("prob", "linpred")
 mar.type <- "cf"
 # mar.type <- "mem"
-cont.pred.n <- 2 
-cont.diff.frac <- 100
+cont.pred.n <- 11
+cont.diff.frac <- 50
 ci.et.width <- 0.9
 var.log <- NULL
-# var.log <- c("A3")
-var.show.log <- NULL
-var.show.log <- "A3"
+var.log <- c("A3")
 # n.draws <- NULL
 n.draws <- 100
 q.ci.l <- (1-ci.et.width)/2
@@ -114,24 +112,6 @@ vars.ref <-
            item = factor(items.ref, levels = items.ref)),
         by = "id.mar")
 
-if(!is.null(var.log)) {
-  var.log.mean <- numeric(0)
-  var.log.sd <- numeric(0)
-  for(i in seq_along(var.log)) {
-    var.mean <- variables[code == var.log[i], cont.mean]
-    var.sd <- variables[code == var.log[i], cont.sd]
-    var.org <- var.mean + (var.sd * survey.irt[[var.log[i]]])
-    var.trans <- log(var.org)
-    var.log.mean[i] <- mean(var.trans)
-    var.log.sd[i] <- sd(var.trans)
-    var.trans.std <- (var.trans - var.log.mean[i]) / var.log.sd[i]
-    survey.irt[, var.sel := var.trans.std, env = list(var.sel = var.log[i])]
-  }
-  names(var.log.mean) <- var.log
-  names(var.log.sd) <- var.log
-}
-
-
 
 pred.l <- list()
 pred.sum.l <- list()
@@ -155,16 +135,19 @@ for(i in seq_along(vars.irt)) {
   var.type <- variables[code == var.foc, type]
 
   if(var.type == "continuous") {
+    var.mean <- variables[code == var.foc, cont.mean]
+    var.sd <- variables[code == var.foc, cont.sd]
     if(var.foc %in% var.log) {
-      var.mean <- var.log.mean[var.foc]
-      var.sd <- var.log.sd[var.foc]
+      var.org <-  var.mean + (var.sd * survey.irt[[var.foc]])
+      var.lev <- exp(seq(log(min(var.org)),
+                         log(max(var.org)),
+                         length.out = cont.pred.n))
+      var.lev <- (var.lev - var.mean) / var.sd
     } else {
-      var.mean <- variables[code == var.foc, cont.mean]
-      var.sd <- variables[code == var.foc, cont.sd]
-    }
     var.lev <- seq(min(survey.irt[[var.foc]]),
                    max(survey.irt[[var.foc]]),
                    length.out = cont.pred.n)
+    }
   }
   if(var.type == "categorical") {
     var.lev <- 
@@ -494,13 +477,6 @@ for(i in seq_along(vars.irt)) {
     slope.var[, lev := (lev*var.sd) + var.mean]
     var.comp.dt[, lev := (lev*var.sd) + var.mean]
 
-
-    if(var.foc %in% var.log) {
-      pred.var[, lev := exp(lev)]
-      slope.var[, lev := exp(lev)]
-      var.comp.dt[, lev := exp(lev)]
-    }
-
     pred.sum.l[[i]] <-
       pred.var[order(code.mar, item.code, lev),
                .(
@@ -794,8 +770,8 @@ for(i in seq_along(vars.irt)) {
                                  breaks = scales::breaks_log(),
                                  # labels = scales::label_log()
                                  ) +
-              coord_fixed(ratio = (log(vlim[2]) - log(vlim[1]))/(slim[2] - slim[1]),
-                          ylim = slim)
+              coord_fixed(ratio = (log(vlim[2]) - log(vlim[1]))/(plim[2] - plim[1]),
+                          ylim = plim)
           prob.p[[k]] <-
             prob.p[[k]] +
               scale_x_continuous(trans = "log",
