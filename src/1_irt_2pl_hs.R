@@ -59,6 +59,10 @@ survey.irt <-
        value.name = "resp")
 
 
+
+vars.pred.cat <- variables[code %in% names(survey.irt) & type == "categorical", code]
+vars.pred.cont <- variables[code %in% names(survey.irt) & type == "continuous", code]
+
 # Fix names to avoid brms error
 setnames(survey.irt, stri_replace_first_regex(names(survey.irt), "^(\\w)(\\d)$", "$10$2"))
 vars.pred.cat <- stri_replace_first_regex(vars.pred.cat, "^(\\w)(\\d)$", "$10$2")
