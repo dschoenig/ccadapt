@@ -48,14 +48,22 @@ if(cont.nl == TRUE) {
            " + (1 | id)") |>
     as.formula()
 
-
-  prior.imp.2pl <-
-    prior("normal(0, 5)", class = "b", nlpar = "eta") +
-    prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
-    prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
-    prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
-    prior("normal(0, 3)", class = "sds", nlpar = "eta") +
-    prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
+  if(length(vars.pred.cont.term) > 0) {
+    prior.imp.2pl <-
+      prior("normal(0, 5)", class = "b", nlpar = "eta") +
+      prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
+      prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
+      prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
+      prior("normal(0, 3)", class = "sds", nlpar = "eta") +
+      prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
+  } else {
+    prior.imp.2pl <-
+      prior("normal(0, 5)", class = "b", nlpar = "eta") +
+      prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
+      prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
+      prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
+      prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
+  }
 
 } else {
 
