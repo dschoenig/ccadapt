@@ -92,7 +92,8 @@ for(i in seq_along(vars.recode)) {
   }
 }
 
-
+# TEST: smaller df
+# survey.irt <- survey.irt[item %in% c("1","2")]
 
 ## ITEM-RESPONSE MODEL 2PL ############################################
 
@@ -129,11 +130,12 @@ mod.imp.2pl <-
       silent = 0,
       chains = 4,
       cores = 4,
+      threads = 2,
       warmup = 5000,
       iter = 7500,
-      refresh = 25,
+      refresh = 5,
       control = list(adapt_delta = 0.9),
-      backend = "cmdstanr",
+      # backend = "cmdstanr",
       prior = prior.imp.2pl)
 
 
