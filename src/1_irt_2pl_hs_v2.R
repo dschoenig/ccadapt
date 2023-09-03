@@ -129,27 +129,17 @@ mod.imp.2pl <-
       silent = 0,
       chains = 4,
       cores = 4,
-      threads = 8,
-      warmup = 0,
-      iter = 0,
+      warmup = 5000,
+      iter = 7500,
       refresh = 25,
       control = list(adapt_delta = 0.9),
       backend = "cmdstanr",
       prior = prior.imp.2pl)
 
 
-mod.imp.2pl <-
-
-
-  update(mod.imp.2pl,
-         iter = 12)
-
-
-
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
 saveRDS(mod.imp.2pl, file.irt.mod.2pl.hs)
-saveRDS(mod.imp.2pl, file.irt.mod.2pl.hs.template)
 
 
 # install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
