@@ -10,7 +10,10 @@ survey.fit <- readRDS(file.survey.rf)
 variables <- readRDS(file.variables.proc)
 dependencies <- readRDS(file.questions.dependencies)
 
-
+vars.all <- names(survey.fit)
+survey.fit <- survey.fit[,
+                         vars.all[!vars.all %in% c(paste0("D", 1:10), "y.acc.comb")],
+                         with = FALSE]
 
 # Remove ordering from factor variables
 var.ord <- names(which(unlist(lapply(survey.fit, is.ordered))))
@@ -48,7 +51,6 @@ survey.irt <- copy(survey.irt)
 
 survey.irt[, id := 1:.N]
 
-
 sel.adaptation <- variables[main == "mgmtChangeACC", code]
 items <- c(paste0("y.acc.", 1:length(sel.adaptation)))
 
@@ -68,6 +70,28 @@ setnames(survey.irt, stri_replace_first_regex(names(survey.irt), "^(\\w)(\\d)$",
 vars.pred.cat <- stri_replace_first_regex(vars.pred.cat, "^(\\w)(\\d)$", "$10$2")
 vars.pred.cont <- stri_replace_first_regex(vars.pred.cont, "^(\\w)(\\d)$", "$10$2")
 
+vars.recode <- names(survey.irt)
+vars.recode <- vars.recode[!vars.recode %in% c("id", "resp")]
+
+recode.key.l <- list()
+for(i in seq_along(vars.recode)) {
+  var.foc <- vars.recode[i]
+  if(is.factor(survey.irt[[var.foc]])) {
+    var.val <- survey.irt[[var.foc]] 
+    var.recode <-
+      data.table(code = var.foc,
+                 level.survey = unique(var.val))
+    var.recode[, level.num := as.numeric(level.survey)]
+    nlev <- nrow(var.recode)
+    var.recode[, level.mod := factor(level.num, levels = as.character(1:nlev))]
+    var.val.rc <- as.numeric(var.val)
+    survey.irt[,
+               var.sel := factor(as.numeric(var.sel), levels = as.character(1:nlev)),
+               env = list(var.sel = var.foc)]
+    recode.key.l[[i]] <- var.recode
+  }
+}
+
 
 
 ## ITEM-RESPONSE MODEL 2PL ############################################
@@ -76,20 +100,19 @@ vars.pred.cont <- stri_replace_first_regex(vars.pred.cont, "^(\\w)(\\d)$", "$10$
 form.eta <- 
   paste0("eta ~ ",
          paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "),
-         " + (1 + ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), " |i| item)",
+         " + (1 + ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), " | item)",
          " + (1 | id)") |>
   as.formula()
 
 
 prior.imp.2pl <-
   prior(horseshoe(df = 3, par_ratio = 0.1, main = TRUE), class = "b", nlpar = "eta") +
-  prior(horseshoe(), class = "sd", group = "item", nlpar = "eta") +
-  prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
+  prior(horseshoe(), class = "sd", nlpar = "eta") +
   prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
   prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
 
 
-form.logalpha <- logalpha ~ 1 + (1 |i| item)
+form.logalpha <- logalpha ~ 1 + (1 | item)
 
 form.imp.2pl <-
   bf(resp ~ exp(logalpha) * eta,
@@ -111,10 +134,16 @@ mod.imp.2pl <-
       iter = 5000,
       refresh = 25,
       control = list(adapt_delta = 0.9),
+      backend = "cmdstanr",
       prior = prior.imp.2pl)
 
 
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
 saveRDS(mod.imp.2pl, file.irt.mod.2pl.hs)
+
+
+# install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+# cmdstanr::cmdstan_make_local(cpp_options = "CXXFLAGS += -ftemplate-depth=2048", append = FALSE)
+# cmdstanr::rebuild_cmdstan()
 
