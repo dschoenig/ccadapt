@@ -113,15 +113,6 @@ prior.imp.2pl <-
   prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
 
 
-form.logalpha <- logalpha ~ 1 + (1 | item)
-
-form.imp.2pl <-
-  bf(resp ~ exp(logalpha) * eta,
-     form.eta,
-     form.logalpha,
-     nl = TRUE)
-
-
 mod.imp.2pl <-
   brm(formula = form.imp.2pl,
       data = survey.irt,
@@ -130,7 +121,6 @@ mod.imp.2pl <-
       silent = 0,
       chains = 4,
       cores = 4,
-      threads = 2,
       warmup = 5000,
       iter = 7500,
       refresh = 5,
