@@ -132,7 +132,7 @@ mod.imp.2pl <-
       iter = 7500,
       refresh = 5,
       control = list(adapt_delta = 0.9),
-      backend = "cmdstanr",
+      # backend = "cmdstanr",
       prior = prior.imp.2pl)
 
 

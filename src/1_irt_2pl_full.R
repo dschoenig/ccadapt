@@ -109,7 +109,7 @@ mod.imp.2pl <-
       warmup = 2500,
       iter = 5000,
       refresh = 25,
-      backend = "cmdstanr",
+      # backend = "cmdstanr",
       prior = prior.imp.2pl)
 
 
