@@ -49,10 +49,10 @@ mod.sel <-
       silent = 0,
       chains = 4,
       cores = 4,
-      warmup = 2000,
-      iter = 3000,
+      warmup = 5000,
+      iter = 6000,
       refresh = 100,
-      control = list(adapt_delta = 0.9),
+      control = list(adapt_delta = 0.99),
       # backend = "cmdstanr",
       prior = prior.sel)
 
