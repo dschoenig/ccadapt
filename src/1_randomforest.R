@@ -75,10 +75,8 @@ survey.sub <- survey[
                      ]
 
 # Exclude variables that do not vary between respondents
-
 var.include <-
   names(survey.sub)[survey.sub[, which(survey.sub[, lapply(.SD, \(x) length(unique(x)))] > 1)]]
-
 var.sel <- var.sel[code %in% var.include]
 
 survey.sel <-

@@ -147,9 +147,9 @@ mod.var.sel <- cv_varsel(mod.ref, nloo = 100, n.terms_max = n.terms.max)
 # geom_hline(yintercept = summary(mod.var.sel)$selection$diff[1] * 0.5)
 
 summary(mod.var.sel)
-suggest_size(mod.var.sel, alpha = 0.05, type = "upper", pct = 0.25)
+suggest_size(mod.var.sel, alpha = 0.05, type = "lower", pct = 0.5)
 
-# saveRDS(mod.var.sel, "../results/varsel/sel.1.rds")
+saveRDS(mod.var.sel, "../results/varsel/sel.1.rds")
 # mod.var.sel <- readRDS("..results/varsel/sel.1.rds")
 
 # install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))

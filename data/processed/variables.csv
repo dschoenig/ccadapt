@@ -1,13 +1,13 @@
 id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,category.personal_stakes,category.threat_appraisal,category.coping_appraisal,category.control,category.adaptation,question.main,question.sub
-5,A1,A,landlord,landlord,,categorical,a,No,FALSE,,,,,,,,Do you own a woodlot in Canada ?,""
-6,A2,A,woodlotsNumber,woodlotsNumber,,categorical,b,1,TRUE,,,1,0,0,0,0,How many woodlots do you own in Canada ?,""
-7,A3,A,woodlotSize,woodlotSize,,continuous,,,,154.237319199766,660.286307634398,1,0,0,0,0,What is the surface of your woodlot?  [Hectares],""
-8,A4,A,coOwnership,coOwnership,,categorical,c,No,FALSE,,,1,0,0,0,0,"Is your woodlot a joint possession (co-ownership, for instance with relatives)?",""
-9,A5,A,provinces_Alberta,provinces,Alberta,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
-10,A6,A,provinces_British_Columbia,provinces,British_Columbia,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
-11,A7,A,provinces_Prince_Edward_Island,provinces,Prince_Edward_Island,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
-12,A8,A,provinces_Manitoba,provinces,Manitoba,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
-13,A9,A,provinces_New_Brunswick,provinces,New_Brunswick,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
+5,A01,A,landlord,landlord,"",categorical,a,No,FALSE,,,,,,,,Do you own a woodlot in Canada ?,""
+6,A02,A,woodlotsNumber,woodlotsNumber,"",categorical,b,1,TRUE,,,1,0,0,0,0,How many woodlots do you own in Canada ?,""
+7,A03,A,woodlotSize,woodlotSize,"",continuous,,,,154.237319199766,660.286307634398,1,0,0,0,0,What is the surface of your woodlot?  [Hectares],""
+8,A04,A,coOwnership,coOwnership,"",categorical,c,No,FALSE,,,1,0,0,0,0,"Is your woodlot a joint possession (co-ownership, for instance with relatives)?",""
+9,A05,A,provinces_Alberta,provinces,Alberta,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
+10,A06,A,provinces_British_Columbia,provinces,British_Columbia,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
+11,A07,A,provinces_Prince_Edward_Island,provinces,Prince_Edward_Island,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
+12,A08,A,provinces_Manitoba,provinces,Manitoba,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
+13,A09,A,provinces_New_Brunswick,provinces,New_Brunswick,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 14,A10,A,provinces_Nova_Scotia,provinces,Nova_Scotia,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 15,A11,A,provinces_Nunavut,provinces,Nunavut,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 16,A12,A,provinces_Ontario,provinces,Ontario,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
@@ -17,7 +17,7 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 20,A16,A,provinces_Northwest_Territories,provinces,Northwest_Territories,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 21,A17,A,provinces_Yukon,provinces,Yukon,categorical,a,No,FALSE,,,0,0,0,1,0,Please indicate the province(s) and/or territory(ies) where your woodlots are located.,""
 22,A18,A,plotAgeDistrib_SQ002,plotAgeDistrib,SQ002,continuous,,,,34.7906710310966,30.2799786913561,0,0,0,1,0,Please indicate what proportion of your woodlots is represented by each of the following categories (in percentage of total forest surface),Older forest stands that can be harvested and regenerated in the next 20 years
-23,A19,A,plotAgeDistrib_SQ003,plotAgeDistrib,SQ003,continuous,w,0,,22.5402618657938,23.5921586569616,0,0,0,1,0,Please indicate what proportion of your woodlots is represented by each of the following categories (in percentage of total forest surface),"Mature forest stands, in active growth phase, harvestable in more than 20 years"
+23,A19,A,plotAgeDistrib_SQ003,plotAgeDistrib,SQ003,continuous,,,,22.5402618657938,23.5921586569616,0,0,0,1,0,Please indicate what proportion of your woodlots is represented by each of the following categories (in percentage of total forest surface),"Mature forest stands, in active growth phase, harvestable in more than 20 years"
 24,A20,A,plotAgeDistrib_SQ004,plotAgeDistrib,SQ004,continuous,,,,15.3518821603928,20.0541621261725,0,0,0,1,0,Please indicate what proportion of your woodlots is represented by each of the following categories (in percentage of total forest surface),"Young forest stands, planted or from natural regeneration for less than 20 years"
 25,A21,A,plotAgeDistrib_SQ005,plotAgeDistrib,SQ005,continuous,,,,3.7823240589198,8.98760978635938,0,0,0,1,0,Please indicate what proportion of your woodlots is represented by each of the following categories (in percentage of total forest surface),"Recent forest cuts, not yet replanted or naturally regenerated"
 26,A22,A,plotAgeDistrib_SQ006,plotAgeDistrib,SQ006,continuous,,,,20.7446808510638,29.8898022582506,0,0,0,1,0,Please indicate what proportion of your woodlots is represented by each of the following categories (in percentage of total forest surface),Multi-age forest stands
@@ -36,7 +36,7 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 39,A35,A,forestReasons_SQ013,forestReasons,SQ013,categorical,d,Neutral,TRUE,,,1,0,0,0,0,People have different reasons to own forests Please indicate how important are these reasons in your decision of owning woodlots,Preventing soil erosion
 40,A36,A,forestReasons_SQ014,forestReasons,SQ014,categorical,d,Neutral,TRUE,,,1,0,0,0,0,People have different reasons to own forests Please indicate how important are these reasons in your decision of owning woodlots,Growing Christmas trees
 41,A37,A,forestReasons_SQ015,forestReasons,SQ015,categorical,d,Neutral,TRUE,,,1,0,0,0,0,People have different reasons to own forests Please indicate how important are these reasons in your decision of owning woodlots,Producing maple syrup
-42,A38,A,forestReasonsExplain,forestReasonsExplain,,qualitative,,,,,,,,,,,Please provide any comments you may have on the previous questions You can also jump to the following question,""
+42,A38,A,forestReasonsExplain,forestReasonsExplain,"",qualitative,,,,,,,,,,,Please provide any comments you may have on the previous questions You can also jump to the following question,""
 43,A39,A,forestManager_SQ005,forestManager,SQ005,categorical,a,No,FALSE,,,1,0,0,0,0,"Who makes the decisions about the management of your woodlots (logging, planting, regeneration, hunting, species choice, etc)?",My woodlots are not managed
 44,A40,A,forestManager_SQ001,forestManager,SQ001,categorical,a,No,FALSE,,,1,0,0,0,0,"Who makes the decisions about the management of your woodlots (logging, planting, regeneration, hunting, species choice, etc)?",I decide everything by myself
 45,A41,A,forestManager_SQ002,forestManager,SQ002,categorical,a,No,FALSE,,,1,0,0,0,0,"Who makes the decisions about the management of your woodlots (logging, planting, regeneration, hunting, species choice, etc)?","I make decisions together with people close to me (relatives, friends, other co-owners)"
@@ -49,7 +49,7 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 52,A48,A,delegateMgmtWhy_SQ005,delegateMgmtWhy,SQ005,categorical,d,Neutral,TRUE,,,,,,,,Why do you delegate every decisions to others?,I do not know enough about how to manage a woodlot
 53,A49,A,delegateMgmtWhy_SQ006,delegateMgmtWhy,SQ006,categorical,d,Neutral,TRUE,,,,,,,,Why do you delegate every decisions to others?,My woodlots are difficult to access
 54,A50,A,delegateMgmtWhy_SQ007,delegateMgmtWhy,SQ007,categorical,d,Neutral,TRUE,,,,,,,,Why do you delegate every decisions to others?,I do not have the equipment or workers available
-55,A51,A,delegateMgmtLater,delegateMgmtLater,,categorical,e,No,FALSE,,,1,0,0,0,0,"Now thinking ahead, do you intend to take part to the decision-management over the next ten years?",""
+55,A51,A,delegateMgmtLater,delegateMgmtLater,"",categorical,e,No,FALSE,,,1,0,0,0,0,"Now thinking ahead, do you intend to take part to the decision-management over the next ten years?",""
 56,A52,A,noMgmtLaterWhy_SQ002,noMgmtLaterWhy,SQ002,categorical,d,Neutral,TRUE,,,,,,,,Why do you prefer not to take part to the decision-management over the next ten years?,I do not want to manage by myself
 57,A53,A,noMgmtLaterWhy_SQ003,noMgmtLaterWhy,SQ003,categorical,d,Neutral,TRUE,,,,,,,,Why do you prefer not to take part to the decision-management over the next ten years?,I do not have time
 58,A54,A,noMgmtLaterWhy_SQ004,noMgmtLaterWhy,SQ004,categorical,d,Neutral,TRUE,,,,,,,,Why do you prefer not to take part to the decision-management over the next ten years?,I do not have the financial means
@@ -64,16 +64,16 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 67,A63,A,infoSources_SQ006,infoSources,SQ006,categorical,d,Neutral,TRUE,,,0,1,0,0,0,How important are these sources of information in how you manage your woodlots?,Discussions with other forest owners
 68,A64,A,infoSources_SQ007,infoSources,SQ007,categorical,d,Neutral,TRUE,,,0,1,0,0,0,How important are these sources of information in how you manage your woodlots?,Forest engineers/advisors
 69,A65,A,infoSources_SQ008,infoSources,SQ008,categorical,d,Neutral,TRUE,,,0,1,0,0,0,How important are these sources of information in how you manage your woodlots?,"Relatives, friends, other co-owners"
-70,A66,A,commentsA,commentsA,,qualitative,,,,,,,,,,,"If you would like to, you may explain your answers (reasons to own forests, who decides for the woodlots management, information sources, …) ",""
-71,B1,B,pastChangeRegen,pastChangeRegen,,categorical,f,I have not changed anything.,FALSE,,,1,0,0,0,0,How has the regeneration of your forests changed since 2010?,""
-72,B2,B,pastChangeSpecies_SQ001,pastChangeSpecies,SQ001,categorical,a,No,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have tried to increase the diversity of species in my forests
-73,B3,B,pastChangeSpecies_SQ002,pastChangeSpecies,SQ002,categorical,a,No,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have modified part of my woodlot to favor a single species
-74,B4,B,pastChangeSpecies_SQ003,pastChangeSpecies,SQ003,categorical,a,Yes,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have not changed anything
-75,B5,B,pastChangePlantSelec_SQ001,pastChangePlantSelec,SQ001,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,This question does not concern me as I have not planted any trees since 2010
-76,B6,B,pastChangePlantSelec_SQ002,pastChangePlantSelec,SQ002,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,I have chosen my seedlings based on wood productivity
-77,B7,B,pastChangePlantSelec_SQ003,pastChangePlantSelec,SQ003,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,"I have chosen my seedlings as to anticipate various risks (drought, insects, etc)"
-78,B8,B,pastChangePlantSelec_SQ005,pastChangePlantSelec,SQ005,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,"I wish I could find or buy seedlings from new species, but I cannot"
-79,B9,B,pastChangePlantSelec_SQ004,pastChangePlantSelec,SQ004,categorical,a,Yes,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,I have not changed my criteria
+70,A66,A,commentsA,commentsA,"",qualitative,,,,,,,,,,,"If you would like to, you may explain your answers (reasons to own forests, who decides for the woodlots management, information sources, …) ",""
+71,B01,B,pastChangeRegen,pastChangeRegen,"",categorical,f,I have not changed anything.,FALSE,,,1,0,0,0,0,How has the regeneration of your forests changed since 2010?,""
+72,B02,B,pastChangeSpecies_SQ001,pastChangeSpecies,SQ001,categorical,a,No,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have tried to increase the diversity of species in my forests
+73,B03,B,pastChangeSpecies_SQ002,pastChangeSpecies,SQ002,categorical,a,No,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have modified part of my woodlot to favor a single species
+74,B04,B,pastChangeSpecies_SQ003,pastChangeSpecies,SQ003,categorical,a,Yes,FALSE,,,1,0,0,0,0,How has the species composition of your woodlots changed since 2010?,I have not changed anything
+75,B05,B,pastChangePlantSelec_SQ001,pastChangePlantSelec,SQ001,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,This question does not concern me as I have not planted any trees since 2010
+76,B06,B,pastChangePlantSelec_SQ002,pastChangePlantSelec,SQ002,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,I have chosen my seedlings based on wood productivity
+77,B07,B,pastChangePlantSelec_SQ003,pastChangePlantSelec,SQ003,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,"I have chosen my seedlings as to anticipate various risks (drought, insects, etc)"
+78,B08,B,pastChangePlantSelec_SQ005,pastChangePlantSelec,SQ005,categorical,a,No,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,"I wish I could find or buy seedlings from new species, but I cannot"
+79,B09,B,pastChangePlantSelec_SQ004,pastChangePlantSelec,SQ004,categorical,a,Yes,FALSE,,,1,0,0,0,0,Have you changed your species selection criteria for planting trees since 2010?,I have not changed my criteria
 80,B10,B,pastChangePlantSelec_other,pastChangePlantSelec,other,qualitative,,,,,,,,,,,Have you changed your species selection criteria for planting trees since 2010?,Other
 81,B11,B,plantSelecReasons_SQ001,plantSelecReasons,SQ001,categorical,g,No,FALSE,,,1,0,0,0,0,Have you chosen your seedlings to …,Introduce exotic species?
 82,B12,B,plantSelecReasons_SQ002,plantSelecReasons,SQ002,categorical,g,No,FALSE,,,1,0,0,0,0,Have you chosen your seedlings to …,Introduce local species coming from southern populations (assisted migration)?
@@ -96,7 +96,7 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 99,B29,B,pastChangeReasons_SQ008,pastChangeReasons,SQ008,categorical,d,Neutral,TRUE,,,1,0,0,0,0,How important were these aspects regarding your decision to change at least one of your management practices?,To benefit from governmental incentives
 100,B30,B,pastChangeReasons_SQ009,pastChangeReasons,SQ009,categorical,d,Neutral,TRUE,,,1,0,0,0,0,How important were these aspects regarding your decision to change at least one of your management practices?,At the request of my relatives or neighbors
 101,B31,B,pastChangeReasons_SQ010,pastChangeReasons,SQ010,categorical,d,Neutral,TRUE,,,1,0,0,0,0,How important were these aspects regarding your decision to change at least one of your management practices?,On the advice of a forest engineer or a forest company
-102,B32,B,pastChangeReasonsOth,pastChangeReasonsOth,,qualitative,,,,,,,,,,,"If you can think of other reasons that motivated your management changes, you can specify them here",""
+102,B32,B,pastChangeReasonsOth,pastChangeReasonsOth,"",qualitative,,,,,,,,,,,"If you can think of other reasons that motivated your management changes, you can specify them here",""
 103,B33,B,future_SQ002,future,SQ002,categorical,i,Neutral,TRUE,,,1,0,0,0,0,Let’s now take a look at the future How much do you agree with the following statements?,Public perception of timber harvesting will not change my forest management
 104,B34,B,future_SQ003,future,SQ003,categorical,i,Neutral,TRUE,,,0,0,1,0,0,Let’s now take a look at the future How much do you agree with the following statements?,Game populations in excess threaten the regeneration of my trees
 105,B35,B,future_SQ004,future,SQ004,categorical,i,Neutral,TRUE,,,0,1,0,0,0,Let’s now take a look at the future How much do you agree with the following statements?,I am concerned about future damage to trees from insects and/or diseases
@@ -105,17 +105,17 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 108,B38,B,future_SQ001,future,SQ001,categorical,i,Neutral,TRUE,,,1,0,0,0,0,Let’s now take a look at the future How much do you agree with the following statements?,I would like to log more trees in my forests
 109,B39,B,future_SQ008,future,SQ008,categorical,i,Neutral,TRUE,,,1,0,0,0,0,Let’s now take a look at the future How much do you agree with the following statements?,I would like to sell forest carbon credits
 110,B40,B,future_SQ007,future,SQ007,categorical,i,Neutral,TRUE,,,1,0,0,0,0,Let’s now take a look at the future How much do you agree with the following statements?,I would like to see a part of my forest become a protected area
-111,B41,B,futureOpportunWhy,futureOpportunWhy,,qualitative,,,,,,,,,,,Could you please specify why climate change would be an opportunity for you?,""
-112,B42,B,commentsB,commentsB,,qualitative,,,,,,,,,,,"If you would like to, please detail the answers to the previous questions (changes in your forest management since 2010)",""
-113,D1,D,mgmtChangeACC_A,mgmtChangeACC,A,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Decrease stand density
-114,D2,D,mgmtChangeACC_B,mgmtChangeACC,B,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Log more frequently
-115,D3,D,mgmtChangeACC_C,mgmtChangeACC,C,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Increase the number of species (diversification)
-116,D4,D,mgmtChangeACC_D,mgmtChangeACC,D,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,"Replace species (ex: introduction of new species, assisted migration, etc)"
-117,D5,D,mgmtChangeACC_E,mgmtChangeACC,E,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Let nature do its work
-118,D6,D,mgmtChangeACC_F,mgmtChangeACC,F,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Increase the use of pesticides or chemical fertilizers
-119,D7,D,mgmtChangeACC_G,mgmtChangeACC,G,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,"Practice prescribed burning, reduce fuel load"
-120,D8,D,mgmtChangeACC_H,mgmtChangeACC,H,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Prepare the soil (ex: drainage)
-121,D9,D,mgmtChangeACC_I,mgmtChangeACC,I,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,"Buy an insurance against wildfire, frost, hail, windstorms, etc"
+111,B41,B,futureOpportunWhy,futureOpportunWhy,"",qualitative,,,,,,,,,,,Could you please specify why climate change would be an opportunity for you?,""
+112,B42,B,commentsB,commentsB,"",qualitative,,,,,,,,,,,"If you would like to, please detail the answers to the previous questions (changes in your forest management since 2010)",""
+113,D01,D,mgmtChangeACC_A,mgmtChangeACC,A,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Decrease stand density
+114,D02,D,mgmtChangeACC_B,mgmtChangeACC,B,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Log more frequently
+115,D03,D,mgmtChangeACC_C,mgmtChangeACC,C,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Increase the number of species (diversification)
+116,D04,D,mgmtChangeACC_D,mgmtChangeACC,D,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,"Replace species (ex: introduction of new species, assisted migration, etc)"
+117,D05,D,mgmtChangeACC_E,mgmtChangeACC,E,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Let nature do its work
+118,D06,D,mgmtChangeACC_F,mgmtChangeACC,F,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Increase the use of pesticides or chemical fertilizers
+119,D07,D,mgmtChangeACC_G,mgmtChangeACC,G,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,"Practice prescribed burning, reduce fuel load"
+120,D08,D,mgmtChangeACC_H,mgmtChangeACC,H,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,Prepare the soil (ex: drainage)
+121,D09,D,mgmtChangeACC_I,mgmtChangeACC,I,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,"Buy an insurance against wildfire, frost, hail, windstorms, etc"
 122,D10,D,mgmtChangeACC_J,mgmtChangeACC,J,categorical,j,No,FALSE,,,0,0,0,0,1,Do you intend to do any of the following (to all or part of your woodlots)?,"Diversify my forest revenue: development of recreation/tourism activities, enrollment in payment for carbon credits programs, etc"
 123,D11,D,mgmtChangeACCWhyNo_SQ008,mgmtChangeACCWhyNo,SQ008,categorical,d,Neutral,TRUE,,,1,0,0,0,0,Why do you prefer not to implement any measures?,I do not want to
 124,D12,D,mgmtChangeACCWhyNo_SQ002,mgmtChangeACCWhyNo,SQ002,categorical,d,Neutral,TRUE,,,0,0,1,0,0,Why do you prefer not to implement any measures?,I do not have time
@@ -143,63 +143,63 @@ id,code,section,name,main,sub,type,cat.scale,cat.ref,cat.ord,cont.mean,cont.sd,c
 146,D34,D,ACCAssistance_C,ACCAssistance,C,categorical,l,Neutral,TRUE,,,0,0,1,0,0,What assistance would you need to adapt to climate change in your woodlots?,Better access to the assistance of forest advisors (engineers or technicians)
 147,D35,D,ACCAssistance_D,ACCAssistance,D,categorical,l,Neutral,TRUE,,,0,0,1,0,0,What assistance would you need to adapt to climate change in your woodlots?,Increased public awareness on forests and climate change
 148,D36,D,ACCAssistance_E,ACCAssistance,E,categorical,l,Neutral,TRUE,,,0,1,0,0,0,What assistance would you need to adapt to climate change in your woodlots?,Vulnerability diagnosis
-149,D37,D,commentsD,commentsD,,qualitative,,,,,,,,,,,"If you would like to, please detail the answers to the previous questions (potential changes of your forest management, climate change, etc)",""
-150,C1,C,climateKnower_A,climateKnower,A,categorical,i,Neutral,TRUE,,,0,1,0,0,0,How much do you agree with the following statements?,The climate is currently changing all over the world
-151,C2,C,climateKnower_B,climateKnower,B,categorical,i,Neutral,TRUE,,,0,1,0,0,0,How much do you agree with the following statements?,"Human activities (for instance, deforestation) do not contribute to climate change"
-152,C3,C,climateKnower_C,climateKnower,C,categorical,i,Neutral,TRUE,,,0,1,0,0,0,How much do you agree with the following statements?,"If we were to stop burning fossil fuels (oil, gas), climate change would stop almost immediately"
-153,C4,C,climateKnower_D,climateKnower,D,categorical,i,Neutral,TRUE,,,0,1,0,0,0,How much do you agree with the following statements?,Climate change will cause more droughts in some places and greater precipitation in others
-154,C5,C,climateExperience_SQ001,climateExperience,SQ001,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Prolonged droughts/Heatwaves
-155,C6,C,climateExperience_SQ002,climateExperience,SQ002,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Extreme cold temperatures
-156,C7,C,climateExperience_SQ003,climateExperience,SQ003,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Freezing rain
-157,C8,C,climateExperience_SQ004,climateExperience,SQ004,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Extreme precipitations
-158,C9,C,climateExperience_SQ005,climateExperience,SQ005,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Wind storms
+149,D37,D,commentsD,commentsD,"",qualitative,,,,,,,,,,,"If you would like to, please detail the answers to the previous questions (potential changes of your forest management, climate change, etc)",""
+150,C01,C,climateKnower_A,climateKnower,A,categorical,i,Neutral,TRUE,,,0,1,0,0,0,How much do you agree with the following statements?,The climate is currently changing all over the world
+151,C02,C,climateKnower_B,climateKnower,B,categorical,i,Neutral,TRUE,,,0,1,0,0,0,How much do you agree with the following statements?,"Human activities (for instance, deforestation) do not contribute to climate change"
+152,C03,C,climateKnower_C,climateKnower,C,categorical,i,Neutral,TRUE,,,0,1,0,0,0,How much do you agree with the following statements?,"If we were to stop burning fossil fuels (oil, gas), climate change would stop almost immediately"
+153,C04,C,climateKnower_D,climateKnower,D,categorical,i,Neutral,TRUE,,,0,1,0,0,0,How much do you agree with the following statements?,Climate change will cause more droughts in some places and greater precipitation in others
+154,C05,C,climateExperience_SQ001,climateExperience,SQ001,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Prolonged droughts/Heatwaves
+155,C06,C,climateExperience_SQ002,climateExperience,SQ002,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Extreme cold temperatures
+156,C07,C,climateExperience_SQ003,climateExperience,SQ003,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Freezing rain
+157,C08,C,climateExperience_SQ004,climateExperience,SQ004,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Extreme precipitations
+158,C09,C,climateExperience_SQ005,climateExperience,SQ005,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Wind storms
 159,C10,C,climateExperience_SQ006,climateExperience,SQ006,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,Wildfires
 160,C11,C,climateExperience_SQ007,climateExperience,SQ007,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,"Insects, pests and pathogen outbreaks"
 161,C12,C,climateExperience_SQ008,climateExperience,SQ008,categorical,a,No,FALSE,,,0,1,0,0,0,Which of the following events have you already witnessed in your woodlots?,None of the above
 162,C13,C,climateExperience_other,climateExperience,other,qualitative,,,,,,,,,,,Which of the following events have you already witnessed in your woodlots?,Other
-163,C14,C,CCExperience,CCExperience,,categorical,m,Neither agree or disagree,TRUE,,,0,1,0,0,0,Do you think that climate change is to blame for one or more of these events?,""
+163,C14,C,CCExperience,CCExperience,"",categorical,m,Neither agree or disagree,TRUE,,,0,1,0,0,0,Do you think that climate change is to blame for one or more of these events?,""
 164,C15,C,CCImpacts_SQ002,CCImpacts,SQ002,categorical,n,Neutral,TRUE,,,0,1,0,0,0,Do you think that the following changes will happen on your woodlots?,Changes in tree species composition
 165,C16,C,CCImpacts_SQ003,CCImpacts,SQ003,categorical,n,Neutral,TRUE,,,0,1,0,0,0,Do you think that the following changes will happen on your woodlots?,Increase in tree growth
 166,C17,C,CCImpacts_SQ004,CCImpacts,SQ004,categorical,n,Neutral,TRUE,,,0,1,0,0,0,Do you think that the following changes will happen on your woodlots?,Decrease in tree growth
 167,C18,C,CCImpacts_SQ005,CCImpacts,SQ005,categorical,n,Neutral,TRUE,,,0,1,0,0,0,Do you think that the following changes will happen on your woodlots?,Changes in soil fertility
 168,C19,C,CCImpacts_SQ006,CCImpacts,SQ006,categorical,n,Neutral,TRUE,,,0,1,0,0,0,Do you think that the following changes will happen on your woodlots?,Increase in tree mortality
-169,C20,C,CCWhen,CCWhen,,categorical,o,In more than 50 years,FALSE,,,0,1,0,0,0,"In your opinion, when will the first impacts of climate change become apparent in your woodlots?",""
+169,C20,C,CCWhen,CCWhen,"",categorical,o,In more than 50 years,FALSE,,,0,1,0,0,0,"In your opinion, when will the first impacts of climate change become apparent in your woodlots?",""
 170,C21,C,CCWhen_other,CCWhen,other,qualitative,,,,,,,,,,,"In your opinion, when will the first impacts of climate change become apparent in your woodlots? ",Other
-171,C22,C,CCSurface,CCSurface,,continuous,,,,51.6240875912409,34.3931608046558,0,1,0,0,0,"In your opinion, what percentage of your woodlots will be affected by the first impacts of climate change?",""
-172,C23,C,commentsC,commentsC,,qualitative,,,,,,,,,,,"If you would like to, please detail the answers to the previous questions (your views on and experiences of climate change)",""
-173,E1,E,ACCLeadership_SQ001,ACCLeadership,SQ001,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,Private forest owners
-174,E2,E,ACCLeadership_SQ002,ACCLeadership,SQ002,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,Environmental organizations/NGOs
-175,E3,E,ACCLeadership_SQ003,ACCLeadership,SQ003,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,"Forest professionals (eg, forest engineer, logging contractor services, etc)"
-176,E4,E,ACCLeadership_SQ004,ACCLeadership,SQ004,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,Officials of the provincial ministry in charge of forests
-177,E5,E,ACCLeadership_SQ005,ACCLeadership,SQ005,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,Forest certification organizations
-178,E6,E,ACCLeadership_other,ACCLeadership,other,qualitative,,,,,,,,,,,Who do you think should lead the way in implementing climate change adaptations?,Other
-179,E7,E,ACCSocial_A1,ACCSocial,A1,categorical,m,Neither agree or disagree,TRUE,,,1,0,1,0,0,How much do you agree with the following statements?,"To reduce the risk that my woodlots may suffer from climate change, I would accept restrictions or requirements on harvesting timber on my woodlots"
-180,E8,E,ACCSocial_A2,ACCSocial,A2,categorical,m,Neither agree or disagree,TRUE,,,1,0,1,0,0,How much do you agree with the following statements?,"To reduce the risk that my woodlots may suffer from climate change, I would be willing to come together with other forest owners in order to manage our woodlots together"
-181,E9,E,ACCSocial_A3,ACCSocial,A3,categorical,m,Neither agree or disagree,TRUE,,,1,0,1,0,0,How much do you agree with the following statements?,Regulations are important to adapt private forests to climate change
+171,C22,C,CCSurface,CCSurface,"",continuous,,,,51.6240875912409,34.3931608046558,0,1,0,0,0,"In your opinion, what percentage of your woodlots will be affected by the first impacts of climate change?",""
+172,C23,C,commentsC,commentsC,"",qualitative,,,,,,,,,,,"If you would like to, please detail the answers to the previous questions (your views on and experiences of climate change)",""
+173,E01,E,ACCLeadership_SQ001,ACCLeadership,SQ001,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,Private forest owners
+174,E02,E,ACCLeadership_SQ002,ACCLeadership,SQ002,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,Environmental organizations/NGOs
+175,E03,E,ACCLeadership_SQ003,ACCLeadership,SQ003,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,"Forest professionals (eg, forest engineer, logging contractor services, etc)"
+176,E04,E,ACCLeadership_SQ004,ACCLeadership,SQ004,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,Officials of the provincial ministry in charge of forests
+177,E05,E,ACCLeadership_SQ005,ACCLeadership,SQ005,categorical,a,No,FALSE,,,0,0,1,0,0,Who do you think should lead the way in implementing climate change adaptations?,Forest certification organizations
+178,E06,E,ACCLeadership_other,ACCLeadership,other,qualitative,,,,,,,,,,,Who do you think should lead the way in implementing climate change adaptations?,Other
+179,E07,E,ACCSocial_A1,ACCSocial,A1,categorical,m,Neither agree or disagree,TRUE,,,1,0,1,0,0,How much do you agree with the following statements?,"To reduce the risk that my woodlots may suffer from climate change, I would accept restrictions or requirements on harvesting timber on my woodlots"
+180,E08,E,ACCSocial_A2,ACCSocial,A2,categorical,m,Neither agree or disagree,TRUE,,,1,0,1,0,0,How much do you agree with the following statements?,"To reduce the risk that my woodlots may suffer from climate change, I would be willing to come together with other forest owners in order to manage our woodlots together"
+181,E09,E,ACCSocial_A3,ACCSocial,A3,categorical,m,Neither agree or disagree,TRUE,,,1,0,1,0,0,How much do you agree with the following statements?,Regulations are important to adapt private forests to climate change
 182,E10,E,ACCSocial_A6,ACCSocial,A6,categorical,m,Neither agree or disagree,TRUE,,,1,0,1,0,0,How much do you agree with the following statements?,Voluntary programs are important to adapt private forests to climate change
 183,E11,E,ACCSocial_A4,ACCSocial,A4,categorical,m,Neither agree or disagree,TRUE,,,1,0,0,0,0,How much do you agree with the following statements?,I feel that people close to me expect me to change my management practices to adapt to climate change
 184,E12,E,ACCSocial_A5,ACCSocial,A5,categorical,m,Neither agree or disagree,TRUE,,,1,0,0,0,0,How much do you agree with the following statements?,"Seeing other forest owners change their forestry practices to adapt to climate change motivates me to do so, too"
-185,E13,E,commentsE,commentsE,,qualitative,,,,,,,,,,,"If you would like to, please detail the answers to the previous questions (who should lead the way, what you would accept to reduce risks, …)",""
-186,F1,F,surveySource_SQ002,surveySource,SQ002,categorical,a,No,FALSE,,,0,0,0,1,0,How did you find out about this questionnaire?,Facebook
-187,F2,F,surveySource_SQ002comment,surveySource,SQ002comment,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,FacebookComment
-188,F3,F,surveySource_SQ003,surveySource,SQ003,categorical,a,No,FALSE,,,0,0,0,1,0,How did you find out about this questionnaire?,Twitter
-189,F4,F,surveySource_SQ003comment,surveySource,SQ003comment,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,TwitterComment
-190,F5,F,surveySource_SQ004,surveySource,SQ004,categorical,a,No,FALSE,,,0,0,0,1,0,How did you find out about this questionnaire?,Newsletter
-191,F6,F,surveySource_SQ004comment,surveySource,SQ004comment,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,NewsletterComment
-192,F7,F,surveySource_SQ005,surveySource,SQ005,categorical,a,No,FALSE,,,0,0,0,1,0,How did you find out about this questionnaire?,A friend
-193,F8,F,surveySource_SQ005comment,surveySource,SQ005comment,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,A friendComment
-194,F9,F,surveySource_other,surveySource,other,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,Other
+185,E13,E,commentsE,commentsE,"",qualitative,,,,,,,,,,,"If you would like to, please detail the answers to the previous questions (who should lead the way, what you would accept to reduce risks, …)",""
+186,F01,F,surveySource_SQ002,surveySource,SQ002,categorical,a,No,FALSE,,,0,0,0,1,0,How did you find out about this questionnaire?,Facebook
+187,F02,F,surveySource_SQ002comment,surveySource,SQ002comment,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,FacebookComment
+188,F03,F,surveySource_SQ003,surveySource,SQ003,categorical,a,No,FALSE,,,0,0,0,1,0,How did you find out about this questionnaire?,Twitter
+189,F04,F,surveySource_SQ003comment,surveySource,SQ003comment,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,TwitterComment
+190,F05,F,surveySource_SQ004,surveySource,SQ004,categorical,a,No,FALSE,,,0,0,0,1,0,How did you find out about this questionnaire?,Newsletter
+191,F06,F,surveySource_SQ004comment,surveySource,SQ004comment,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,NewsletterComment
+192,F07,F,surveySource_SQ005,surveySource,SQ005,categorical,a,No,FALSE,,,0,0,0,1,0,How did you find out about this questionnaire?,A friend
+193,F08,F,surveySource_SQ005comment,surveySource,SQ005comment,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,A friendComment
+194,F09,F,surveySource_other,surveySource,other,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,Other
 195,F10,F,surveySource_othercomment,surveySource,othercomment,qualitative,,,,,,,,,,,How did you find out about this questionnaire?,Other comment
-196,F11,F,age,age,,categorical,p,60-69 years old,FALSE,,,0,0,0,1,0,What is your age?,""
-197,F12,F,gender,gender,,categorical,q,Male,FALSE,,,0,0,0,1,0,What gender do you identify with?,""
+196,F11,F,age,age,"",categorical,p,60-69 years old,FALSE,,,0,0,0,1,0,What is your age?,""
+197,F12,F,gender,gender,"",categorical,q,Male,FALSE,,,0,0,0,1,0,What gender do you identify with?,""
 198,F13,F,gender_other,gender,other,qualitative,,,,,,,,,,,What gender do you identify with?,Other
-199,F14,F,autochtonous,autochtonous,,categorical,r,No,FALSE,,,0,0,0,1,0,"Do you identify as First Nation, Métis or Inuit?",""
-200,F15,F,woodlotMoney,woodlotMoney,,categorical,s,1 to 10 %,FALSE,,,1,0,0,0,0,"On average, how much of your annual family income comes from your woodlots?",""
-201,F16,F,education,education,,categorical,t,University degree or equivalent,FALSE,,,0,0,0,1,0,What is the highest level of education you have completed?,""
+199,F14,F,autochtonous,autochtonous,"",categorical,r,No,FALSE,,,0,0,0,1,0,"Do you identify as First Nation, Métis or Inuit?",""
+200,F15,F,woodlotMoney,woodlotMoney,"",categorical,s,1 to 10 %,FALSE,,,1,0,0,0,0,"On average, how much of your annual family income comes from your woodlots?",""
+201,F16,F,education,education,"",categorical,t,University degree or equivalent,FALSE,,,0,0,0,1,0,What is the highest level of education you have completed?,""
 202,F17,F,education_other,education,other,qualitative,,,,,,,,,,,What is the highest level of education you have completed?,Other
-203,F18,F,professionalForester,professionalForester,,categorical,a,No,FALSE,,,0,0,0,1,0,"Do you have a degree related to forestry (forester, technician, engineer, etc)?",""
-204,F19,F,job,job,,categorical,u,Retired,FALSE,,,0,0,0,1,0,Which professional category best describes you?,""
+203,F18,F,professionalForester,professionalForester,"",categorical,a,No,FALSE,,,0,0,0,1,0,"Do you have a degree related to forestry (forester, technician, engineer, etc)?",""
+204,F19,F,job,job,"",categorical,u,Retired,FALSE,,,0,0,0,1,0,Which professional category best describes you?,""
 205,F20,F,job_other,job,other,qualitative,,,,,,,,,,,Which professional category best describes you?,Other
-206,F21,F,woodlotVisit,woodlotVisit,,categorical,v,Every week,FALSE,,,1,0,0,0,0,How often do you visit at least one of your woodlots?,""
+206,F21,F,woodlotVisit,woodlotVisit,"",categorical,v,Every week,FALSE,,,1,0,0,0,0,How often do you visit at least one of your woodlots?,""
 207,F22,F,woodlotVisit_other,woodlotVisit,other,qualitative,,,,,,,,,,,How often do you visit at least one of your woodlots?,Other
-208,F23,F,commentsFinal,commentsFinal,,qualitative,,,,,,,,,,,"",""
+208,F23,F,commentsFinal,commentsFinal,"",qualitative,,,,,,,,,,,"",""
