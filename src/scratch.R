@@ -6,9 +6,40 @@ source("paths.R")
 source("utilities.R")
 
 
+survey.fit <- readRDS(file.survey.rf)
+
+vars.adapt <- paste0("D", 1:10)
+vars.resp <- c(paste0("y.acc.", 1:10), "y.acc.comb")
+vars.expl <- names(survey.fit)[!names(survey.fit) %in% c(vars.adapt, vars.resp)]
+
+adapt.mat <-
+  survey.fit[, ..vars.resp
+             ][, lapply(.SD, as.numeric)] |>
+  as.matrix()
+
+var.mat <-
+  survey.fit[, ..vars.expl
+             ][, lapply(.SD, as.numeric)] |>
+  as.matrix()
+
+cor.dt <-
+  cor(adapt.mat, var.mat, method = "pearson") |>
+  as.data.table(keep.rownames = "adapt") |>
+  melt(id.vars = "adapt",
+       variable.name = "expl",
+       value.name = "cor")
+
+cor.dt
+
+cor.dt[order(adapt, -cor), .SD[which.max(cor)], by = adapt]
+
+
 survey.irt <- readRDS(file.survey.irt)
 variables <- readRDS(file.variables.proc)
 dependencies <- readRDS(file.questions.dependencies)
+
+variables
+
 
 vars.pred.cat <- variables[code %in% names(survey.irt) & type == "categorical", code]
 vars.pred.cont <- variables[code %in% names(survey.irt) & type == "continuous", code]
