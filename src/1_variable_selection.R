@@ -9,7 +9,6 @@ source("paths.R")
 source("utilities.R")
 
 mod.id <- as.integer(args[1])
-mod.id <- 1
 
 options(mc.cores = 4)
 
@@ -26,6 +25,8 @@ file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
 
 ## SELECTION MODEL WITH HORSESHOE PRIOR ################################
 
+message(paste0("Performing variable selection for adaptation action '",
+               var.resp, "' …"))
 
 form.sel <- 
   paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
