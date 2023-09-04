@@ -103,7 +103,6 @@ mod.imp.2pl <-
   brm(formula = form.imp.2pl,
       data = survey.irt,
       family = brmsfamily("bernoulli", "logit"),
-      init = 0,
       silent = 0,
       chains = 4,
       cores = 4,
