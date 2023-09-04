@@ -107,11 +107,10 @@ mod.imp.2pl <-
       silent = 0,
       chains = 4,
       cores = 4,
-      threads = 8,
       warmup = 2500,
       iter = 5000,
       refresh = 25,
-      control = list(adapt_delta = 0.9),
+      backend = "cmdstanr",
       prior = prior.imp.2pl)
 
 
