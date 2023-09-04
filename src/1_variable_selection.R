@@ -32,7 +32,7 @@ form.sel <-
   paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
   as.formula()
 
-prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b")
+prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
              prior(normal(0, 3), class = "Intercept")
 
 # form.sel <- 
