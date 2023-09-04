@@ -1,6 +1,7 @@
 library(data.table)
 library(stringi)
 library(brms)
+library(projpred)
 
 source("paths.R")
 source("utilities.R")
@@ -138,14 +139,14 @@ mod.ref <- get_refmodel(mod.sel)
 
 # mod.var.sel <- varsel(mod.ref, nterms_max = 50)
 
-mod.var.sel <- cv_varsel(mod.ref, nterms.max = 50)
+mod.var.sel <- cv_varsel(mod.ref, nterms_max = 50)
 
+# plot(mod.var.sel, alpha = 0.01, deltas = TRUE)
 summary(mod.var.sel)
-suggest_size(mod.var.sel)
+suggest_size(mod.var.sel, alpha = 0.05, pct = 0.2)
 
 saveRDS(mod.var.sel, "../results/varsel/sel.1.rds")
 
 # install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 # cmdstanr::cmdstan_make_local(cpp_options = "CXXFLAGS += -ftemplate-depth=2048", append = FALSE)
 # cmdstanr::rebuild_cmdstan()
-
