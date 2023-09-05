@@ -118,8 +118,8 @@ if(var.resp != "Count") {
   mod.ref <- get_refmodel(mod.sel, latent = TRUE)
 }
 
-# mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max)
-mod.var.sel <- varsel(mod.ref, nterms_max = n.terms.max)
+mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max)
+# mod.var.sel <- varsel(mod.ref, nterms_max = n.terms.max)
 
 # plot(mod.var.sel, deltas = TRUE, alpha = 0.05)
 # plot(mod.var.sel, alpha = 0.05, deltas = TRUE) +
