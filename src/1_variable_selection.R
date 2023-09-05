@@ -84,7 +84,7 @@ mod.sel <-
       iter = 10000,
       thin = 2,
       refresh = 100,
-      control = list(adapt_delta = 0.9),
+      control = list(adapt_delta = 0.99),
       # backend = "cmdstanr",
       prior = prior.sel)
 
