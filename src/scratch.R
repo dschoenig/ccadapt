@@ -5,6 +5,10 @@ library(brms)
 source("paths.R")
 source("utilities.R")
 
+modd <- readRDS("../results/varsel/mod.sel.D02.rds")
+
+library(shinystan)
+launch_shinystan(modd)
 
 survey.fit <- readRDS(file.survey.rf)
 
