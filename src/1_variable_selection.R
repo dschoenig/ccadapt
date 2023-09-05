@@ -9,6 +9,7 @@ source("paths.R")
 source("utilities.R")
 
 mod.id <- as.integer(args[1])
+# mod.id <- 3
 
 options(mc.cores = 4)
 
@@ -21,6 +22,35 @@ vars.pred <- names(survey.fit.w)[!names(survey.fit.w) %in% vars.adapt]
 
 file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
 file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
+
+
+## SIMPLIFY FACTOR LEVELS #############################################
+
+# Purely to avoid parsing errors in projpred
+
+vars.recode <- names(survey.fit.w)
+vars.recode <- vars.recode[!vars.recode %in% vars.adapt]
+
+recode.key.l <- list()
+for(i in seq_along(vars.recode)) {
+  var.foc <- vars.recode[i]
+  if(is.factor(survey.fit.w[[var.foc]])) {
+    var.val <- survey.fit.w[[var.foc]] 
+    var.recode <-
+      data.table(code = var.foc,
+                 level.survey = unique(var.val))
+    var.recode[, level.num := as.numeric(level.survey)]
+    nlev <- nrow(var.recode)
+    var.recode[, level.mod := factor(level.num, levels = as.character(1:nlev))]
+    var.val.rc <- as.numeric(var.val)
+    survey.fit.w[,
+               var.sel := factor(as.numeric(var.sel), levels = as.character(1:nlev)),
+               env = list(var.sel = var.foc)]
+    recode.key.l[[i]] <- var.recode
+  }
+}
+
+recode.key <- rbindlist(recode.key.l)
 
 
 ## SELECTION MODEL WITH HORSESHOE PRIOR ################################
@@ -54,7 +84,7 @@ mod.sel <-
       iter = 10000,
       thin = 2,
       refresh = 100,
-      control = list(adapt_delta = 0.99),
+      control = list(adapt_delta = 0.9),
       # backend = "cmdstanr",
       prior = prior.sel)
 
@@ -68,8 +98,8 @@ saveRDS(mod.sel, file.mod.sel)
 n.terms.max <- round(0.25 * length(vars.pred))
 
 mod.ref <- get_refmodel(mod.sel)
-mod.var.sel <- cv_varsel(mod.ref, n.terms_max = n.terms.max)
-# mod.var.sel <- varsel(mod.ref, n.terms_max = n.terms.max)
+mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max)
+# mod.var.sel <- varsel(mod.ref, nterms_max = n.terms.max)
 
 # plot(mod.var.sel, alpha = 0.05, deltas = TRUE) +
 # geom_hline(yintercept = summary(mod.var.sel)$selection$diff[1] * 0.5)
