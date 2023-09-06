@@ -7,27 +7,31 @@ source("utilities.R")
 
 cont.nl <- TRUE
 k.max <- 10
-var.trans.log <- NULL
-# var.trans.log <- c("A3")
 
-survey.irt <- readRDS(file.survey.irt)
+survey.fit.w <- readRDS(file.survey.fit.w)
 variables <- readRDS(file.variables.proc)
-dependencies <- readRDS(file.questions.dependencies)
-
-vars.pred.cat <- variables[code %in% names(survey.irt) & type == "categorical", code]
-vars.pred.cont <- variables[code %in% names(survey.irt) & type == "continuous", code]
+sel.res.sum <- readRDS(file.var.sel.res)
 
 
-if(!is.null(var.trans.log)) {
-  for(i in seq_along(var.trans.log)) {
-    var.mean <- variables[code == var.trans.log[i], cont.mean]
-    var.sd <- variables[code == var.trans.log[i], cont.sd]
-    var.org <- var.mean + (var.sd * survey.irt[[var.trans.log[i]]])
-    var.trans <- log(var.org)
-    var.trans.std <- (var.trans - mean(var.trans)) / sd(var.trans)
-    survey.irt[, var.sel := var.trans.std, env = list(var.sel = var.trans.log[i])]
-  }
-}
+vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
+
+vars.pred <-
+  sel.res.sum[size <= size.sel & !is.na(expl),
+              sort(unique(expl))]
+
+vars.pred.cat <- variables[code %in% vars.pred & type == "categorical", code]
+vars.pred.cont <- variables[code %in% vars.pred & type == "continuous", code]
+
+survey.fit.w[, id := 1:.N]
+
+survey.irt <- 
+  survey.fit.w[ , c("id", vars.adapt, vars.pred), with = FALSE] |>
+  melt(id.vars = c("id", vars.pred),
+       measure.vars = vars.adapt,
+       variable.name = "item",
+       value.name = "resp")
+
+saveRDS(survey.irt, file.survey.irt)
 
 
 ## ITEM-RESPONSE MODEL 2PL ############################################

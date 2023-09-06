@@ -57,7 +57,7 @@ plot_theme <-
 
 variables <- readRDS(file.variables.proc)
 
-vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
+# vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
 vars.adapt <- c(variables[category.adaptation == TRUE, sort(code)], "Count")
 
 files.var.sel <- paste0(file.var.sel.prefix, vars.adapt, ".rds")
@@ -71,10 +71,11 @@ for(i in seq_along(vars.adapt)) {
   sel.res.adapt[[i]] <- readRDS(files.var.sel[i])
 }
 
+
 # ci.alpha <- 2 * pnorm(-1)
 ci.alpha <- 2*pnorm(-1)
-ci.type <- "upper"
-diff.pct <- 0
+ci.type <- "lower"
+diff.pct <- 0.5
 sel.res.sum.l <- list()
 sel.res.size <- integer()
 sel.res.vars <- integer()
@@ -134,13 +135,12 @@ sel.res.sum[size <= size.sel & size != 0, count.sel := .N, by = "expl"]
 setcolorder(sel.res.sum, c("resp", "size", "expl", "cv_prop"))
 
 
-vars.selected <-
-  sel.res.sum[size <= size.sel & !is.na(expl),
-              sort(unique(expl))]
-
-
 sel.res.sum[, resp := factor(resp, levels = vars.adapt)]
 setorder(sel.res.sum, resp)
+
+fwrite(sel.res.sum, file.var.sel.res.csv)
+saveRDS(sel.res.sum, file.var.sel.res)
+
 
 ## PREPARE FOR PLOTTING ###############################################
 
@@ -191,10 +191,23 @@ cat.labels <-
 
 ref.lines <-
   rbind(
-        sel.res.p[size == 0, .(type = rep("Null model", .N), yint = diff), by = "resp"],
-        sel.res.p[size == Inf, .(type = rep("Full model", .N), yint = diff), by = "resp"],
-        sel.res.p[, .(type = rep("Best model", .N), yint = max(diff)), by = "resp"])
+        sel.res.p[size == 0,
+                  .(type = rep("Null model", .N), yint = diff, col = "black"),
+                  by = "resp"],
+        sel.res.p[size == Inf,
+                  .(type = rep("Full model", .N), yint = diff, col = "black"),
+                  by = "resp"],
+        sel.res.p[,
+                  .(type = rep("Best model", .N), yint = max(diff), col = "black"),
+                  by = "resp"],
+        sel.res.p[size == 0,
+                  .(type = rep("Acceptance threshold", .N), yint = diff/2, col = "red"),
+                  by = "resp"])
 
+ref.lines[, type := factor(type, levels = c("Best model",
+                                            "Full model",
+                                            "Null model",
+                                            "Acceptance threshold"))] 
 
 
 ggplot(sel.res.p) +
@@ -212,9 +225,12 @@ ggplot(sel.res.p) +
   # geom_hline(data = sel.res.p[, .(int.line = min(diff)), by = "resp"],
   #            mapping = aes(yintercept = int.line),
   #            linetype = "dotted") +
-  geom_hline(data = ref.lines,
+  geom_hline(data = ref.lines[type != "Acceptance threshold"],
              mapping = aes(yintercept = yint, linetype = type),
              linewidth = 0.2) +
+  geom_hline(data = ref.lines[type == "Acceptance threshold"],
+             mapping = aes(yintercept = yint),
+             linewidth = 0.2, color = 2) +
   geom_line(aes(x = size,
                 y = diff,
                 group = resp)) +
@@ -238,6 +254,7 @@ ggplot(sel.res.p) +
                 label = expl,
                 color = cat.lab.mult),
             family = base.family,
+            # fontface = "bold",
             size = base.size/4,
             angle = 90,
             hjust = 1,
@@ -256,12 +273,14 @@ ggplot(sel.res.p) +
   scale_y_continuous(expand = expansion(c(0.225, 0.1), 0)) +
   scale_linetype_manual(values = c("Null model" = "dotted",
                                    "Full model" = "dashed",
-                                   "Best model" = "solid")) +
+                                   "Best model" = "solid",
+                                   "Acceptance threshold" = "solid"),
+                        drop = FALSE) +
   scale_fill_brewer(type = "qual", palette = "Set1",
                     aesthetics = c("fill", "colour")) +
   # guides(colour = guide_legend(override.aes=list(shape = 16, size = 1,  label = ""))) +
-  guides(linetype = guide_legend(order = 1)) +
-  facet_wrap(vars(resp), ncol = 2, scales = "free_y") +
+  guides(linetype = guide_legend(order = 1, override.aes = list(colour = c(1, 1, 1, 2)))) +
+  facet_wrap(vars(resp), ncol = 3, scales = "free_y") +
   labs(x = "Model size (number of terms)",
        y = "Difference in ELPD vs. best model",
        linetype = "Reference models",
@@ -269,3 +288,8 @@ ggplot(sel.res.p) +
   plot_theme
 
 
+# sel.res.sum[size <= size.sel & !is.na(expl) & resp != "Count",
+#             sort(unique(expl))]
+
+# sel.res.sum[size <= size.sel & !is.na(expl),
+#             sort(unique(expl))]

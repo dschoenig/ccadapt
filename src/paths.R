@@ -37,6 +37,8 @@ file.irt.mod.2pl.hs.template <- paste0(path.results.irt, "mod.imp.2pl.hs.templat
 file.irt.mod.2pl.hs <- paste0(path.results.irt, "mod.imp.2pl.hs.rds")
 file.mod.sel.prefix <- paste0(path.results.varsel, "mod.sel.")
 file.var.sel.prefix <- paste0(path.results.varsel, "var.sel.")
+file.var.sel.res <- paste0(path.results.varsel, "var.sel.res.rds")
+file.var.sel.res.csv <- paste0(path.results.varsel, "var.sel.res.csv")
 file.irt.mod.2pl.hs.nl <- paste0(path.results.irt, "mod.imp.2pl.hs.nl.rds")
 file.irt.mod.2pl.full <- paste0(path.results.irt, "mod.imp.2pl.full.rds")
 file.irt.mod.2pl.full.nl <- paste0(path.results.irt, "mod.imp.2pl.full.nl.rds")
