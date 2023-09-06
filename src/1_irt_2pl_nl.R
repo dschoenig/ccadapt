@@ -5,7 +5,7 @@ library(brms)
 source("paths.R")
 source("utilities.R")
 
-cont.nl <- TRUE
+cont.nl <- FALSE
 k.max <- 10
 
 survey.fit.w <- readRDS(file.survey.fit.w)
@@ -32,6 +32,7 @@ survey.irt <-
        value.name = "resp")
 
 saveRDS(survey.irt, file.survey.irt)
+
 
 
 ## ITEM-RESPONSE MODEL 2PL ############################################
@@ -116,4 +117,6 @@ mod.imp.2pl <-
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
 saveRDS(mod.imp.2pl, file.irt.mod.2pl.nl)
+
+
 
