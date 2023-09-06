@@ -4,6 +4,9 @@ library(data.table)
 library(stringi)
 library(brms)
 library(projpred)
+library(doParallel)
+library(doRNG)
+
 
 source("paths.R")
 source("utilities.R")
@@ -109,7 +112,6 @@ dir.create(path.results.varsel, recursive = TRUE, showWarnings = FALSE)
 saveRDS(mod.sel, file.mod.sel)
 # mod.sel <- readRDS(file.mod.sel)
 
-
 n.terms.max <- round(0.25 * length(vars.pred))
 
 if(var.resp != "Count") {
@@ -118,7 +120,10 @@ if(var.resp != "Count") {
   mod.ref <- get_refmodel(mod.sel, latent = TRUE)
 }
 
-mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max)
+cl <- makeCluster(4)
+registerDoParallel(cl)
+
+mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max, parallel = TRUE)
 # mod.var.sel <- varsel(mod.ref, nterms_max = n.terms.max)
 
 # plot(mod.var.sel, deltas = TRUE, alpha = 0.05)
