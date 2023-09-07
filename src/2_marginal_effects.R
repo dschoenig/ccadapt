@@ -19,17 +19,19 @@ dependencies <- readRDS(file.questions.dependencies)
 survey.irt <- readRDS(file.survey.irt)
 # survey.irt <- survey.irt[, .SD[1], by = item]
 
-mod.irt <- readRDS(file.irt.mod.2pl.nl)
+mod.irt <- readRDS(file.irt.mod.2pl)
 
-pred.scales <- c("prob", "linpred")
+# pred.scales <- c("prob", "linpred")
+pred.scales <- c("prob")
 mar.type <- "cf"
 # mar.type <- "mem"
-cont.pred.n <- 11
+cont.pred.n <- 21
 cont.diff.frac <- 100
+slope.res <- "fine"
 # var.log <- NULL
 var.log <- c("A3")
-n.draws <- NULL
-# n.draws <- 50
+draw.ids <- NULL
+# draw.ids <- sample(1:1e4, 100)
 ci.et.width <- 0.9
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
@@ -90,7 +92,7 @@ vars.pred <-
             ]
 
 items.ref <- levels(survey.irt$item)
-items.code <- paste0("D", 1:10)
+items.code <- variables[category.adaptation == 1, code]
 items.code <- factor(items.code, levels = items.code)
 names(items.code) <- items.ref
 
@@ -125,7 +127,8 @@ for(p in seq_along(pred.scales)) {
 
 # vars.irt <- vars.irt[1:2]
 # vars.irt <- "F14"
-# vars.irt <- "A3"
+# vars.irt <- "A22"
+# survey.irt <- survey.irt[id %in% sample(1:.N, 100)]
 
 for(i in seq_along(vars.irt)) {
   
@@ -202,24 +205,43 @@ for(i in seq_along(vars.irt)) {
       re.form <-
         paste0("~ (1 + ", paste0(vars.re, collapse = " + "), " | item)") |>
         as.formula()
-      pred.mod <- t(posterior_epred(mod.irt, var.lev.dt, re_formula = re.form, ndraws = n.draws))
+        pred.mod <- t(posterior_epred(mod.irt,
+                                      newdata = var.lev.dt,
+                                      re_formula = re.form,
+                                      draw_ids = draw.ids))
+        pred.mod.lp <- t(posterior_linpred(mod.irt,
+                                           newdata = var.lev.dt,
+                                           re_formula = re.form,
+                                           draw_ids = draw.ids))
     }
     if(mar.type == "cf") {
-      pred.mod <- t(posterior_epred(mod.irt, var.lev.dt, ndraws = n.draws))
+      pred.mod <- t(posterior_epred(mod.irt,
+                                    newdata = var.lev.dt,
+                                    draw_ids = draw.ids))
+      pred.mod.lp <- t(posterior_linpred(mod.irt,
+                                         newdata = var.lev.dt,
+                                         draw_ids = draw.ids))
     }
 
     colnames(pred.mod) <- paste0("draw_", 1:ncol(pred.mod))
+    colnames(pred.mod.lp) <- paste0("draw_", 1:ncol(pred.mod))
 
-    pred.var.lev <-
+    pred.mod.obs <-
       as.data.table(as.data.frame(pred.mod)) |>
       _[, obs := var.lev.dt$obs] |>
       melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
-           value.name = "prob") |>
-      _[, linpred := qlogis(prob)] |>
-      merge(var.lev.dt[,.(obs, item)])
+           value.name = "prob")
+    pred.mod.lp.obs <-
+      as.data.table(as.data.frame(pred.mod.lp)) |>
+      _[, obs := var.lev.dt$obs] |>
+      melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
+           value.name = "linpred")
+
+    pred.var.lev <-
+      merge(pred.mod.obs, pred.mod.lp.obs, by = c("obs", "draw")) |>
+      merge(var.lev.dt[,.(obs, item.code = item)], by = "obs")
 
     pred.var.lev[, draw := as.integer(draw)]
-    pred.var.lev[, item.code := items.code[as.character(item)]]
     pred.var.lev[, code.mar := var.foc]
 
     if(var.type == "continuous") {
@@ -246,10 +268,6 @@ for(i in seq_along(vars.irt)) {
 
   pred.var <- rbindlist(pred.var.l)
 
-  pred.var[linpred == Inf, linpred := qlogis(1-sqrt(.Machine$double.eps))]
-  pred.var[linpred == -Inf, linpred := qlogis(sqrt(.Machine$double.eps))]
-  pred.var[prob == 1, linpred := qlogis(1-sqrt(.Machine$double.eps))]
-  pred.var[prob == 0, linpred := qlogis(sqrt(.Machine$double.eps))]
 
   if(var.type == "categorical") {
 
@@ -302,116 +320,164 @@ for(i in seq_along(vars.irt)) {
     setorder(var.comp.dt, item.code, comp.id)
   }
 
+
   if(var.type == "continuous") {
 
     message("Calculating slopes (central difference) …")
 
-    diff.h <-
-      (max(survey.irt[[var.foc]]) - min(survey.irt[[var.foc]])) / cont.diff.frac
+    if(slope.res == "coarse") {
 
+      message("Coarse approximation …")
 
-    slope.var.l <- list()
+      slope.var <-
+        pred.var[order(item.code, draw, lev),
+                 .(code.mar,
+                   lev,
+                   prob,
+                   lev.bw = lev[c(1, 1:(.N-1))],
+                   lev.fw = lev[c(2:.N, .N)],
+                   prob.bw = prob[c(1, 1:(.N-1))],
+                   prob.fw = prob[c(2:.N, .N)],
+                   linpred.bw = linpred[c(1, 1:(.N-1))],
+                   linpred.fw = linpred[c(2:.N, .N)]
+                   ),
+                 by = c("item.code", "draw")]
 
-    for(j in seq_along(var.lev)) {
-      # For loop to keep memory footprint lower
+      slope.var[,
+                `:=`(prob.slope = (prob.fw - prob.bw) / (lev.fw - lev.bw),
+                     linpred.slope = (linpred.fw - linpred.bw) / (lev.fw - lev.bw))]
 
-      message(paste0("Level ", j , "/", length(var.lev), " …"))
-
-      var.lev.foc <- var.lev[j]
-
-      var.lev.dt <- 
-        var.dt[var.sel == var.lev.foc,
-               env = list(var.sel = var.foc)]
-
-      var.lev.fw <- copy(var.lev.dt)
-      var.lev.bw <- copy(var.lev.dt)
-
-      var.lev.fw[,
-                 var.sel := var.lev.foc + diff.h/2,
-                 env = list(var.sel = var.foc)]
-      var.lev.bw[,
-                 var.sel := var.lev.foc - diff.h/2,
-                 env = list(var.sel = var.foc)]
-
-
-      if(mar.type == "mem") {
-        vars.re <- names(mod.irt$data)
-        vars.re <- vars.re[vars.re %in% variables$code]
-        re.form <-
-          paste0("~ (1 + ", paste0(vars.re, collapse = " + "), " | item)") |>
-          as.formula()
-        pred.mod.fw <- t(posterior_epred(mod.irt, var.lev.fw, re_formula = re.form, ndraws = n.draws))
-        pred.mod.bw <- t(posterior_epred(mod.irt, var.lev.bw, re_formula = re.form, ndraws = n.draws))
-      }
-      if(mar.type == "cf") {
-        pred.mod.fw <- t(posterior_epred(mod.irt, var.lev.fw, ndraws = n.draws))
-        pred.mod.bw <- t(posterior_epred(mod.irt, var.lev.bw, ndraws = n.draws))
-      }
-
-      pred.mod.prob <- (pred.mod.fw - pred.mod.bw) / diff.h
-      colnames(pred.mod.prob) <- paste0("draw_", 1:ncol(pred.mod.prob))
-
-      mat.fw.lp <- qlogis(pred.mod.fw)
-      mat.fw.lp[mat.fw.lp == Inf] <- 1-sqrt(.Machine$double.eps)
-      mat.fw.lp[mat.fw.lp == -Inf] <- sqrt(.Machine$double.eps)
-      mat.bw.lp <- qlogis(pred.mod.bw)
-      mat.bw.lp[mat.bw.lp == Inf] <- 1-sqrt(.Machine$double.eps)
-      mat.bw.lp[mat.bw.lp == -Inf] <- sqrt(.Machine$double.eps)
-
-      pred.mod.linpred <- (mat.fw.lp - mat.bw.lp) / diff.h
-
-      colnames(pred.mod.linpred) <- paste0("draw_", 1:ncol(pred.mod.linpred))
-
-      slope.var.lev.prob <-
-        as.data.table(as.data.frame(pred.mod.prob)) |>
-        _[, obs := var.lev.dt$obs] |>
-        melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
-             value.name = "prob.slope") |>
-        merge(var.lev.dt[,.(obs, item)])
-
-      slope.var.lev.linpred <-
-        as.data.table(as.data.frame(pred.mod.linpred)) |>
-        _[, obs := var.lev.dt$obs] |>
-        melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
-             value.name = "linpred.slope") |>
-        merge(var.lev.dt[,.(obs, item)])
-
-      slope.var.lev <- merge(slope.var.lev.linpred,
-                             slope.var.lev.prob,
-                             by = c("obs", "draw", "item"))
-
-
-      slope.var.lev[, draw := as.integer(draw)]
-      slope.var.lev[, item.code := items.code[as.character(item)]]
-      slope.var.lev[, code.mar := var.foc]
-
-      slope.var.lev[,
-                   lev := var.lev.foc,
-                   env = list(var.sel = var.foc)]
-
-      slope.var.l[[j]] <-
-        slope.var.lev[,
-                     .(prob.slope = mean(prob.slope),
-                       linpred.slope = mean(linpred.slope)),
-                     by = c("draw", "item.code", "code.mar", "lev")]
-
-      gc()
 
     }
 
-    slope.var <- rbindlist(slope.var.l)
+    if(slope.res == "fine") {
 
-    var.comp.dt <-
-      slope.var[,
-                .(prob.slope.median = median(prob.slope),
-                  prob.slope.ci.l = quantile(prob.slope, q.ci.l),
-                  prob.slope.ci.u = quantile(prob.slope, q.ci.u),
-                  linpred.slope.median = median(linpred.slope),
-                  linpred.slope.ci.l = quantile(linpred.slope, q.ci.l),
-                  linpred.slope.ci.u = quantile(linpred.slope, q.ci.u),
-                  p.diff.pos = sum(prob.slope > 0)/.N,
-                  p.diff.neg = sum(prob.slope < 0)/.N),
-                by = c("item.code", "code.mar", "lev")]
+      message("Fine approximation …")
+
+      diff.h <-
+        (max(survey.irt[[var.foc]]) - min(survey.irt[[var.foc]])) / cont.diff.frac
+
+
+      slope.var.l <- list()
+
+      for(j in seq_along(var.lev)) {
+        # For loop to keep memory footprint lower
+
+        message(paste0("Level ", j , "/", length(var.lev), " …"))
+
+        var.lev.foc <- var.lev[j]
+
+        var.lev.dt <- 
+          var.dt[var.sel == var.lev.foc,
+                 env = list(var.sel = var.foc)]
+
+        var.lev.fw <- copy(var.lev.dt)
+        var.lev.bw <- copy(var.lev.dt)
+
+        var.lev.fw[,
+                   var.sel := var.lev.foc + diff.h/2,
+                   env = list(var.sel = var.foc)]
+        var.lev.bw[,
+                   var.sel := var.lev.foc - diff.h/2,
+                   env = list(var.sel = var.foc)]
+
+
+        if(mar.type == "mem") {
+          vars.re <- names(mod.irt$data)
+          vars.re <- vars.re[vars.re %in% variables$code]
+          re.form <-
+            paste0("~ (1 + ", paste0(vars.re, collapse = " + "), " | item)") |>
+            as.formula()
+          pred.mod.fw <- t(posterior_epred(mod.irt,
+                                           newdata = var.lev.fw,
+                                           re_formula = re.form,
+                                           draw_ids = draw.ids))
+          pred.mod.bw <- t(posterior_epred(mod.irt,
+                                           newdata = var.lev.bw,
+                                           re_formula = re.form,
+                                           draw_ids = draw.ids))
+          pred.mod.lp.fw <- t(posterior_linpred(mod.irt,
+                                                newdata = var.lev.fw,
+                                                re_formula = re.form,
+                                                draw_ids = draw.ids))
+          pred.mod.lp.bw <- t(posterior_linpred(mod.irt,
+                                                newdata = var.lev.bw,
+                                                re_formula = re.form,
+                                                draw_ids = draw.ids))
+        }
+        if(mar.type == "cf") {
+          pred.mod.fw <- t(posterior_epred(mod.irt,
+                                           newdata = var.lev.fw,
+                                           draw_ids = draw.ids))
+          pred.mod.bw <- t(posterior_epred(mod.irt,
+                                           newdata =  var.lev.bw,
+                                           draw_ids = draw.ids))
+          pred.mod.lp.fw <- t(posterior_linpred(mod.irt,
+                                                newdata = var.lev.fw,
+                                                draw_ids = draw.ids))
+          pred.mod.lp.bw <- t(posterior_linpred(mod.irt,
+                                                newdata =  var.lev.bw,
+                                                draw_ids = draw.ids))
+        }
+
+        pred.mod.prob <- (pred.mod.fw - pred.mod.bw) / diff.h
+        colnames(pred.mod.prob) <- paste0("draw_", 1:ncol(pred.mod.prob))
+
+        pred.mod.linpred <- (pred.mod.lp.fw - pred.mod.lp.bw) / diff.h
+        colnames(pred.mod.linpred) <- paste0("draw_", 1:ncol(pred.mod.linpred))
+
+        slope.var.lev.prob <-
+          as.data.table(as.data.frame(pred.mod.prob)) |>
+          _[, obs := var.lev.dt$obs] |>
+          melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
+               value.name = "prob.slope") |>
+          merge(var.lev.dt[,.(obs, item)])
+
+        slope.var.lev.linpred <-
+          as.data.table(as.data.frame(pred.mod.linpred)) |>
+          _[, obs := var.lev.dt$obs] |>
+          melt(measure.vars = measure(draw, pattern = "draw_(.*)"),
+               value.name = "linpred.slope") |>
+          merge(var.lev.dt[,.(obs, item)])
+
+        slope.var.lev <- merge(slope.var.lev.linpred,
+                               slope.var.lev.prob,
+                               by = c("obs", "draw", "item"))
+
+
+        slope.var.lev[, draw := as.integer(draw)]
+        slope.var.lev[, item.code := items.code[as.character(item)]]
+        slope.var.lev[, code.mar := var.foc]
+
+        slope.var.lev[,
+                     lev := var.lev.foc,
+                     env = list(var.sel = var.foc)]
+
+        slope.var.l[[j]] <-
+          slope.var.lev[,
+                       .(prob.slope = mean(prob.slope),
+                         linpred.slope = mean(linpred.slope)),
+                       by = c("draw", "item.code", "code.mar", "lev")]
+
+        gc()
+
+      }
+
+      slope.var <- rbindlist(slope.var.l)
+
+    } # end fine
+
+      var.comp.dt <-
+        slope.var[,
+                  .(prob.slope.median = median(prob.slope),
+                    prob.slope.ci.l = quantile(prob.slope, q.ci.l),
+                    prob.slope.ci.u = quantile(prob.slope, q.ci.u),
+                    linpred.slope.median = median(linpred.slope),
+                    linpred.slope.ci.l = quantile(linpred.slope, q.ci.l),
+                    linpred.slope.ci.u = quantile(linpred.slope, q.ci.u),
+                    p.diff.pos = sum(prob.slope > 0)/.N,
+                    p.diff.neg = sum(prob.slope < 0)/.N),
+                  by = c("item.code", "code.mar", "lev")]
 
   }
 
@@ -471,6 +537,7 @@ for(i in seq_along(vars.irt)) {
 
   }
 
+
   if(var.type == "continuous") {
 
     pred.var[, lev := (lev*var.sd) + var.mean]
@@ -518,6 +585,8 @@ for(i in seq_along(vars.irt)) {
   }
 
   # Prepare plots
+
+  message("Creating plots …")
 
   for(p in seq_along(pred.scales)) {
    
@@ -722,7 +791,7 @@ for(i in seq_along(vars.irt)) {
         pred.p[[k]] <-
           ggplot(pred.var[item.code == item.foc]) +
             stat_lineribbon(aes(x = lev, y = pred.plot),
-                            .width = c(0.5, 0.9, 0.95),
+                            .width = c(0.5, 0.8, 0.9, 0.95),
                             linewidth = 0.5) +
             geom_rug(data = data.table(rug = var.mean + (var.sd * survey.irt[[var.foc]])),
                      mapping = aes(x = rug, y = 1),
@@ -743,7 +812,7 @@ for(i in seq_along(vars.irt)) {
         prob.p[[k]] <-
           ggplot(slope.var[item.code == item.foc]) +
             stat_lineribbon(aes(x = lev, y = slope.plot),
-                            .width = c(0.5, 0.9, 0.95),
+                            .width = c(0.5, 0.8, 0.9, 0.95),
                             linewidth = 0.5) +
             geom_rug(data = data.table(rug = var.mean + (var.sd * survey.irt[[var.foc]])),
                      mapping = aes(x = rug, y = 1),
@@ -836,16 +905,37 @@ setorder(comp.sum, var.code, adapt.code)
 setcolorder(comp.sum,
              c("adapt.code", "var.code",
                "var.level.1", "var.level.2",
-               "prob.diff.median", "prob.diff.ci.l", "prob.diff.ci.u",
                "var.level.cont",
+               "prob.diff.median", "prob.diff.ci.l", "prob.diff.ci.u",
                "linpred.diff.median", "linpred.diff.ci.l", "linpred.diff.ci.u",
                "prob.slope.median", "prob.slope.ci.l", "prob.slope.ci.u",
                "linpred.slope.median", "linpred.slope.ci.l", "linpred.slope.ci.u",
                "cert.pos", "cert.neg"))
 
-fwrite(pred.sum, file.irt.pred.mem)
-fwrite(comp.sum, file.irt.comp.mem)
-      
 
 
+if(mar.type == "mem") {
+  file.irt.pred <- file.irt.pred.mem
+  file.irt.comp <- file.irt.comp.mem
+  file.irt.pred.ex <- file.irt.pred.ex.mem
+  file.irt.comp.ex <- file.irt.comp.ex.mem
+}
+
+if(mar.type == "cf") {
+  file.irt.pred <- file.irt.pred.cf
+  file.irt.comp <- file.irt.comp.cf
+  file.irt.pred.ex <- file.irt.pred.ex.cf
+  file.irt.comp.ex <- file.irt.comp.ex.cf
+}
+
+fwrite(pred.sum, file.irt.pred)
+fwrite(comp.sum, file.irt.comp)
+
+pred.ex.cols <- names(pred.sum)
+pred.ex.cols <- pred.ex.cols[grep("linpred", pred.ex.cols, invert = TRUE)]
+comp.ex.cols <- names(comp.sum)
+comp.ex.cols <- comp.ex.cols[grep("linpred", comp.ex.cols, invert = TRUE)]
+
+fwrite(pred.sum[, ..pred.ex.cols], file.irt.pred.ex)
+fwrite(comp.sum[, ..comp.ex.cols], file.irt.comp.ex)
 

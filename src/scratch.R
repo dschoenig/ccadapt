@@ -5,7 +5,19 @@ library(brms)
 source("paths.R")
 source("utilities.R")
 
-modd <- readRDS("../results/varsel/mod.sel.D02.rds")
+
+mod1 <- readRDS(file.irt.mod.2pl)
+mod2 <- readRDS(file.irt.mod.2pl.nl)
+
+loo(mod1, mod2)
+
+conditional_smooths(mod2)
+conditional_effects(mod1, "A22", conditions = make_conditions(mod1, "item"), re_formula = ~ (1 + A22|item), rug = TRUE, scales = "free")
+
+modd
+
+
+
 
 library(shinystan)
 launch_shinystan(modd)
