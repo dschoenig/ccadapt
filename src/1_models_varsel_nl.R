@@ -24,7 +24,7 @@ survey.fit.w <- readRDS(file.survey.fit.w)
 
 vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
 
-if(count.nl == TRUE) {
+if(cont.nl == TRUE) {
   message("Continuous variables: non-linear effects will be estimated.")
   files.suffix <- ".nl"
 } else {
