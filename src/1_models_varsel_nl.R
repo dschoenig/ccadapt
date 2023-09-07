@@ -12,9 +12,9 @@ source("paths.R")
 source("utilities.R")
 
 mod.id <- as.integer(args[1])
-mod.id <- 1
-
+# mod.id <- 1
 cont.nl <- TRUE
+k.max <- 10
 
 options(mc.cores = 4)
 
