@@ -91,7 +91,7 @@ if(cont.nl == TRUE) {
   vars.pred.cont.term <- character(0)
   for(i in seq_along(vars.pred.cont)) {
     var.k <- min(length(unique(survey.fit.w[[vars.pred.cont[i]]])), k.max)
-    vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i], ", k = ", var.k, ", bs = 'tp')")
+    vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i], ")")
   }
 
   form.sel <- 
