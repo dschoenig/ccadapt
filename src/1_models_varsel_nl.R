@@ -12,7 +12,7 @@ source("paths.R")
 source("utilities.R")
 
 mod.id <- as.integer(args[1])
-# mod.id <- 1
+mod.id <- 1
 cont.nl <- TRUE
 k.max <- 10
 
@@ -91,8 +91,7 @@ if(cont.nl == TRUE) {
   vars.pred.cont.term <- character(0)
   for(i in seq_along(vars.pred.cont)) {
     var.k <- min(length(unique(survey.fit.w[[vars.pred.cont[i]]])), k.max)
-    vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i],
-                                     ", by = item, k = ", var.k, ", bs = 'tp')")
+    vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i], ", k = ", var.k, ", bs = 'tp')")
   }
 
   form.sel <- 
@@ -120,14 +119,6 @@ if(cont.nl == TRUE) {
 
 }
 
-
-
-form.sel <- 
-  paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
-  as.formula()
-
-prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-             prior(normal(0, 3), class = "Intercept")
 
 # form.sel <- 
 #   paste0("resp ~ 1 + (1 | ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), ")") |>
