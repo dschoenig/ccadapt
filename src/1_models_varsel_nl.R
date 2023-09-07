@@ -24,7 +24,14 @@ survey.fit.w <- readRDS(file.survey.fit.w)
 
 vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
 
-files.suffix <- ifelse(cont.nl == TRUE, ".nl", "")
+if(count.nl == TRUE) {
+  message("Continuous variables: non-linear effects will be estimated.")
+  files.suffix <- ".nl"
+} else {
+  message("Continuous variables: only linear effects will be estimated.")
+  files.suffix <- ""
+}
+
 
 if(mod.id <= length(vars.adapt)) {
   var.resp <- vars.adapt[mod.id]
@@ -40,6 +47,7 @@ if(mod.id <= length(vars.adapt)) {
   file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
 }
 
+message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel))
 
 ## SIMPLIFY FACTOR LEVELS #############################################
 
