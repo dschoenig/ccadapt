@@ -36,16 +36,16 @@ if(cont.nl == TRUE) {
 if(mod.id <= length(vars.adapt)) {
   var.resp <- vars.adapt[mod.id]
   vars.pred <- names(survey.fit.w)[!names(survey.fit.w) %in% vars.adapt]
-  file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
-  file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
 } else {
   var.resp <- "Count"
   survey.fit.w[, Count := apply(.SD, 1, sum), .SDcols = vars.adapt]
   vars.adapt <- c(vars.adapt, "Count")
   vars.pred <- names(survey.fit.w)[!names(survey.fit.w) %in% vars.adapt]
-  file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
-  file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
 }
+
+
+file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, files.suffix, ".rds")
+file.var.sel <- paste0(file.var.sel.prefix, var.resp, files.suffix, ".rds")
 
 message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel))
 
