@@ -10,4 +10,4 @@
 
 module load StdEnv/2020 gcc/9.3.0 r/4.2.2
 
-Rscript 1_models_varsel.R $SLURM_ARRAY_TASK_ID
+Rscript 1_models_varsel_nl.R $SLURM_ARRAY_TASK_ID
