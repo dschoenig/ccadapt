@@ -1,4 +1,4 @@
-args <- commandArgs(trailingOnly = TRUE)Rscript 1_irt_2pl.R TRUE
+args <- commandArgs(trailingOnly = TRUE)
 
 library(data.table)
 library(stringi)
@@ -115,7 +115,6 @@ mod.imp.2pl <-
       warmup = 2500,
       iter = 5000,
       refresh = 25,
-      empty = TRUE,
       prior = prior.imp.2pl)
 
 
