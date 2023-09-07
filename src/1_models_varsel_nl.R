@@ -12,7 +12,7 @@ source("paths.R")
 source("utilities.R")
 
 mod.id <- as.integer(args[1])
-# mod.id <- 1
+mod.id <- 1
 
 cont.nl <- TRUE
 
@@ -84,9 +84,10 @@ message(paste0("Performing variable selection for adaptation action '",
                var.resp, "' …"))
 
 
+vars.pred.cat <- variables[code %in% vars.pred & type == "categorical", code]
+vars.pred.cont <- variables[code %in% vars.pred & type == "continuous", code]
 
 if(cont.nl == TRUE) {
-
   vars.pred.cont.term <- character(0)
   for(i in seq_along(vars.pred.cont)) {
     var.k <- min(length(unique(survey.irt[[vars.pred.cont[i]]])), k.max)
