@@ -550,3 +550,23 @@ if(nrow(var.cont) > 0) {
 }
 
 saveRDS(survey.fit.u, file.survey.fit.u)
+
+survey.n <- 
+  list(willingness = survey.fit.w[, c(adapt.code, "id"), with = FALSE],
+       urgency = survey.fit.u[, c(adapt.code, "id"), with = FALSE]) |>
+  rbindlist(idcol = "type") |>
+  melt(
+       id.vars = c("type", "id"),
+       measure.vars = adapt.code,
+       variable.name = "resp") |>
+  _[!is.na(value),
+    .(n = .N),
+    by = c("type", "resp")] |>
+rbind(data.table(type = factor(c("willingness", "urgency")),
+                 resp = factor(rep("Count", 2)),
+                 n = c(nrow(survey.fit.w), nrow(survey.fit.u))))
+survey.n[, type := factor(type, levels = c("willingness", "urgency"))]
+setorder(survey.n, type, resp)
+
+saveRDS(survey.n, file.survey.n)
+

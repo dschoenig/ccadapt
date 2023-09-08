@@ -11,6 +11,7 @@ file.questions <- paste0(path.data.proc, "questions.rds")
 file.questions.dependencies <- paste0(path.data.proc, "questions.dependencies.rds")
 file.survey.proc <- paste0(path.data.proc, "survey.rds")
 file.survey.fit <- paste0(path.data.proc, "survey.fit.rds")
+file.survey.n <- paste0(path.data.proc, "survey.n.rds")
 
 path.results.w <- "../results/willingness/"
 path.results.w.varsel <- paste0(path.results.w, "varsel/")
