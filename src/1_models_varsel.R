@@ -13,8 +13,10 @@ source("utilities.R")
 
 mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
-# mod.id <- 1
-# resp.type <- "urgency"
+threshold.fit <- 0
+threshold.small <- 0
+mod.id <- 3
+resp.type <- "urgency"
 # resp.type <- "willingness"
 
 options(mc.cores = 4)
@@ -54,7 +56,7 @@ if(mod.id <= length(vars.adapt)) {
   file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
 }
 
-
+nobs.orig <- nrow(survey.fit)
 survey.fit <- survey.fit[!is.na(resp),, env = list(resp = var.resp)]
 
 
@@ -64,8 +66,6 @@ vars.vary <-
   vars.fit[survey.fit[, which(survey.fit[, lapply(.SD, \(x) length(unique(x)))] > 1)]]
 vars.pred <- vars.pred[vars.pred %in% vars.vary]
 survey.fit <- survey.fit[, ..vars.vary]
-
-
 
 
 
@@ -106,7 +106,12 @@ if(sum(is.na(recode.key$level.mod)) > 0) {
 
 nobs.fit <- nrow(survey.fit)
 
-message(paste0("Using ", nobs.fit, " observations"))
+if(nobs.fit > floor(threshold.fit * nobs.orig)) {
+  message(paste0("Using ", nobs.fit, " observations"))
+} else {
+  message(paste0("Not enough observations to fit the model (n = ", nobs.fit, ").\nQuitting …"))
+  quit(save = "no", status = 0)
+}
 
 
 ## SELECTION MODEL WITH HORSESHOE PRIOR ################################
@@ -114,12 +119,7 @@ message(paste0("Using ", nobs.fit, " observations"))
 message(paste0("Performing variable selection for adaptation action '", var.resp, "' …"))
 message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel))
 
-form.sel <- 
-  paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
-  as.formula()
 
-prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-             prior(normal(0, 3), class = "Intercept")
 
 # form.sel <- 
 #   paste0("resp ~ 1 + (1 | ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), ")") |>
@@ -134,7 +134,14 @@ if(var.resp != "Count") {
   mod.fam <- brmsfamily("poisson")
 }
 
-if(nobs.fit > 500) {
+if(nobs.fit > threshold.small) {
+
+  form.sel <- 
+    paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
+    as.formula()
+
+  prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
+               prior(normal(0, 3), class = "Intercept")
   mod.sel <-
     brm(formula = form.sel,
         data = survey.fit,
@@ -149,7 +156,20 @@ if(nobs.fit > 500) {
         control = list(adapt_delta = 0.99),
         # backend = "cmdstanr",
         prior = prior.sel)
+
 } else {
+
+  resp.mean <- mean(survey.fit[[var.resp]])
+
+  form.sel <- 
+    paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
+    as.formula()
+
+  int.prior <- paste0("normal(", round(resp.mean, 2), ", 1)")
+
+  prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
+               prior_string(int.prior, class = "Intercept")
+
   mod.sel <-
     brm(formula = form.sel,
         data = survey.fit,
@@ -157,14 +177,16 @@ if(nobs.fit > 500) {
         silent = 0,
         chains = 4,
         cores = 4,
+        init = 0,
         warmup = 7500,
         iter = 10000,
         thin = 2,
         refresh = 100,
-        control = list(adapt_delta = 0.99,
+        control = list(adapt_delta = 0.995,
                        max_treedepth = 12),
         # backend = "cmdstanr",
         prior = prior.sel)
+
 }
 
 
