@@ -179,7 +179,7 @@ if(nobs.fit > threshold.small) {
           silent = 0,
           chains = 4,
           cores = 4,
-          init = 0,
+          # init = 0,
           warmup = 7500,
           iter = 10000,
           thin = 2,
@@ -190,8 +190,11 @@ if(nobs.fit > threshold.small) {
           prior = prior.sel)
   } else {
 
+
+    int.prior <- paste0("normal(", round(log(resp.mean), 2), ", 1)")
+
     prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-                 prior(normal(0, 3), class = "Intercept")
+                 prior_string(int.prior, class = "Intercept")
 
     mod.sel <-
       brm(formula = form.sel,
@@ -200,13 +203,13 @@ if(nobs.fit > threshold.small) {
           silent = 0,
           chains = 4,
           cores = 4,
-          init = 0,
+          # init = 0,
           warmup = 7500,
           iter = 10000,
           thin = 2,
           refresh = 100,
           control = list(adapt_delta = 0.9975,
-                         max_treedepth = 14),
+                         max_treedepth = 12),
           # backend = "cmdstanr",
           prior = prior.sel)
   }
