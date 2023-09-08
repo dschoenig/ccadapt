@@ -177,7 +177,7 @@ if(nobs.fit > threshold.small) {
         silent = 0,
         chains = 4,
         cores = 4,
-        # init = 0,
+        init = 0,
         warmup = 7500,
         iter = 10000,
         thin = 2,
