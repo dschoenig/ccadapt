@@ -12,18 +12,19 @@ source("utilities.R")
 options(mc.cores = 4)
 
 resp.type <- "willingness"
+cont.nl <- FALSE
 # resp.type <- "urgency"
 # pred.scales <- c("prob", "linpred")
 pred.scales <- c("prob")
 mar.type <- "cf"
 # mar.type <- "mem"
-cont.pred.n <- 21
+cont.pred.n <- 11
 cont.diff.frac <- 100
 slope.res <- "fine"
 # var.log <- NULL
-var.log <- c("A3")
+var.log <- c("A03")
 draw.ids <- NULL
-# draw.ids <- sample(1:1e4, 100)
+draw.ids <- sample(1:1e4, 1000)
 ci.et.width <- 0.9
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
@@ -32,20 +33,28 @@ q.ci.u <- 1-q.ci.l
 if(resp.type == "willingness") {
   file.survey.irt <- file.survey.irt.w
   file.irt.mod.2pl <- file.irt.w.mod.2pl
-  path.irt.plots <- path.irt.plots.w
+  path.irt.plots <- path.irt.w.plots
   path.results.irt <- path.results.w.irt
 }
 if(resp.type == "urgency") {
   file.survey.irt <- file.survey.irt.u
   file.irt.mod.2pl <- file.irt.u.mod.2pl
-  path.irt.plots <- path.irt.plots.u
+  path.irt.plots <- path.irt.u.plots.u
   path.results.irt <- path.results.u.irt
 }
 
-file.irt.pred <- paste0(path.results.irt, "predictions.", mar.type, ".csv")
-file.irt.comp <- paste0(path.results.irt, "comparisons.", mar.type, ".csv")
-file.irt.pred.ex <- paste0(path.results.irt, "predictions.csv")
-file.irt.comp.ex <- paste0(path.results.irt, "comparisons.csv")
+if(cont.nl == TRUE) {
+  file.irt.mod <- file.irt.mod.2pl.nl
+  suffix.nl <- ".nl"
+} else {
+  file.irt.mod <- file.irt.mod.2pl
+  suffix.nl <- ""
+}
+
+file.irt.pred <- paste0(path.results.irt, "predictions.", mar.type, suffix.nl, ".csv")
+file.irt.comp <- paste0(path.results.irt, "comparisons.", mar.type, suffix.nl, ".csv")
+file.irt.pred.ex <- paste0(path.results.irt, "predictions", suffix.nl, ".csv")
+file.irt.comp.ex <- paste0(path.results.irt, "comparisons", suffix.nl, ".csv")
 
 
 variables <- readRDS(file.variables.proc)
@@ -140,13 +149,14 @@ comp.sum.l <- list()
 n.sum.l <- list()
 
 for(p in seq_along(pred.scales)) {
-  plot.file <- paste0(path.irt.plots, pred.scales[p], ".", mar.type, ".pdf")
+  plot.file <- paste0(path.irt.plots, pred.scales[p], ".", mar.type, suffix.nl, ".pdf")
   cairo_pdf(plot.file, onefile = TRUE, width = 8.5, height = 11)
 }
 
 # vars.irt <- vars.irt[1:2]
 # vars.irt <- "F14"
 # vars.irt <- "A22"
+vars.irt <- "A03"
 # survey.irt <- survey.irt[id %in% sample(1:.N, 100)]
 
 for(i in seq_along(vars.irt)) {

@@ -165,27 +165,53 @@ if(nobs.fit > threshold.small) {
     paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
     as.formula()
 
-  int.prior <- paste0("normal(", round(resp.mean, 2), ", 1)")
+  if(var.resp != "Count") {
 
-  prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-               prior_string(int.prior, class = "Intercept")
+    int.prior <- paste0("normal(", round(qlogis(resp.mean), 2), ", 1)")
 
-  mod.sel <-
-    brm(formula = form.sel,
-        data = survey.fit,
-        family = mod.fam,
-        silent = 0,
-        chains = 4,
-        cores = 4,
-        init = 0,
-        warmup = 7500,
-        iter = 10000,
-        thin = 2,
-        refresh = 100,
-        control = list(adapt_delta = 0.9975,
-                       max_treedepth = 12),
-        # backend = "cmdstanr",
-        prior = prior.sel)
+    prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
+                 prior_string(int.prior, class = "Intercept")
+
+    mod.sel <-
+      brm(formula = form.sel,
+          data = survey.fit,
+          family = mod.fam,
+          silent = 0,
+          chains = 4,
+          cores = 4,
+          init = 0,
+          warmup = 7500,
+          iter = 10000,
+          thin = 2,
+          refresh = 100,
+          control = list(adapt_delta = 0.9975,
+                         max_treedepth = 12),
+          # backend = "cmdstanr",
+          prior = prior.sel)
+  } else {
+
+    int.prior <- paste0("normal(", round(log(resp.mean), 2), ", 1)")
+
+    prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
+                 prior_string(int.prior, class = "Intercept")
+
+    mod.sel <-
+      brm(formula = form.sel,
+          data = survey.fit,
+          family = mod.fam,
+          silent = 0,
+          chains = 4,
+          cores = 4,
+          init = 0,
+          warmup = 7500,
+          iter = 10000,
+          thin = 2,
+          refresh = 100,
+          control = list(adapt_delta = 0.9975,
+                         max_treedepth = 14),
+          # backend = "cmdstanr",
+          prior = prior.sel)
+  }
 
 }
 

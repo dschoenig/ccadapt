@@ -569,4 +569,3 @@ survey.n[, type := factor(type, levels = c("willingness", "urgency"))]
 setorder(survey.n, type, resp)
 
 saveRDS(survey.n, file.survey.n)
-
