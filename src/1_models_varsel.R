@@ -14,9 +14,9 @@ source("utilities.R")
 mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 threshold.fit <- 0
-threshold.small <- 0
-mod.id <- 3
-resp.type <- "urgency"
+threshold.small <- 500
+# mod.id <- 3
+# resp.type <- "urgency"
 # resp.type <- "willingness"
 
 options(mc.cores = 4)
@@ -116,7 +116,7 @@ if(nobs.fit > floor(threshold.fit * nobs.orig)) {
 
 ## SELECTION MODEL WITH HORSESHOE PRIOR ################################
 
-message(paste0("Performing variable selection for adaptation action '", var.resp, "' …"))
+message(paste0("Performing variable selection for adaptation action `", var.resp, "` …"))
 message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel))
 
 
@@ -180,9 +180,9 @@ if(nobs.fit > threshold.small) {
         init = 0,
         warmup = 7500,
         iter = 10000,
-        thin = 2,
+        thin = 4,
         refresh = 100,
-        control = list(adapt_delta = 0.995,
+        control = list(adapt_delta = 0.99,
                        max_treedepth = 12),
         # backend = "cmdstanr",
         prior = prior.sel)
