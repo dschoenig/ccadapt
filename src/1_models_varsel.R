@@ -131,7 +131,7 @@ message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel)
 if(var.resp != "Count") {
   mod.fam <- brmsfamily("bernoulli", "logit")
 } else {
-  mod.fam <- brmsfamily("negbinomial")
+  mod.fam <- brmsfamily("poisson")
 }
 
 if(nobs.fit > threshold.small) {
