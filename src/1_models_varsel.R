@@ -15,7 +15,7 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 threshold.fit <- 0
 threshold.small <- 500
-# mod.id <- 3
+# mod.id <- 11
 # resp.type <- "urgency"
 # resp.type <- "willingness"
 
@@ -131,7 +131,7 @@ message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel)
 if(var.resp != "Count") {
   mod.fam <- brmsfamily("bernoulli", "logit")
 } else {
-  mod.fam <- brmsfamily("poisson")
+  mod.fam <- brmsfamily("negbinomial")
 }
 
 if(nobs.fit > threshold.small) {
