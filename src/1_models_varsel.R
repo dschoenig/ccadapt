@@ -190,10 +190,8 @@ if(nobs.fit > threshold.small) {
           prior = prior.sel)
   } else {
 
-    int.prior <- paste0("normal(", round(log(resp.mean), 2), ", 1)")
-
     prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-                 prior_string(int.prior, class = "Intercept")
+                 prior(normal(0, 3), class = "Intercept")
 
     mod.sel <-
       brm(formula = form.sel,

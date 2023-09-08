@@ -9,10 +9,10 @@ source("utilities.R")
 
 
 cont.nl <- as.logical(args[1])
-cont.nl <- FALSE
+# cont.nl <- FALSE
 k.max <- 10
 # resp.type <- as.character(args[2])
-resp.type = "willingness"
+# resp.type = "willingness"
 
 
 if(resp.type == "willingness") {
