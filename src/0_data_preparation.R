@@ -446,6 +446,8 @@ vars.vary <-
 
 survey.fit <- survey.fit[, ..vars.vary]
 
+survey.fit[, id := 1:.N]
+
 saveRDS(survey.fit, file.survey.fit)
 
 
@@ -464,8 +466,8 @@ survey.fit.w[,
 
 
 
-# Remove ordering from factor variables (to let them be reordered by
-# `ranger`)
+# Reorder factor variables (reference level first)
+
 var.ord <- names(which(unlist(lapply(survey.fit.w, is.ordered))))
 survey.fit.w[, (var.ord) := lapply(.SD,
                                    \(x) factor(x,
@@ -494,3 +496,57 @@ if(nrow(var.cont) > 0) {
 }
 
 saveRDS(survey.fit.w, file.survey.fit.w)
+
+
+# Urgency to adapt: Binary coding of adaptation variables
+
+adapt.code <- variables[category.adaptation == TRUE, code]
+pred.code <- names(survey.fit)[!names(survey.fit) %in% adapt.code]
+
+idx.adapt <-
+  survey.fit.w[,
+               .(adapt.any = apply(.SD, 1, \(x) sum(x) > 0)),
+               .SDcols = adapt.code,
+               by = "id"
+               ][adapt.any == TRUE, id]
+
+survey.fit.u <- copy(survey.fit[id %in% idx.adapt])
+
+survey.fit.u[,
+             (adapt.code) := lapply(.SD,
+                                    \(x) fcase(x == "Yes, within the next 5 years", 1,
+                                               x ==  "Yes, in 6 to 10 years", 0,
+                                               default = NA)),
+             .SDcols = adapt.code]
+
+
+# Reorder factor variables (reference level first)
+
+var.ord <- names(which(unlist(lapply(survey.fit.w, is.ordered))))
+survey.fit.w[, (var.ord) := lapply(.SD,
+                                   \(x) factor(x,
+                                               ordered = FALSE,
+                                               levels = levels(x))),
+             .SDcols = var.ord]
+                   
+var.cat <-
+  var.sel[code %in% pred.code & type == "categorical",
+          .(code, cat.ref)]
+for(i in 1:nrow(var.cat)) {
+  survey.fit.w[[var.cat$code[i]]] <-
+    relevel(survey.fit.w[[var.cat$code[i]]], var.cat$cat.ref[i])
+}
+
+var.cont <-
+  var.sel[code %in% pred.code & type == "continuous",
+          .(code, cont.mean, cont.sd)]
+# var.cont <- var.sel[type == "continuous", .(code, cont.mean, cont.sd)]
+if(nrow(var.cont) > 0) {
+  for(i in 1:nrow(var.cont)) {
+    survey.fit.w[[var.cont$code[i]]] <-
+      (survey.fit.w[[var.cont$code[i]]] - var.cont$cont.mean[i]) /
+      var.cont$cont.sd[i]
+  }
+}
+
+saveRDS(survey.fit.u, file.survey.fit.u)

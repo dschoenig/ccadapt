@@ -1,3 +1,17 @@
+
+
+
+# pers <- as.data.table(ranef(mod.irt, groups = "id")[[1]][,,1])
+pers <- as.data.table(ranef(mod.irt, groups = "item")[[1]][,,95])
+pers[, Rank := rank(Estimate)]
+
+
+ggplot(pers) +
+  geom_linerange(aes(y = Rank, xmin = Q2.5, xmax = Q97.5), alpha = 0.2) +
+  geom_point(aes(y = Rank, x = Estimate), shape = "|", alpha = 0.75) +
+  plot_theme
+  # geom_point(aes(y = Rank, x = Estimate))
+
 library(data.table)
 library(stringi)
 library(brms)

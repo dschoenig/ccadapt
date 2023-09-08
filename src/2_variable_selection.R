@@ -1,3 +1,5 @@
+args <- commandArgs(trailingOnly = TRUE)
+
 library(data.table)
 library(stringi)
 library(brms)
@@ -10,9 +12,25 @@ source("utilities.R")
 
 options(mc.cores = 4)
 
+resp.type <- as.character(args[1])
+
+message(paste0("Response type: `", resp.type, "`"))
+
+if(resp.type == "willingness") {
+  file.var.sel.prefix <- file.var.sel.w.prefix
+  file.var.sel.res <- file.var.sel.w.res
+  file.var.sel.res.csv <- file.var.sel.w.res.csv
+  file.var.sel.plot <- file.var.sel.w.plot
+}
+if(resp.type == "urgency") {
+  file.var.sel.prefix <- file.var.sel.u.prefix
+  file.var.sel.res <- file.var.sel.u.res
+  file.var.sel.res.csv <- file.var.sel.u.res.csv
+  file.var.sel.plot <- file.var.sel.u.plot
+}
 
 
-base.size <- 10
+base.size <- 9 
 base.family <- "IBMPlexSansCondensed"
 
 plot_theme <-
@@ -182,7 +200,8 @@ cat.labels <-
               cat.lab.mult,
               expl = ifelse(is.na(expl),
                             NA,
-                            paste0(expl, "   ")),
+                            # paste0(expl, "   ")),
+                            paste0(expl, " ")),
               size,
               size.sel,
               y = rep(min(diff.lq), .N)),
@@ -210,7 +229,9 @@ ref.lines[, type := factor(type, levels = c("Best model",
                                             "Acceptance threshold"))] 
 
 
-ggplot(sel.res.p) +
+
+cairo_pdf(file.var.sel.plot, onefile = TRUE, width = 11, height = 8.5)
+ggplot(sel.res.p[size < Inf]) +
   geom_rect(data = sel.res.p[,
                                .(xmin = size.sel[1] + 0.5,
                                  xmax = Inf,
@@ -233,18 +254,20 @@ ggplot(sel.res.p) +
              linewidth = 0.2, color = 2) +
   geom_line(aes(x = size,
                 y = diff,
-                group = resp)) +
+                group = resp),
+            linewidth = 0.35) +
   geom_linerange(aes(x = size,
                      ymin = diff.lq,
-                     ymax = diff.uq)) +
+                     ymax = diff.uq),
+                 linewidth = 0.35) +
   geom_point(data = sel.res.p[size <= size.sel & !is.na(expl)],
              mapping = aes(x = size, y = diff,
                            # fill = cat1.lab
                            ), 
-             shape = 21, fill = 1, size = 2) +
-  geom_point(data = sel.res.p[size > size.sel],
+             shape = 21, fill = 1, size = 1.5) +
+  geom_point(data = sel.res.p[size > size.sel & size != Inf],
              mapping = aes(x = size, y = diff), 
-             shape = 21, fill = 1, size = 1) +
+             shape = 21, fill = 1, size = 0.75) +
   geom_point(data = sel.res.p[size == 0],
              mapping = aes(x = size, y = diff), 
              shape = 21, fill = "white", size = 2) +
@@ -253,7 +276,8 @@ ggplot(sel.res.p) +
                 y = y,
                 label = expl,
                 color = cat.lab.mult),
-            family = base.family,
+            # family = base.family,
+            family = "IBMPlexMono",
             # fontface = "bold",
             size = base.size/4,
             angle = 90,
@@ -263,14 +287,15 @@ ggplot(sel.res.p) +
             aes(x = size,
                 y = y,
                 label = expl),
-            family = base.family,
+            # family = base.family,
+            family = "IBMPlexMono",
             size = base.size/4,
             angle = 90,
             hjust = 1) +
   # geom_point(data = sel.res.p[size <= size.sel],
   #            mapping = aes(x = size, y = diff), 
   #            shape = 21, fill = 1) +
-  scale_y_continuous(expand = expansion(c(0.225, 0.1), 0)) +
+  scale_y_continuous(expand = expansion(c(0.275, 0.1), 0)) +
   scale_linetype_manual(values = c("Null model" = "dotted",
                                    "Full model" = "dashed",
                                    "Best model" = "solid",
@@ -285,8 +310,9 @@ ggplot(sel.res.p) +
        y = "Difference in ELPD vs. best model",
        linetype = "Reference models",
        colour = "Category") +
-  plot_theme
-
+  plot_theme +
+  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "inch"))
+dev.off()
 
 # sel.res.sum[size <= size.sel & !is.na(expl) & resp != "Count",
 #             sort(unique(expl))]

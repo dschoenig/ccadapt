@@ -11,8 +11,27 @@ source("utilities.R")
 cont.nl <- as.logical(args[1])
 # cont.nl <- FALSE
 k.max <- 10
+# resp.type <- as.character(args[2])
+# resp.type = "willingness"
 
-survey.fit.w <- readRDS(file.survey.fit.w)
+
+if(resp.type == "willingness") {
+  file.var.sel.res <- file.var.sel.w.res
+  file.survey.fit <- file.survey.fit.w
+  file.survey.irt <- file.survey.irt.w
+  file.irt.mod.2pl <- file.irt.w.mod.2pl
+  file.irt.mod.2pl.nl <- file.irt.w.mod.2pl.nl
+}
+if(resp.type == "urgency") {
+  file.var.sel.res <- file.var.sel.u.res
+  file.survey.fit <- file.survey.fit.u
+  file.survey.irt <- file.survey.irt.u
+  file.irt.mod.2pl <- file.irt.w.mod.2pl
+  file.irt.mod.2pl.nl <- file.irt.w.mod.2pl.nl
+}
+
+
+survey.fit <- readRDS(file.survey.fit)
 variables <- readRDS(file.variables.proc)
 sel.res.sum <- readRDS(file.var.sel.res)
 
@@ -26,17 +45,16 @@ vars.pred <-
 vars.pred.cat <- variables[code %in% vars.pred & type == "categorical", code]
 vars.pred.cont <- variables[code %in% vars.pred & type == "continuous", code]
 
-survey.fit.w[, id := 1:.N]
-
 survey.irt <- 
-  survey.fit.w[ , c("id", vars.adapt, vars.pred), with = FALSE] |>
+  survey.fit[ , c("id", vars.adapt, vars.pred), with = FALSE] |>
   melt(id.vars = c("id", vars.pred),
        measure.vars = vars.adapt,
        variable.name = "item",
        value.name = "resp")
 
-saveRDS(survey.irt, file.survey.irt)
+survey.irt <- survey.irt[!is.na(resp)]
 
+saveRDS(survey.irt, file.survey.irt)
 
 
 ## ITEM-RESPONSE MODEL 2PL ############################################

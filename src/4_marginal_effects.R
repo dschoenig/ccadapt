@@ -11,16 +11,8 @@ source("utilities.R")
 
 options(mc.cores = 4)
 
-survey <- readRDS(file.survey.proc)
-variables <- readRDS(file.variables.proc)
-cat.levels <- readRDS(file.cat.levels.proc)
-dependencies <- readRDS(file.questions.dependencies)
-
-survey.irt <- readRDS(file.survey.irt)
-# survey.irt <- survey.irt[, .SD[1], by = item]
-
-mod.irt <- readRDS(file.irt.mod.2pl)
-
+resp.type <- "willingness"
+# resp.type <- "urgency"
 # pred.scales <- c("prob", "linpred")
 pred.scales <- c("prob")
 mar.type <- "cf"
@@ -35,6 +27,33 @@ draw.ids <- NULL
 ci.et.width <- 0.9
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
+
+
+if(resp.type == "willingness") {
+  file.survey.irt <- file.survey.irt.w
+  file.irt.mod.2pl <- file.irt.w.mod.2pl
+  path.irt.plots <- path.irt.plots.w
+  path.results.irt <- path.results.w.irt
+}
+if(resp.type == "urgency") {
+  file.survey.irt <- file.survey.irt.u
+  file.irt.mod.2pl <- file.irt.u.mod.2pl
+  path.irt.plots <- path.irt.plots.u
+  path.results.irt <- path.results.u.irt
+}
+
+file.irt.pred <- paste0(path.results.irt, "predictions.", mar.type, ".csv")
+file.irt.comp <- paste0(path.results.irt, "comparisons.", mar.type, ".csv")
+file.irt.pred.ex <- paste0(path.results.irt, "predictions.csv")
+file.irt.comp.ex <- paste0(path.results.irt, "comparisons.csv")
+
+
+variables <- readRDS(file.variables.proc)
+cat.levels <- readRDS(file.cat.levels.proc)
+
+survey.irt <- readRDS(file.survey.irt)
+mod.irt <- readRDS(file.irt.mod.2pl)
+
 
 base.size <- 9
 base.family <- "IBMPlexSansCondensed"
@@ -121,7 +140,7 @@ comp.sum.l <- list()
 n.sum.l <- list()
 
 for(p in seq_along(pred.scales)) {
-  plot.file <- paste0(path.plots.irt, pred.scales[p], ".", mar.type, ".pdf")
+  plot.file <- paste0(path.irt.plots, pred.scales[p], ".", mar.type, ".pdf")
   cairo_pdf(plot.file, onefile = TRUE, width = 8.5, height = 11)
 }
 
@@ -913,20 +932,6 @@ setcolorder(comp.sum,
                "cert.pos", "cert.neg"))
 
 
-
-if(mar.type == "mem") {
-  file.irt.pred <- file.irt.pred.mem
-  file.irt.comp <- file.irt.comp.mem
-  file.irt.pred.ex <- file.irt.pred.ex.mem
-  file.irt.comp.ex <- file.irt.comp.ex.mem
-}
-
-if(mar.type == "cf") {
-  file.irt.pred <- file.irt.pred.cf
-  file.irt.comp <- file.irt.comp.cf
-  file.irt.pred.ex <- file.irt.pred.ex.cf
-  file.irt.comp.ex <- file.irt.comp.ex.cf
-}
 
 fwrite(pred.sum, file.irt.pred)
 fwrite(comp.sum, file.irt.comp)
