@@ -13,13 +13,17 @@ source("utilities.R")
 
 mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
-threshold.fit <- 0
-threshold.small <- 500
-# mod.id <- 11
+n.threads <- as.character(args[3])
+# mod.id <- 1
 # resp.type <- "urgency"
 # resp.type <- "willingness"
+# resp.type <- "categorical"
+# n.threads <- 4
 
-options(mc.cores = 4)
+threshold.fit <- 0
+threshold.small <- 0
+
+options(mc.cores = n.threads)
 
 message(paste0("Response type: `", resp.type, "`"))
 
@@ -34,6 +38,12 @@ if(resp.type == "urgency") {
   file.var.sel.prefix <- file.var.sel.u.prefix
   file.survey.fit <- file.survey.fit.u
   path.results.varsel <- path.results.u.varsel
+}
+if(resp.type == "categorical") {
+  file.mod.sel.prefix <- file.mod.sel.c.prefix
+  file.var.sel.prefix <- file.var.sel.c.prefix
+  file.survey.fit <- file.survey.fit.c
+  path.results.varsel <- path.results.c.varsel
 }
 
 
@@ -74,7 +84,11 @@ survey.fit <- survey.fit[, ..vars.vary]
 # Purely to avoid parsing errors in projpred
 
 vars.recode <- names(survey.fit)
-vars.recode <- vars.recode[!vars.recode %in% c(vars.adapt, "id")]
+if(resp.type != "categorical") {
+  vars.recode <- vars.recode[!vars.recode %in% c(vars.adapt, "id")]
+} else {
+  vars.recode <- vars.recode[!vars.recode %in% c("id")]
+}
 
 recode.key.l <- list()
 for(i in seq_along(vars.recode)) {
@@ -128,10 +142,14 @@ message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel)
 # prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "sd") +
 #              prior(normal(0, 3), class = "Intercept")
 
-if(var.resp != "Count") {
-  mod.fam <- brmsfamily("bernoulli", "logit")
+if(resp.type != "categorical") {
+  if(var.resp != "Count") {
+    mod.fam <- brmsfamily("bernoulli", "logit")
+  } else {
+    mod.fam <- brmsfamily("poisson")
+  }
 } else {
-  mod.fam <- brmsfamily("poisson")
+  mod.fam <- brmsfamily("categorical", refcat = "1")
 }
 
 if(nobs.fit > threshold.small) {
@@ -140,8 +158,16 @@ if(nobs.fit > threshold.small) {
     paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
     as.formula()
 
-  prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-               prior(normal(0, 3), class = "Intercept")
+  if(resp.type != "categorical") {
+    prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
+                 prior(normal(0, 3), class = "Intercept")
+  } else {
+    ncat <- length(unique(survey.fit[[var.resp]]))
+    prior.sel <-
+      prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
+      prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "b", dpar = paste0("mu", 2:ncat))
+  }
+
   mod.sel <-
     brm(formula = form.sel,
         data = survey.fit,
@@ -149,6 +175,8 @@ if(nobs.fit > threshold.small) {
         silent = 0,
         chains = 4,
         cores = 4,
+        # threads = 1,
+        threads = floor(n.threads / 4),
         warmup = 7500,
         iter = 10000,
         thin = 2,
@@ -157,7 +185,8 @@ if(nobs.fit > threshold.small) {
         # backend = "cmdstanr",
         prior = prior.sel)
 
-} else {
+
+} else { # Model for few observations
 
   resp.mean <- mean(survey.fit[[var.resp]])
 
@@ -188,6 +217,7 @@ if(nobs.fit > threshold.small) {
                          max_treedepth = 12),
           # backend = "cmdstanr",
           prior = prior.sel)
+
   } else {
 
 
@@ -231,7 +261,7 @@ if(var.resp != "Count") {
 }
 
 
-cl <- makeCluster(4)
+cl <- makeCluster(n.threads)
 registerDoParallel(cl)
 
 mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max, parallel = TRUE)
