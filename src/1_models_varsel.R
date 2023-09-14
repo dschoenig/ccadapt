@@ -97,7 +97,7 @@ survey.fit <- survey.fit[, ..vars.vary]
 # Purely to avoid parsing errors in projpred
 
 vars.recode <- names(survey.fit)
-if(resp.type != "categorical") {
+if(! resp.type %in% c("categorical", "categorical.sd")) {
   vars.recode <- vars.recode[!vars.recode %in% c(vars.adapt, "id")]
 } else {
   vars.recode <- vars.recode[!vars.recode %in% c("id")]
@@ -155,7 +155,7 @@ message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel)
 # prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "sd") +
 #              prior(normal(0, 3), class = "Intercept")
 
-if(resp.type != "categorical") {
+if(! resp.type %in% c("categorical", "categorical.sd")) {
   if(var.resp != "Count") {
     mod.fam <- brmsfamily("bernoulli", "logit")
   } else {
@@ -171,21 +171,27 @@ if(nobs.fit > threshold.small) {
     form.sel <- 
       paste0(var.resp, " ~ 1 + (1 | ", paste0(vars.pred, collapse = " + "), ")") |>
       as.formula()
+      ncat <- length(unique(survey.fit[[var.resp]]))
+      prior.sel <-
+        prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
+        prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "sd", dpar = paste0("mu", 2:ncat))
+    }
   } else {
     form.sel <- 
       paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
       as.formula()
+    if(resp.type != "categorical") {
+      prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
+                   prior(normal(0, 3), class = "Intercept")
+    } else {
+      ncat <- length(unique(survey.fit[[var.resp]]))
+      prior.sel <-
+        prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
+        prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "b", dpar = paste0("mu", 2:ncat))
+    }
   }
 
-  if(resp.type != "categorical") {
-    prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-                 prior(normal(0, 3), class = "Intercept")
-  } else {
-    ncat <- length(unique(survey.fit[[var.resp]]))
-    prior.sel <-
-      prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
-      prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "b", dpar = paste0("mu", 2:ncat))
-  }
+
 
   mod.sel <-
     brm(formula = form.sel,
