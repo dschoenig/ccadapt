@@ -100,7 +100,8 @@ vars.recode <- names(survey.fit)
 if(! resp.type %in% c("categorical", "categorical.sd")) {
   vars.recode <- vars.recode[!vars.recode %in% c(vars.adapt, "id")]
 } else {
-  vars.recode <- vars.recode[!vars.recode %in% c("id")]
+  vars.recode <- vars.recode[!vars.recode %in% c(vars.adapt, "id")]
+  # vars.recode <- vars.recode[!vars.recode %in% c("id")]
 }
 
 recode.key.l <- list()
@@ -114,9 +115,9 @@ for(i in seq_along(vars.recode)) {
                  level.survey = unique(var.val))
     var.recode[, level.num := as.numeric(level.survey)]
     nlev <- length(levels(var.val))
-    var.recode[, level.mod := factor(level.num, levels = as.character(1:nlev), ordered = var.ord)]
+    var.recode[, level.mod := factor(letters[level.num], levels = letters[1:nlev], ordered = var.ord)]
     survey.fit[,
-               var.sel := factor(as.numeric(var.sel), levels = as.character(1:nlev), ordered = var.ord),
+               var.sel := factor(letters[as.numeric(var.sel)], levels = letters[1:nlev], ordered = var.ord),
                env = list(var.sel = var.foc)]
     var.recode[, level.survey := as.character(level.survey)]
     recode.key.l[[i]] <- var.recode
@@ -162,20 +163,30 @@ if(! resp.type %in% c("categorical", "categorical.sd")) {
     mod.fam <- brmsfamily("poisson")
   }
 } else {
-  mod.fam <- brmsfamily("categorical", refcat = "1")
+  # mod.fam <- brmsfamily("categorical", refcat = "1")
+  mod.fam <- brmsfamily("categorical", refcat = "No")
 }
 
 if(nobs.fit > threshold.small) {
 
   if(resp.type %in% "categorical.sd") {
     form.sel <- 
-      paste0(var.resp, " ~ 1 + (1 | ", paste0(vars.pred, collapse = " + "), ")") |>
+      paste0(var.resp, " ~ (1 | ", paste0(vars.pred, collapse = " + "), ")") |>
       as.formula()
-      ncat <- length(unique(survey.fit[[var.resp]]))
-      prior.sel <-
-        prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
-        prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "sd", dpar = paste0("mu", 2:ncat))
-    }
+
+    # ncat <- length(unique(survey.fit[[var.resp]]))
+    # prior.sel <-
+      # prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
+      # prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "sd", dpar = paste0("mu", 2:ncat))
+    catmu <-
+      c("Idonotknowthisaction",
+        "Unlikely",
+        "Yesin6to10years",
+        "Yeswithinthenext5years")
+    prior.sel <-
+      prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", catmu)) +
+      prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "sd", dpar = paste0("mu", catmu))
+  }
   } else {
     form.sel <- 
       paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
@@ -191,8 +202,6 @@ if(nobs.fit > threshold.small) {
     }
   }
 
-
-
   mod.sel <-
     brm(formula = form.sel,
         data = survey.fit,
@@ -207,7 +216,7 @@ if(nobs.fit > threshold.small) {
         thin = 2,
         refresh = 100,
         control = list(adapt_delta = 0.99),
-        # backend = "cmdstanr",
+        backend = "cmdstanr",
         prior = prior.sel)
 
 
@@ -246,7 +255,7 @@ if(nobs.fit > threshold.small) {
           refresh = 100,
           control = list(adapt_delta = 0.9975,
                          max_treedepth = 12),
-          # backend = "cmdstanr",
+          backend = "cmdstanr",
           prior = prior.sel)
 
   } else {

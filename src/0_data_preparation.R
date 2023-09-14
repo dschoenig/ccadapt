@@ -622,6 +622,46 @@ if(nrow(var.cont) > 0) {
 saveRDS(survey.fit.c, file.survey.fit.c)
 
 
+# Categorical response, ordered
+
+adapt.code <- variables[category.adaptation == TRUE, code]
+pred.code <- names(survey.fit)[!names(survey.fit) %in% adapt.code]
+
+survey.fit.c <- copy(survey.fit)
+
+# Reorder factor variables (reference level first)
+
+var.ord <- names(which(unlist(lapply(survey.fit.c, is.ordered))))
+survey.fit.c[, (var.ord) := lapply(.SD,
+                                   \(x) factor(x,
+                                               ordered = FALSE,
+                                               levels = levels(x))),
+             .SDcols = var.ord]
+                   
+var.cat <-
+  var.sel[code %in% pred.code & type == "categorical",
+          .(code, cat.ref)]
+for(i in 1:nrow(var.cat)) {
+  survey.fit.c[[var.cat$code[i]]] <-
+    relevel(survey.fit.c[[var.cat$code[i]]], var.cat$cat.ref[i])
+}
+
+var.cont <-
+  var.sel[code %in% pred.code & type == "continuous",
+          .(code, cont.mean, cont.sd)]
+# var.cont <- var.sel[type == "continuous", .(code, cont.mean, cont.sd)]
+if(nrow(var.cont) > 0) {
+  for(i in 1:nrow(var.cont)) {
+    survey.fit.c[[var.cont$code[i]]] <-
+      (survey.fit.c[[var.cont$code[i]]] - var.cont$cont.mean[i]) /
+      var.cont$cont.sd[i]
+  }
+}
+
+saveRDS(survey.fit.c, file.survey.fit.c)
+
+
+
 survey.n <- 
   list(willingness = survey.fit.w[, c(adapt.code, "id"), with = FALSE],
        urgency = survey.fit.u[, c(adapt.code, "id"), with = FALSE]) |>
