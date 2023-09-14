@@ -15,13 +15,13 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 cv.type <- as.character(args[3])
 n.threads <- as.numeric(args[4])
-mod.id <- 1
+# mod.id <- 1
 # resp.type <- "urgency"
-resp.type <- "willingness"
+# resp.type <- "willingness"
 # resp.type <- "willingness.ord"
 # resp.type <- "categorical"
-cv.type <- "loo"
-n.threads <- 4
+# cv.type <- "loo"
+# n.threads <- 4
 
 message(paste0("Response type: `", resp.type, "`"))
 
