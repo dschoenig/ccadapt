@@ -12,8 +12,8 @@ source("utilities.R")
 
 options(mc.cores = 4)
 
-resp.type <- as.character(args[1])
-resp.type <- "urgency"
+# resp.type <- as.character(args[1])
+# resp.type <- "urgency"
 
 message(paste0("Response type: `", resp.type, "`"))
 
@@ -28,6 +28,12 @@ if(resp.type == "urgency") {
   file.var.sel.res <- file.var.sel.u.res
   file.var.sel.res.csv <- file.var.sel.u.res.csv
   file.var.sel.plot <- file.var.sel.u.plot
+}
+if(resp.type == "categorical") {
+  file.var.sel.prefix <- file.var.sel.c.prefix
+  file.var.sel.res <- file.var.sel.c.res
+  file.var.sel.res.csv <- file.var.sel.c.res.csv
+  file.var.sel.plot <- file.var.sel.c.plot
 }
 
 
@@ -76,8 +82,11 @@ plot_theme <-
 
 variables <- readRDS(file.variables.proc)
 
-# vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
-vars.adapt <- c(variables[category.adaptation == TRUE, sort(code)], "Count")
+if(resp.type == "categorical") {
+  vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
+} else {
+  vars.adapt <- c(variables[category.adaptation == TRUE, sort(code)], "Count")
+}
 
 files.var.sel <- paste0(file.var.sel.prefix, vars.adapt, ".rds")
 var.sel.exists <- file.exists(files.var.sel)
