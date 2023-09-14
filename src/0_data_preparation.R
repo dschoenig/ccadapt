@@ -546,7 +546,7 @@ survey.fit.u[,
              (adapt.code) := lapply(.SD,
                                     \(x) fcase(x == "Yes, within the next 5 years", 1,
                                                x ==  "Yes, in 6 to 10 years", 0,
-                                               default = NA)),
+                                               default = 0)),
              .SDcols = adapt.code]
 
 

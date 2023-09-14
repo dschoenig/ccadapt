@@ -69,6 +69,8 @@ if(mod.id <= length(vars.adapt)) {
 
 mod.sel <- readRDS(file.mod.sel)
 
+summary(mod.sel)
+
 n.terms.max <- round(0.25 * (length(names(mod.sel$data))-1))
 
 if(var.resp != "Count") {
