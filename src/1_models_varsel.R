@@ -14,7 +14,11 @@ source("utilities.R")
 mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
+
 # mod.id <- 1
+# resp.type <- "categorical.sd"
+# n.threads <- 4
+
 # resp.type <- "urgency"
 # resp.type <- "willingness"
 # resp.type <- "willingness.ord"
@@ -173,7 +177,6 @@ if(nobs.fit > threshold.small) {
     form.sel <- 
       paste0(var.resp, " ~ (1 | ", paste0(vars.pred, collapse = " + "), ")") |>
       as.formula()
-
     # ncat <- length(unique(survey.fit[[var.resp]]))
     # prior.sel <-
       # prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
@@ -186,7 +189,6 @@ if(nobs.fit > threshold.small) {
     prior.sel <-
       prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", catmu)) +
       prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "sd", dpar = paste0("mu", catmu))
-  }
   } else {
     form.sel <- 
       paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
