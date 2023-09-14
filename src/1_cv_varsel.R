@@ -15,6 +15,13 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 cv.type <- as.character(args[3])
 n.threads <- as.numeric(args[4])
+
+
+# mod.id <- 1
+# resp.type <- "categorical"
+# cv.type <- "loo"
+# n.threads <- 4
+
 # mod.id <- 1
 # resp.type <- "urgency"
 # resp.type <- "willingness"
@@ -73,11 +80,12 @@ summary(mod.sel)
 
 n.terms.max <- round(0.25 * (length(names(mod.sel$data))-1))
 
-if(var.resp != "Count") {
-  mod.ref <- get_refmodel(mod.sel)
-} else {
+if(var.resp == "Count" | resp.type == "categorical") {
   mod.ref <- get_refmodel(mod.sel, latent = TRUE)
+} else {
+  mod.ref <- get_refmodel(mod.sel)
 }
+
 
 cl <- makeCluster(n.threads)
 registerDoParallel(cl)
