@@ -16,7 +16,7 @@ resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
 
 # mod.id <- 1
-# resp.type <- "categorical.sd"
+# resp.type <- "categorical"
 # n.threads <- 4
 
 # resp.type <- "urgency"
@@ -167,8 +167,7 @@ if(! resp.type %in% c("categorical", "categorical.sd")) {
     mod.fam <- brmsfamily("poisson")
   }
 } else {
-  # mod.fam <- brmsfamily("categorical", refcat = "1")
-  mod.fam <- brmsfamily("categorical", refcat = "No")
+  mod.fam <- brmsfamily("cumulative", "logit")
 }
 
 if(nobs.fit > threshold.small) {
@@ -197,10 +196,20 @@ if(nobs.fit > threshold.small) {
       prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
                    prior(normal(0, 3), class = "Intercept")
     } else {
-      ncat <- length(unique(survey.fit[[var.resp]]))
-      prior.sel <-
-        prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
-        prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "b", dpar = paste0("mu", 2:ncat))
+      # ncat <- length(unique(survey.fit[[var.resp]]))
+      # prior.sel <-
+      #   prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
+      #   prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "b", dpar = paste0("mu", 2:ncat))
+      # catmu <-
+      #   c("Idonotknowthisaction",
+      #     "Unlikely",
+      #     "Yesin6to10years",
+      #     "Yeswithinthenext5years")
+      # prior.sel <-
+      #   prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", catmu)) +
+      #   prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "b", dpar = paste0("mu", catmu))
+      prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
+                   prior(normal(0, 3), class = "Intercept")
     }
   }
 
@@ -218,7 +227,7 @@ if(nobs.fit > threshold.small) {
         thin = 2,
         refresh = 100,
         control = list(adapt_delta = 0.99),
-        backend = "cmdstanr",
+        # backend = "cmdstanr",
         prior = prior.sel)
 
 

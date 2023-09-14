@@ -590,9 +590,30 @@ pred.code <- names(survey.fit)[!names(survey.fit) %in% adapt.code]
 
 survey.fit.c <- copy(survey.fit)
 
-# Reorder factor variables (reference level first)
+survey.fit.c[,
+             (adapt.code) := lapply(.SD,
+                                    \(x) fcase(x == "Yes, within the next 5 years", as.character(x),
+                                               x ==  "Yes, in 6 to 10 years", as.character(x),
+                                               x ==  "Unlikely", as.character(x),
+                                               default = "No")),
+             .SDcols = adapt.code]
+
+
+survey.fit.c[,
+             (adapt.code) := lapply(.SD,
+                                    \(x) factor(x,
+                                                levels = c("No",
+                                                           "Unlikely",
+                                                           "Yes, in 6 to 10 years",
+                                                           "Yes, within the next 5 years"),
+                                                ordered = TRUE)),
+             .SDcols = adapt.code]
+
+# Reorder other factor variables (reference level first)
 
 var.ord <- names(which(unlist(lapply(survey.fit.c, is.ordered))))
+var.ord <- var.ord[!var.ord %in% adapt.code]
+
 survey.fit.c[, (var.ord) := lapply(.SD,
                                    \(x) factor(x,
                                                ordered = FALSE,
