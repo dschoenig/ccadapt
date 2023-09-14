@@ -14,7 +14,7 @@ source("utilities.R")
 mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
-# mod.id <- 1
+mod.id <- 1
 # resp.type <- "urgency"
 # resp.type <- "willingness"
 # resp.type <- "willingness.ord"
@@ -51,12 +51,6 @@ if(resp.type == "categorical") {
   file.var.sel.prefix <- file.var.sel.c.prefix
   file.survey.fit <- file.survey.fit.c
   path.results.varsel <- path.results.c.varsel
-}
-if(resp.type == "categorical.sd") {
-  file.mod.sel.prefix <- file.mod.sel.cs.prefix
-  file.var.sel.prefix <- file.var.sel.cs.prefix
-  file.survey.fit <- file.survey.fit.c
-  path.results.varsel <- path.results.cs.varsel
 }
 
 
@@ -167,18 +161,12 @@ if(resp.type != "categorical") {
 
 if(nobs.fit > threshold.small) {
 
-  if(resp.type %in% "categorical.sd") {
-    form.sel <- 
-      paste0(var.resp, " ~ 1 + (1 | ", paste0(vars.pred, collapse = " + "), ")") |>
-      as.formula()
-  } else {
-    form.sel <- 
-      paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
-      as.formula()
-  }
+  form.sel <- 
+    paste0(var.resp, " ~ 1 + (1 | ", paste0(vars.pred, collapse = " + "), ")") |>
+    as.formula()
 
   if(resp.type != "categorical") {
-    prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
+    prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "sd") +
                  prior(normal(0, 3), class = "Intercept")
   } else {
     ncat <- length(unique(survey.fit[[var.resp]]))
@@ -209,15 +197,9 @@ if(nobs.fit > threshold.small) {
 
   resp.mean <- mean(survey.fit[[var.resp]])
 
-  if(resp.type %in% "categorical.sd") {
-    form.sel <- 
-      paste0(var.resp, " ~ 1 + (1 | ", paste0(vars.pred, collapse = " + "), ")") |>
-      as.formula()
-  } else {
-    form.sel <- 
-      paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
-      as.formula()
-  }
+  form.sel <- 
+    paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
+    as.formula()
 
   if(var.resp != "Count") {
 
@@ -275,4 +257,35 @@ if(nobs.fit > threshold.small) {
 dir.create(path.results.varsel, recursive = TRUE, showWarnings = FALSE)
 
 saveRDS(mod.sel, file.mod.sel)
+# mod.sel <- readRDS(file.mod.sel)
 
+n.terms.max <- round(0.25 * (length(names(mod.sel$data))-1))
+
+if(var.resp != "Count") {
+  mod.ref <- get_refmodel(mod.sel)
+} else {
+  mod.ref <- get_refmodel(mod.sel, latent = TRUE)
+}
+
+
+cl <- makeCluster(n.threads)
+registerDoParallel(cl)
+
+mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max, parallel = TRUE)
+
+# mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max)
+# mod.var.sel <- varsel(mod.ref, nterms_max = n.terms.max)
+
+# plot(mod.var.sel, deltas = TRUE, alpha = 0.05)
+# plot(mod.var.sel, alpha = 0.05, deltas = TRUE) +
+# geom_hline(yintercept = summary(mod.var.sel)$selection$diff[1] * 0.5)
+
+summary(mod.var.sel)
+# suggest_size(mod.var.sel, type = "lower", pct = 0.5)
+
+saveRDS(mod.var.sel, file.var.sel)
+# mod.var.sel <- readRDS("..results/varsel/sel.1.rds")
+
+# install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+# cmdstanr::cmdstan_make_local(cpp_options = "CXXFLAGS += -ftemplate-depth=2048", append = FALSE)
+# cmdstanr::rebuild_cmdstan()
