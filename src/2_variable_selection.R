@@ -13,6 +13,7 @@ source("utilities.R")
 options(mc.cores = 4)
 
 resp.type <- as.character(args[1])
+resp.type <- "urgency"
 
 message(paste0("Response type: `", resp.type, "`"))
 
@@ -231,6 +232,7 @@ ref.lines[, type := factor(type, levels = c("Best model",
 
 
 cairo_pdf(file.var.sel.plot, onefile = TRUE, width = 11, height = 8.5)
+
 ggplot(sel.res.p[size < Inf]) +
   geom_rect(data = sel.res.p[,
                                .(xmin = size.sel[1] + 0.5,
@@ -243,9 +245,6 @@ ggplot(sel.res.p[size < Inf]) +
                           ymin = ymin,
                           ymax = ymax),
             fill = "grey90") +
-  # geom_hline(data = sel.res.p[, .(int.line = min(diff)), by = "resp"],
-  #            mapping = aes(yintercept = int.line),
-  #            linetype = "dotted") +
   geom_hline(data = ref.lines[type != "Acceptance threshold"],
              mapping = aes(yintercept = yint, linetype = type),
              linewidth = 0.2) +
@@ -292,9 +291,6 @@ ggplot(sel.res.p[size < Inf]) +
             size = base.size/4,
             angle = 90,
             hjust = 1) +
-  # geom_point(data = sel.res.p[size <= size.sel],
-  #            mapping = aes(x = size, y = diff), 
-  #            shape = 21, fill = 1) +
   scale_y_continuous(expand = expansion(c(0.275, 0.1), 0)) +
   scale_linetype_manual(values = c("Null model" = "dotted",
                                    "Full model" = "dashed",
@@ -302,8 +298,8 @@ ggplot(sel.res.p[size < Inf]) +
                                    "Acceptance threshold" = "solid"),
                         drop = FALSE) +
   scale_fill_brewer(type = "qual", palette = "Set1",
-                    aesthetics = c("fill", "colour")) +
-  # guides(colour = guide_legend(override.aes=list(shape = 16, size = 1,  label = ""))) +
+                    aesthetics = c("fill", "colour"),
+                    drop = FALSE) +
   guides(linetype = guide_legend(order = 1, override.aes = list(colour = c(1, 1, 1, 2)))) +
   facet_wrap(vars(resp), ncol = 3, scales = "free_y") +
   labs(x = "Model size (number of terms)",
@@ -312,6 +308,7 @@ ggplot(sel.res.p[size < Inf]) +
        colour = "Category") +
   plot_theme +
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "inch"))
+
 dev.off()
 
 # sel.res.sum[size <= size.sel & !is.na(expl) & resp != "Count",

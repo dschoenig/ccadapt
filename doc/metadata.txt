@@ -63,12 +63,21 @@ level
 
 # Results
 
-## Random forest: Variable importance
+## Variable selection and importance
 
-File: `rf/varimp.csv`
+File: `willingness/varsel/var.sel.csv`
 
 resp
 :   Identity of the binary version of the adaptation variable (used as a response variable), corresponding to the codes in the variable table. `Count` represents the sum of all ten binary adaption variables.
+
+size 
+:   Ranking of the explanatory variable given in `expl`. This ranking also corresponds of the number of variables present in the model (i.e. model size). For example, a size of `5` means that the variable given in `expl` is the fifth-most important variable, and it starts to be part of the model once the model contains 5 variables in total (and it will also be contained in all models of a larger size). A `size` of `Inf` correspnds to the full model (i.e. the model that contains all possible variables).
+
+size.sel
+:   Size of the model chosen according to a decision rule. As a decision rule, we chose: the selected model is the most parsimonious model whole performance is closer to the best model than to the null model. As performance measure, we use the difference in ELPD to the best model. And the best model can either be the full model or one of the submodels with a reduced number of predictors. A performance threshold is established halfway between the null model and the best model. The selected model is then the "smallest" model that clears this performance thresholdby at least on standard error.
+
+count.sel
+:   How often was the variable given in `expl` selected across all adaptation variables?
 
 expl
 :   Identity of the explanatory variable, corresponding to the codes in `var/variables.csv`.
@@ -76,44 +85,19 @@ expl
 category
 :   Group that the explanatory variable belongs to (either `personal_stakes`, `threat_appraisal`, `coping_appraisal`, `control`). If an explanatory variable belongs to several groups, it will appear several times for the same adaptations variable.
 
-importance
-:   Importance score of the variable given in `expl` on the outcome given in `resp`. Importance scores as based on permutations and scaled by standard error, as in Breiman (2001).
+diff
+:   Performance difference of the submodel against the best model.
 
-pvalue
-:   p value for the importance score, expressing the probability to obtain the observed importance score under the null hypothesis that the explanatory variable is not important. The approach of Altmann et al. (2010) is used to calculate p values based on permutations.
+diff.lq
+:   Lower uncertainty bound of the performance difference, corresponding to an uncertainty interval that is 2 standard errors wide.
 
-
-## Random forest: Importance by category
-
-File: `rf/catimp.csv`
-
-This table accompanies the plots of variable importance values by adaptation and category (`plots/rf/catimp.pdf`). Only variables for the p-value of the importance is < 0.05 have been used to calculate the category summaries.
-
-resp
-:   Identity of the binary version of the adaptation variable (used as a response variable), corresponding to the codes in the variable table. `Count` represents the sum of all ten binary adaption variables.
-
-category
-:   Group of explanatory variables (either `personal_stakes`, `threat_appraisal`, `coping_appraisal`, `control`).
-
-importance.min
-:   Importance score of the least important variable belonging to `category` on the outcome given in `resp`.
-
-importance.median
-:   Median importance score of all variables belonging to `category` on the outcome given in `resp`.
-
-importance.mean
-:   Average importance score of all variables belonging to `category` on the outcome given in `resp`.
-
-importance.max
-:   Importance score of the most important variable belonging to `category` on the outcome given in `resp`.
-
-cat.n
-:   Number of variables in the given `category` that are deemed important (based on permutation tests).
+diff.uq
+:   Upper uncertainty bound of the performance difference, corresponding to an uncertainty interval that is 2 standard errors wide.
 
 
-## IRT: Marginal effects at the mean
+## IRT: Marginal effects
 
-File: `irt/predictions.csv`
+File: `willingness/irt/predictions.csv`
 
 This table accompanies the plots of the marginal effect estimates in `plots/irt/response.pdf` and `plots/irt/link.pdf`.
 
@@ -124,22 +108,18 @@ adapt.code
 :   Identity of the adaptation variable for which the marginal effect is calculated. Corresponds to the codes in `var/variables.csv`.
 
 var.level
-:   Level of the explanatory variable for which the marginal effect is calculated.
-
-linpred.median, linpred.q5, linpred.q25, linpred.q75, linpred.q95
-:   Linear predictor (i.e. log odds of the willingness to adapt) for the adaptation variable if the explanatory variable is set to `var.level`. Provided are the median, as well as the 5th, 25th, 75th, and 95th percentiles. The 50% equal-tailed Bayesian credible interval is situated between the 25th and 75th percentiles. The 90% interval is situated between the 5th and 95th percentiles. These values are presented graphically in `plots/irt/linpred.pdf`.
-
+:   Level (or value) of the explanatory variable for which the marginal effect is calculated.
 
 prob.median, prob.q5, prob.q25, prob.q75, prob.q95
 :    Predicted response (i.e. probability of the willingness to adapt) for the adaptation variable if the explanatory variable is set to `var.level`. Provided are the median, as well as the 5th, 25th, 75th, and 95th percentiles. The 50% equal-tailed Bayesian credible interval is situated between the 25th and 75th percentiles. The 90% interval is situated between the 5th and 95th percentiles. These values are presented graphically in `plots/irt/prob.pdf`.
 
 n
-:   Number of responses for the given level of the explanatory variable.
+:   For *categorical* predictors: Number of responses for the given level of the explanatory variable. For *continuoues* predictors: Number of responses closest to the given value of the explanatory variable.
 
 
 ## IRT: Comparisons
 
-File: `irt/comparisons.csv`
+File: `willingness/irt/comparisons.csv`
 
 This table accompanies the plots of the comparison matrices in `plots/irt/response.pdf` and `plots/irt/link.pdf`.
 
@@ -150,32 +130,35 @@ adapt.code
 :   Identity of the adaptation variable for which the marginal effects are compared. Corresponds to the codes in `var/variables.csv`.
 
 var.level1
-:   The first of two levels of the explanatory variable that are compared against each other.
+:   [Categorical predictors only] The first of two levels of the explanatory variable that are compared against each other.
 
 var.level2
-:   The second of two levels of the explanatory variable that are compared against each other.
+:   [Categorical predictors only] The second of two levels of the explanatory variable that are compared against each other.
+
+var.level.cont
+:   [Continuous predictors only] The value of the explanatory variable at which the slope was evaluated.
+
+prob.slope.diff.median
+:   [Continuous predictors only] Median slope (also called "effect"), that is the (instantaneous) change of willingness to adapt, calculated at `var.level.cont`. The slope is expressed in percentage points per variable unit.
+
+prob.slope.diff.ci.u
+:   [Continuous predictors only] Lower limit of the 90% credibility interval for the slope.
+
+prob.slope.diff.ci.u
+:   [Continuous predictors only] Lower limit of the 90% credibility interval for the slope.
 
 prob.diff.median
-:   Median difference of willingness to adapt, calculated between `var.level1` and `var.level1`. The difference is expressed in percentage points.
+:   [Categorical predictors only] Median difference in willingness to adapt, calculated between `var.level1` and `var.level1`. The difference is expressed in percentage points.
 
 prob.diff.ci.u
-:   Lower limit of the 90% credibility interval for the difference in willingness to adapt, between `var.level1` and `var.level1`. The difference is expressed in percentage points.
+:   [Categorical predictors only] Lower limit of the 90% credibility interval for the difference in willingness to adapt.
 
 prob.diff.ci.u
-:   Upper limit of the 90% credibility interval for the difference in willingness to adapt, between `var.level1` and `var.level1`. The difference is expressed in percentage points.
-
-linpred.diff.median
-:   Median difference in willingness to adapt, calculated between `var.level1` and `var.level1`. Expressed as a difference in log odds.
-
-linpred.diff.ci.l
-:   Lower limit of the 90% credibility interval for the difference in willingness to adapt, between `var.level1` and `var.level1`. Expressed as a difference in log odds.
-
-linpred.diff.ci.u
-:   Upper limit of the 90% credibility interval for the difference in willingness to adapt, between `var.level1` and `var.level1`. Expressed as a difference in log odds.
+:   [Categorical predictors only] Upper limit of the 90% credibility interval for the difference in willingness to adapt.
 
 cert.diff.pos
-:   Certainty that `var.level1` *increases* the willingness to adapt, compared to `var.level2`.
+:   For *categorical* predictors: Certainty that `var.level1` *increases* the willingness to adapt, compared to `var.level2`. For continuous predictors: Certainty that the slope is positive.
 
 cert.diff.neg 
-:   Certainty that `var.level1` *decreases* the willingness to adapt, compared to `var.level2`.
+:   For *categorical* predictors: Certainty that `var.level1` *decreases* the willingness to adapt, compared to `var.level2`. For continuous predictors: Certainty that the slope is negative.
 

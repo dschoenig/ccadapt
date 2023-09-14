@@ -498,6 +498,36 @@ if(nrow(var.cont) > 0) {
 saveRDS(survey.fit.w, file.survey.fit.w)
 
 
+
+# Willingness, ordered version
+
+adapt.code <- variables[category.adaptation == TRUE, code]
+pred.code <- names(survey.fit)[!names(survey.fit) %in% adapt.code]
+
+survey.fit.wo <- copy(survey.fit)
+
+survey.fit.wo[,
+             (adapt.code) := lapply(.SD,
+                                    \(x) as.numeric(x %in% c("Yes, within the next 5 years",
+                                                             "Yes, in 6 to 10 years"))),
+             .SDcols = adapt.code]
+
+
+var.cont <-
+  var.sel[code %in% pred.code & type == "continuous",
+          .(code, cont.mean, cont.sd)]
+# var.cont <- var.sel[type == "continuous", .(code, cont.mean, cont.sd)]
+if(nrow(var.cont) > 0) {
+  for(i in 1:nrow(var.cont)) {
+    survey.fit.wo[[var.cont$code[i]]] <-
+      (survey.fit.wo[[var.cont$code[i]]] - var.cont$cont.mean[i]) /
+      var.cont$cont.sd[i]
+  }
+}
+
+saveRDS(survey.fit.wo, file.survey.fit.wo)
+
+
 # Urgency to adapt: Binary coding of adaptation variables
 
 adapt.code <- variables[category.adaptation == TRUE, code]

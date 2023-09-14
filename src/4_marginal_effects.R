@@ -18,13 +18,13 @@ cont.nl <- FALSE
 pred.scales <- c("prob")
 mar.type <- "cf"
 # mar.type <- "mem"
-cont.pred.n <- 11
+cont.pred.n <- 21
 cont.diff.frac <- 100
 slope.res <- "fine"
 # var.log <- NULL
 var.log <- c("A03")
 draw.ids <- NULL
-draw.ids <- sample(1:1e4, 1000)
+# draw.ids <- sample(1:1e4, 100)
 ci.et.width <- 0.9
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
@@ -156,7 +156,7 @@ for(p in seq_along(pred.scales)) {
 # vars.irt <- vars.irt[1:2]
 # vars.irt <- "F14"
 # vars.irt <- "A22"
-vars.irt <- "A03"
+vars.irt <- c("A03", "A06", "A22")
 # survey.irt <- survey.irt[id %in% sample(1:.N, 100)]
 
 for(i in seq_along(vars.irt)) {
@@ -774,7 +774,7 @@ for(i in seq_along(vars.irt)) {
           pred.desc <- "Willingness to adapt\n(log odds)"
         }
 
-        slope.desc <- "Slope\n(change in willingness)"
+        slope.desc <- "Slope\n(instantaneous change in willingness)"
 
         q.main <-
           variables[code == var.foc,
@@ -818,17 +818,20 @@ for(i in seq_along(vars.irt)) {
 
         
         pred.p[[k]] <-
+
           ggplot(pred.var[item.code == item.foc]) +
             stat_lineribbon(aes(x = lev, y = pred.plot),
                             .width = c(0.5, 0.8, 0.9, 0.95),
                             linewidth = 0.5) +
+            geom_point(data = pred.sum.l[[i]][item.code == item.foc],
+                       mapping = aes(x = lev, y = prob.median), size = 1) +
             geom_rug(data = data.table(rug = var.mean + (var.sd * survey.irt[[var.foc]])),
                      mapping = aes(x = rug, y = 1),
                      sides = "b",
                      # position = position_jitter(width = (vlim[2] - vlim[1])/100, height = 0),
                      alpha = 0.1) +
             # scale_fill_discrete_divergingx("Roma", nmax = 5, order = 1:3) +
-            scale_fill_brewer(palette = 1) +
+            scale_fill_brewer(palette = "Purples") +
             coord_fixed(ratio = (vlim[2] - vlim[1])/(plim[2] - plim[1]),
                         ylim = plim) +
             labs(x = var.foc, y = pred.desc,
@@ -836,29 +839,58 @@ for(i in seq_along(vars.irt)) {
                  fill = "Credible\ninterval") +
             plot_theme +
             theme(plot.margin = margin(base.size, base.size, base.size, base.size))
-          
+
+        # prob.p[[k]] <-
+        #   ggplot(slope.var[item.code == item.foc]) +
+        #     stat_lineribbon(aes(x = lev, y = slope.plot),
+        #                     .width = c(0.5, 0.8, 0.9, 0.95),
+        #                     linewidth = 0.5) +
+        #     geom_rug(data = data.table(rug = var.mean + (var.sd * survey.irt[[var.foc]])),
+        #              mapping = aes(x = rug, y = 1),
+        #              sides = "b",
+        #              # position = position_jitter(width = (vlim[2] - vlim[1])/100, height = 0),
+        #              alpha = 0.1) +
+        #     geom_hline(yintercept = 0, linetype = "dotted", linewidth = 0.3) +
+        #     # scale_fill_discrete_divergingx("Roma", nmax = 5, order = 1:3) +
+        #     scale_fill_brewer(palette = "Purples") +
+        #     coord_fixed(ratio = (vlim[2] - vlim[1])/(slim[2] - slim[1]),
+        #                 ylim = slim) +
+        #     labs(x = var.foc,
+        #          y = slope.desc,
+        #          fill = "Credible\ninterval") +
+        #     plot_theme +
+        #     theme(plot.margin = margin(base.size, base.size, base.size, base.size))
+
 
         prob.p[[k]] <-
-          ggplot(slope.var[item.code == item.foc]) +
-            stat_lineribbon(aes(x = lev, y = slope.plot),
-                            .width = c(0.5, 0.8, 0.9, 0.95),
-                            linewidth = 0.5) +
+          ggplot(comp.sum.l[[i]][item.code == item.foc]) +
+            geom_hline(yintercept = 0, linetype = "dotted", linewidth = 0.3) +
+            geom_linerange(aes(x = lev,
+                               ymin = prob.slope.ci.l,
+                               ymax = prob.slope.ci.u),
+                           linewidth = 0.3) +
+            geom_line(aes(x = lev, y = prob.slope.median),
+                      linewidth = 0.5) +
+            geom_point(aes(x = lev, y = prob.slope.median,
+                                     fill = p.diff.pos),
+                       shape = 21, colour = 1, size = 2, stroke = 0.3) +
+            scale_fill_binned_divergingx("Roma", rev = TRUE, mid = 0.5,
+                                         breaks = c(0,0.01, 0.05, 0.1, 0.25, 0.5,
+                                                    0.75, 0.9, 0.95, 0.99, 1),
+                                         limits = c(0, 1)) +
             geom_rug(data = data.table(rug = var.mean + (var.sd * survey.irt[[var.foc]])),
                      mapping = aes(x = rug, y = 1),
                      sides = "b",
                      # position = position_jitter(width = (vlim[2] - vlim[1])/100, height = 0),
                      alpha = 0.1) +
-            geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.3) +
-            # scale_fill_discrete_divergingx("Roma", nmax = 5, order = 1:3) +
-            scale_fill_brewer(palette = "Purples") +
             coord_fixed(ratio = (vlim[2] - vlim[1])/(slim[2] - slim[1]),
                         ylim = slim) +
             labs(x = var.foc,
                  y = slope.desc,
-                 fill = "Credible\ninterval") +
+                 fill = "Certainty that\nwillingness\nincreases") +
             plot_theme +
-            theme(plot.margin = margin(base.size, base.size, base.size, base.size))
-
+            theme(legend.key.size = unit(2*base.size, "pt"),
+                  plot.margin = margin(base.size, base.size, base.size, base.size))
 
 
         if(var.foc %in% var.log) {

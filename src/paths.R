@@ -27,6 +27,20 @@ file.var.sel.w.plot <- paste0(path.results.w, "plots/varsel/var.sel.pdf")
 file.irt.w.mod.2pl <- paste0(path.results.w.irt, "mod.2pl.rds")
 file.irt.w.mod.2pl.nl <- paste0(path.results.w.irt, "mod.2pl.nl.rds")
 
+path.results.wo <- "../results/willingness.ord/"
+path.results.wo.varsel <- paste0(path.results.wo, "varsel/")
+path.results.wo.irt <- paste0(path.results.wo, "irt/")
+path.irt.wo.plots <- paste0(path.results.wo, "/plots/irt/")
+file.survey.fit.wo <- paste0(path.data.proc, "survey.fit.wo.rds")
+file.survey.irt.wo <- paste0(path.data.proc, "survey.irt.wo.rds")
+file.mod.sel.wo.prefix <- paste0(path.results.wo.varsel, "mod.sel.")
+file.var.sel.wo.prefix <- paste0(path.results.wo.varsel, "var.sel.")
+file.var.sel.wo.res <- paste0(path.results.wo.varsel, "var.sel.res.rds")
+file.var.sel.wo.res.csv <- paste0(path.results.wo.varsel, "var.sel.res.csv")
+file.var.sel.wo.plot <- paste0(path.results.wo, "plots/varsel/var.sel.pdf")
+file.irt.wo.mod.2pl <- paste0(path.results.wo.irt, "mod.2pl.rds")
+file.irt.wo.mod.2pl.nl <- paste0(path.results.wo.irt, "mod.2pl.nl.rds")
+
 path.results.u <- "../results/urgency/"
 path.results.u.varsel <- paste0(path.results.u, "varsel/")
 path.results.u.irt <- paste0(path.results.u, "irt/")

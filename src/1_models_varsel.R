@@ -14,9 +14,10 @@ source("utilities.R")
 mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
-# mod.id <- 1
+mod.id <- 1
 # resp.type <- "urgency"
 # resp.type <- "willingness"
+# resp.type <- "willingness.ord"
 # resp.type <- "categorical"
 # n.threads <- 4
 
@@ -32,6 +33,12 @@ if(resp.type == "willingness") {
   file.var.sel.prefix <- file.var.sel.w.prefix
   file.survey.fit <- file.survey.fit.w
   path.results.varsel <- path.results.w.varsel
+}
+if(resp.type == "willingness.ord") {
+  file.mod.sel.prefix <- file.mod.sel.wo.prefix
+  file.var.sel.prefix <- file.var.sel.wo.prefix
+  file.survey.fit <- file.survey.fit.wo
+  path.results.varsel <- path.results.wo.varsel
 }
 if(resp.type == "urgency") {
   file.mod.sel.prefix <- file.mod.sel.u.prefix
@@ -95,22 +102,22 @@ for(i in seq_along(vars.recode)) {
   var.foc <- vars.recode[i]
   if(is.factor(survey.fit[[var.foc]])) {
     var.val <- survey.fit[[var.foc]] 
+    var.ord <- is.ordered(var.val)
     var.recode <-
       data.table(code = var.foc,
                  level.survey = unique(var.val))
     var.recode[, level.num := as.numeric(level.survey)]
     nlev <- length(levels(var.val))
-    var.recode[, level.mod := factor(level.num, levels = as.character(1:nlev))]
-    var.val.rc <- as.numeric(var.val)
+    var.recode[, level.mod := factor(level.num, levels = as.character(1:nlev), ordered = var.ord)]
     survey.fit[,
-               var.sel := factor(as.numeric(var.sel), levels = as.character(1:nlev)),
+               var.sel := factor(as.numeric(var.sel), levels = as.character(1:nlev), ordered = var.ord),
                env = list(var.sel = var.foc)]
     var.recode[, level.survey := as.character(level.survey)]
     recode.key.l[[i]] <- var.recode
   }
 }
 
-recode.key <- rbindlist(recode.key.l)
+recode.key <- rbindlist(recode.key.l[!sapply(recode.key.l, is.null)], fill = TRUE)
 setorder(recode.key, code, level.num)
 
 
@@ -252,7 +259,7 @@ dir.create(path.results.varsel, recursive = TRUE, showWarnings = FALSE)
 saveRDS(mod.sel, file.mod.sel)
 # mod.sel <- readRDS(file.mod.sel)
 
-n.terms.max <- round(0.25 * length(vars.pred))
+n.terms.max <- round(0.25 * (length(names(mod.sel$data))-1))
 
 if(var.resp != "Count") {
   mod.ref <- get_refmodel(mod.sel)
