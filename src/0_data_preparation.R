@@ -533,14 +533,14 @@ saveRDS(survey.fit.wo, file.survey.fit.wo)
 adapt.code <- variables[category.adaptation == TRUE, code]
 pred.code <- names(survey.fit)[!names(survey.fit) %in% adapt.code]
 
-idx.adapt <-
-  survey.fit.w[,
-               .(adapt.any = apply(.SD, 1, \(x) sum(x) > 0)),
-               .SDcols = adapt.code,
-               by = "id"
-               ][adapt.any == TRUE, id]
-
-survey.fit.u <- copy(survey.fit[id %in% idx.adapt])
+# idx.adapt <-
+#   survey.fit.w[,
+#                .(adapt.any = apply(.SD, 1, \(x) sum(x) > 0)),
+#                .SDcols = adapt.code,
+#                by = "id"
+#                ][adapt.any == TRUE, id]
+# survey.fit.u <- copy(survey.fit[id %in% idx.adapt])
+survey.fit.u <- copy(survey.fit)
 
 survey.fit.u[,
              (adapt.code) := lapply(.SD,
