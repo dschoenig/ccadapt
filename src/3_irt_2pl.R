@@ -207,8 +207,8 @@ mod.irt.2pl <-
       chains = 4,
       cores = 4,
       threads = 8,
-      warmup = 2500,
-      iter = 5000,
+      warmup = 7500,
+      iter = 10000,
       refresh = 25,
       backend = "cmdstanr",
       prior = prior.irt.2pl)
