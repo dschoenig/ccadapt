@@ -12,8 +12,8 @@ cont.nl <- as.logical(args[1])
 resp.type <- as.character(args[2])
 k.max <- 10
 
-# cont.nl <- FALSE
-# resp.type = "categorical"
+cont.nl <- FALSE
+resp.type = "categorical"
 
 
 if(resp.type == "willingness") {
@@ -36,6 +36,7 @@ if(resp.type == "categorical") {
   file.survey.irt <- file.survey.irt.c
   file.irt.mod.2pl <- file.irt.c.mod.2pl
   file.irt.mod.2pl.nl <- file.irt.c.mod.2pl.nl
+  path.results.irt <- path.results.c.irt
 }
 
 
@@ -156,16 +157,20 @@ if(resp.type != "categorical") {
 
    if(length(vars.pred.cont.term) > 0) {
      prior.irt.2pl <-
+       prior("normal(0, 5)", class = "Intercept") +
        prior("normal(0, 5)", class = "b") +
        prior("normal(0, 3)", class = "sd", group = "id") +
        prior("normal(0, 3)", class = "sd", group = "item") +
        prior("normal(0, 3)", class = "sds") +
+       prior("normal(0, 1)", class = "Intercept", dpar = "disc") +
        prior("normal(0, 1)", class = "sd", group = "item", dpar = "disc")
    } else {
      prior.irt.2pl <-
+       prior("normal(0, 5)", class = "Intercept") +
        prior("normal(0, 5)", class = "b") +
        prior("normal(0, 3)", class = "sd", group = "id") +
        prior("normal(0, 3)", class = "sd", group = "item") +
+       prior("normal(0, 1)", class = "Intercept", dpar = "disc") +
        prior("normal(0, 1)", class = "sd", group = "item", dpar = "disc")
    }
 
@@ -180,9 +185,11 @@ if(resp.type != "categorical") {
 
 
    prior.irt.2pl <-
+     prior("normal(0, 5)", class = "Intercept") +
      prior("normal(0, 5)", class = "b") +
      prior("normal(0, 3)", class = "sd", group = "id") +
      prior("normal(0, 3)", class = "sd", group = "item") +
+     prior("normal(0, 1)", class = "Intercept", dpar = "disc") +
      prior("normal(0, 1)", class = "sd", group = "item", dpar = "disc")
 
   }
@@ -211,8 +218,8 @@ mod.irt.2pl <-
       iter = 10000,
       refresh = 25,
       backend = "cmdstanr",
+      empty = TRUE,
       prior = prior.irt.2pl)
-
 
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
