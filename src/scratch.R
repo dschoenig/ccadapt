@@ -1,4 +1,23 @@
 
+adapt.vars <-
+  c("D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08",
+    "D09",
+    "D10")
+
+survey.fit[, c("id", adapt.vars), with = FALSE] |>
+melt(id.vars = "id",
+     variable.name = "item",
+     value.name = "resp",
+     value.factor = TRUE) |>
+_[, .N, by = c("item", "resp")]
+# _[resp == "I do not know this action", .N, by = item]
 
 
 # pers <- as.data.table(ranef(mod.irt, groups = "id")[[1]][,,1])
