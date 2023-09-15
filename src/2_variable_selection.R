@@ -12,8 +12,8 @@ source("utilities.R")
 
 options(mc.cores = 4)
 
-# resp.type <- as.character(args[1])
-# resp.type <- "urgency"
+resp.type <- as.character(args[1])
+resp.type <- "categorical"
 
 message(paste0("Response type: `", resp.type, "`"))
 
@@ -88,6 +88,8 @@ if(resp.type == "categorical") {
   vars.adapt <- c(variables[category.adaptation == TRUE, sort(code)], "Count")
 }
 
+# vars.adapt <- vars.adapt[1:2]
+
 files.var.sel <- paste0(file.var.sel.prefix, vars.adapt, ".rds")
 var.sel.exists <- file.exists(files.var.sel)
 
@@ -101,7 +103,8 @@ for(i in seq_along(vars.adapt)) {
 
 
 # ci.alpha <- 2 * pnorm(-1)
-ci.alpha <- 2*pnorm(-1)
+# ci.alpha <- 2*pnorm(-1)
+ci.alpha <- 0.1
 ci.type <- "lower"
 diff.pct <- 0.5
 sel.res.sum.l <- list()
@@ -159,12 +162,22 @@ sel.res.sum <-
   rbindlist(sel.res.sum.l, idcol = "resp") |>
   merge(sel.sizes)
 
-sel.res.sum[size <= size.sel & size != 0, count.sel := .N, by = "expl"]
-setcolorder(sel.res.sum, c("resp", "size", "expl", "cv_prop"))
+sel.res.sum[,
+            selected := fcase(size <= size.sel & size != 0, TRUE,
+                              size > size.sel & size != Inf, FALSE,
+                              default = NA)]
 
+sel.res.sum <- 
+  merge(sel.res.sum,
+        sel.res.sum[, .(count.sel = sum(selected, na.rm = TRUE)), by = "expl"],
+        by = "expl", all.x = TRUE)
+
+sel.res.sum[is.na(selected), count.sel := NA]
+
+setcolorder(sel.res.sum, c("resp", "size", "size.sel", "expl", "selected", "count.sel", "cv_prop"))
 
 sel.res.sum[, resp := factor(resp, levels = vars.adapt)]
-setorder(sel.res.sum, resp)
+setorder(sel.res.sum, resp, size)
 
 fwrite(sel.res.sum, file.var.sel.res.csv)
 saveRDS(sel.res.sum, file.var.sel.res)
@@ -214,9 +227,11 @@ cat.labels <-
                             paste0(expl, " ")),
               size,
               size.sel,
+              count.sel,
               y = rep(min(diff.lq), .N)),
             by = "resp"
-            ][!is.na(expl)]
+            ][!is.na(expl)] |>
+  copy()
 
 ref.lines <-
   rbind(
@@ -286,12 +301,22 @@ ggplot(sel.res.p[size < Inf]) +
                 color = cat.lab.mult),
             # family = base.family,
             family = "IBMPlexMono",
-            # fontface = "bold",
+            fontface = "bold",
             size = base.size/4,
             angle = 90,
             hjust = 1,
             key_glyph = "point") +
-  geom_text(data = cat.labels[size > size.sel],
+  geom_text(data = cat.labels[size > size.sel & count.sel >= 1],
+            aes(x = size,
+                y = y,
+                label = expl),
+            # family = base.family,
+            family = "IBMPlexMono",
+            fontface = "bold",
+            size = base.size/4,
+            angle = 90,
+            hjust = 1) +
+  geom_text(data = cat.labels[size > size.sel & count.sel == 0],
             aes(x = size,
                 y = y,
                 label = expl),
@@ -312,7 +337,7 @@ ggplot(sel.res.p[size < Inf]) +
   guides(linetype = guide_legend(order = 1, override.aes = list(colour = c(1, 1, 1, 2)))) +
   facet_wrap(vars(resp), ncol = 3, scales = "free_y") +
   labs(x = "Model size (number of terms)",
-       y = "Difference in ELPD vs. best model",
+       y = "Model performance (difference in ELPD vs. best model)",
        linetype = "Reference models",
        colour = "Category") +
   plot_theme +
@@ -320,8 +345,8 @@ ggplot(sel.res.p[size < Inf]) +
 
 dev.off()
 
-# sel.res.sum[size <= size.sel & !is.na(expl) & resp != "Count",
-#             sort(unique(expl))]
+sel.res.sum[size <= size.sel & !is.na(expl) & resp != "Count",
+            sort(unique(expl))]
 
 # sel.res.sum[size <= size.sel & !is.na(expl),
 #             sort(unique(expl))]
