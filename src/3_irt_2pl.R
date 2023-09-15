@@ -22,6 +22,7 @@ if(resp.type == "willingness") {
   file.survey.irt <- file.survey.irt.w
   file.irt.mod.2pl <- file.irt.w.mod.2pl
   file.irt.mod.2pl.nl <- file.irt.w.mod.2pl.nl
+  path.results.irt <- path.results.w.irt
 }
 if(resp.type == "urgency") {
   file.var.sel.res <- file.var.sel.u.res
@@ -29,6 +30,7 @@ if(resp.type == "urgency") {
   file.survey.irt <- file.survey.irt.u
   file.irt.mod.2pl <- file.irt.u.mod.2pl
   file.irt.mod.2pl.nl <- file.irt.u.mod.2pl.nl
+  path.results.irt <- path.results.u.irt
 }
 if(resp.type == "categorical") {
   file.var.sel.res <- file.var.sel.c.res
