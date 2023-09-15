@@ -12,8 +12,8 @@ cont.nl <- as.logical(args[1])
 resp.type <- as.character(args[2])
 k.max <- 10
 
-cont.nl <- FALSE
-resp.type = "categorical"
+# cont.nl <- FALSE
+# resp.type = "categorical"
 
 
 if(resp.type == "willingness") {
@@ -220,7 +220,6 @@ mod.irt.2pl <-
       iter = 10000,
       refresh = 25,
       backend = "cmdstanr",
-      empty = TRUE,
       prior = prior.irt.2pl)
 
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
