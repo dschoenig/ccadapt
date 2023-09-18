@@ -13,7 +13,7 @@ resp.type <- as.character(args[2])
 k.max <- 10
 
 # cont.nl <- FALSE
-# resp.type = "categorical"
+# resp.type = "urgency"
 
 
 if(resp.type == "willingness") {
@@ -45,7 +45,6 @@ if(resp.type == "categorical") {
 survey.fit <- readRDS(file.survey.fit)
 variables <- readRDS(file.variables.proc)
 sel.res.sum <- readRDS(file.var.sel.res)
-
 
 vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
 

@@ -6,7 +6,7 @@
 #SBATCH --array=1-11
 #SBATCH --mail-user=schonig.daniel@courrier.uqam.ca
 #SBATCH --mail-type=ALL
-#SBATCH --job-name=cv_c
+#SBATCH --job-name=cv_u
 
 module load StdEnv/2020 gcc/9.3.0 r/4.2.2
 

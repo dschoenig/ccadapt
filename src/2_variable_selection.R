@@ -13,7 +13,7 @@ source("utilities.R")
 options(mc.cores = 4)
 
 resp.type <- as.character(args[1])
-resp.type <- "categorical"
+# resp.type <- "willingness"
 
 message(paste0("Response type: `", resp.type, "`"))
 
@@ -102,11 +102,13 @@ for(i in seq_along(vars.adapt)) {
 }
 
 
+
 # ci.alpha <- 2 * pnorm(-1)
-# ci.alpha <- 2*pnorm(-1)
-ci.alpha <- 0.1
-ci.type <- "lower"
-diff.pct <- 0.5
+# ci.type <- "lower"
+# diff.pct <- 0.5
+ci.alpha <- 2 * pnorm(-1)
+ci.type <- "upper"
+diff.pct <- 0.1
 sel.res.sum.l <- list()
 sel.res.size <- integer()
 sel.res.vars <- integer()
@@ -245,7 +247,7 @@ ref.lines <-
                   .(type = rep("Best model", .N), yint = max(diff), col = "black"),
                   by = "resp"],
         sel.res.p[size == 0,
-                  .(type = rep("Acceptance threshold", .N), yint = diff/2, col = "red"),
+                  .(type = rep("Acceptance threshold", .N), yint = diff.pct * diff, col = "red"),
                   by = "resp"])
 
 ref.lines[, type := factor(type, levels = c("Best model",
@@ -347,6 +349,7 @@ dev.off()
 
 sel.res.sum[size <= size.sel & !is.na(expl) & resp != "Count",
             sort(unique(expl))]
+
 
 # sel.res.sum[size <= size.sel & !is.na(expl),
 #             sort(unique(expl))]
