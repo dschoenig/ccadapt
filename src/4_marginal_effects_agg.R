@@ -1,3 +1,4 @@
+
 library(data.table)
 library(brms)
 library(stringi)
@@ -11,9 +12,41 @@ source("utilities.R")
 
 options(mc.cores = 4)
 
+vars.sel <- c("F15", "C01")
+lev.agg <-
+  list(F15 =
+         factor(c("0 %" = "0 %",
+                  "1 to 10 %" = "1 to 50%",
+                  "11 to 30 %" = "1 to 50%",
+                  "31 to 50 %" = "1 to 50%",
+                  "51 to 75 %" = "51 to 100%",
+                  "76 to 100 %" = "51 to 100%",
+                  "I prefer not to answer" = "I prefer not to answer"),
+                levels = c("0 %",
+                           "1 to 50%",
+                           "51 to 100%",
+                           "I prefer not to answer")),
+       # C15 =
+       #   factor(c("Not at all" = "No",
+       #            "No" = "No",
+       #            "Rather no" = "No",
+       #            "Neutral" = "Neutral",
+       #            "Rather yes" = "Yes",
+       #            "Yes" = "Yes",
+       #            "Yes, I’m really sure" = "Yes"),
+       #          levels = c("No", "Neutral", "Yes")),
+       C01 = factor(c("Absolutely disagree" = "Disagree",
+                      "Disagree" = "Disagree",
+                      "Somewhat disagree" = "Disagree",
+                      "Neutral" = "Neutral",
+                      "Somewhat agree" = "Agree",
+                      "Agree" = "Agree",
+                      "Absolutely agree" = "Agree"),
+                    levels = c("Disagree", "Neutral", "Agree")))
+
+# resp.type <- "willingness"
 resp.type <- "urgency"
 cont.nl <- FALSE
-# resp.type <- "urgency"
 # pred.scales <- c("prob", "linpred")
 pred.scales <- c("prob")
 mar.type <- "cf"
@@ -53,17 +86,25 @@ if(cont.nl == TRUE) {
   suffix.nl <- ""
 }
 
-file.irt.pred <- paste0(path.results.irt, "predictions.", mar.type, suffix.nl, ".csv")
-file.irt.comp <- paste0(path.results.irt, "comparisons.", mar.type, suffix.nl, ".csv")
-file.irt.pred.ex <- paste0(path.results.irt, "predictions", suffix.nl, ".csv")
-file.irt.comp.ex <- paste0(path.results.irt, "comparisons", suffix.nl, ".csv")
+file.irt.pred <- paste0(path.results.irt, "predictions.agg.", mar.type, suffix.nl, ".csv")
+file.irt.comp <- paste0(path.results.irt, "comparisons.agg.", mar.type, suffix.nl, ".csv")
+file.irt.pred.ex <- paste0(path.results.irt, "predictions.agg", suffix.nl, ".csv")
+file.irt.comp.ex <- paste0(path.results.irt, "comparisons.agg", suffix.nl, ".csv")
 
 
 variables <- readRDS(file.variables.proc)
-cat.levels <- readRDS(file.cat.levels.proc)
 
 survey.irt <- readRDS(file.survey.irt)
 mod.irt <- readRDS(file.irt.mod.2pl)
+
+survey.rc <- copy(survey.irt)
+for(i in seq_along(vars.sel)) {
+  var.foc <- vars.sel[i]
+  var.rc <- lev.agg[[var.foc]]
+  survey.rc[,
+            var.sel := var.rc[as.character(var.sel)],
+            env = list(var.sel = var.foc)]
+}
 
 
 base.size <- 9
@@ -153,23 +194,18 @@ n.sum.l <- list()
 for(p in seq_along(pred.scales)) {
   if(pred.scales[p] == "prob") plot.type <- "prob"
   if(pred.scales[p] == "linpred") plot.type <- "lp"
-  plot.file <- paste0(path.irt.plots, plot.type, ".", mar.type, suffix.nl, ".pdf")
+  plot.file <- paste0(path.irt.plots, plot.type, ".", mar.type, suffix.nl, ".agg.pdf")
   cairo_pdf(plot.file, onefile = TRUE, width = 8.5, height = 11)
 }
 
-# vars.irt <- vars.irt[1:2]
-# vars.irt <- "F14"
-# vars.irt <- "A22"
-# vars.irt <- c("A03", "A06", "A22")
-# vars.irt <- c("A03", "F15")
-# vars.irt <- c("A03", "F21")
-# survey.irt <- survey.irt[id %in% sample(1:.N, 100)]
+vars.irt <- vars.irt[vars.irt %in% vars.sel]
 
 for(i in seq_along(vars.irt)) {
   
   message(paste0("Processing variable ", i, "/", length(vars.irt), " …"))
 
   var.foc <- vars.irt[i]
+  var.rc <- lev.agg[[var.foc]]
   var.type <- variables[code == var.foc, type]
 
   if(var.type == "continuous") {
@@ -303,6 +339,15 @@ for(i in seq_along(vars.irt)) {
 
   pred.var <- rbindlist(pred.var.l)
 
+  # Recode predictions
+  pred.var[, lev := var.rc[as.character(lev)]]
+
+  pred.var <-
+    pred.var[,
+             .(linpred = mean(linpred),
+               prob = mean(prob)),
+             by = c("item.code", "code.mar", "lev", "draw")]
+
 
   if(var.type == "categorical") {
 
@@ -310,13 +355,8 @@ for(i in seq_along(vars.irt)) {
 
     # Comparison between levels
 
-    var.cat.ref <- variables[code == var.foc, cat.ref]
-    var.lev <-
-          cat.levels[cat.scale == vars.pred[code == var.foc, cat.scale]
-                     ][order(level.id), level]
+    var.lev <- levels(var.rc)
     
-    pred.var[, lev := factor(lev, levels = var.lev)]
-
     var.comb <- 
       CJ(lev1 = factor(var.lev, levels = var.lev),
          lev2 = factor(var.lev, levels = var.lev))
@@ -523,16 +563,16 @@ for(i in seq_along(vars.irt)) {
   if(var.type == "categorical") {
 
     var.n <-
-      survey.irt[,
-                 .(n = .N),
-                 by = c("item", var.foc)
-                 ][,
-                   .(code.mar = var.foc,
-                     item.code = items.code[as.character(item)],
-                     lev = var.sel,
-                     n),
-                   env = list(var.sel = var.foc)
-                   ]
+      survey.rc[,
+                .(n = .N),
+                by = c("item", var.foc)
+                ][,
+                  .(code.mar = var.foc,
+                    item.code = items.code[as.character(item)],
+                    lev = var.sel,
+                    n),
+                  env = list(var.sel = var.foc)
+                  ]
     var.n[, lev := factor(lev, levels = levels(pred.var$lev))]
     setorder(var.n, code.mar, item.code, lev)
 
@@ -688,9 +728,9 @@ for(i in seq_along(vars.irt)) {
         }
         var.desc <- paste(c(q.main, q.sub), collapse = "\n")
 
-        ref.line <-
-          pred.var[item.code == item.foc & lev == var.cat.ref,
-                   median(pred.plot)]
+        # ref.line <-
+        #   pred.var[item.code == item.foc & lev == var.cat.ref,
+        #            median(pred.plot)]
         
         plim <-
           pred.var[item.code == item.foc,
@@ -710,7 +750,7 @@ for(i in seq_along(vars.irt)) {
                               .width = c(0.5, 0.9),
                               fill = "grey80",
                               scale = 0.8) +
-            geom_vline(xintercept = ref.line, linewidth = 0.3, linetype = "dashed") + 
+            # geom_vline(xintercept = ref.line, linewidth = 0.3, linetype = "dashed") + 
             coord_fixed(ratio = (plim[2] - plim[1])/length(var.lev),
                         xlim = plim) +
             scale_y_discrete(labels = ylab) +
@@ -975,19 +1015,20 @@ setnames(comp.sum,
            "p.diff.pos", "p.diff.neg"),
          c("var.code", "adapt.code",
            "var.level.cont", "var.level.1", "var.level.2",
-           "cert.pos", "cert.neg"))
+           "cert.pos", "cert.neg"),
+         skip_absent = TRUE)
 setorder(comp.sum, var.code, adapt.code)
-setcolorder(comp.sum,
-             c("adapt.code", "var.code",
-               "var.level.1", "var.level.2",
-               "var.level.cont",
-               "prob.diff.median", "prob.diff.ci.l", "prob.diff.ci.u",
-               "linpred.diff.median", "linpred.diff.ci.l", "linpred.diff.ci.u",
-               "prob.slope.median", "prob.slope.ci.l", "prob.slope.ci.u",
-               "linpred.slope.median", "linpred.slope.ci.l", "linpred.slope.ci.u",
-               "cert.pos", "cert.neg"))
-
-
+ord.cols <-
+  c("adapt.code", "var.code",
+    "var.level.1", "var.level.2",
+    "var.level.cont",
+    "prob.diff.median", "prob.diff.ci.l", "prob.diff.ci.u",
+    "linpred.diff.median", "linpred.diff.ci.l", "linpred.diff.ci.u",
+    "prob.slope.median", "prob.slope.ci.l", "prob.slope.ci.u",
+    "linpred.slope.median", "linpred.slope.ci.l", "linpred.slope.ci.u",
+    "cert.pos", "cert.neg")
+ord.cols <- ord.cols[ord.cols %in% names(comp.sum)]
+setcolorder(comp.sum, ord.cols)
 
 fwrite(pred.sum, file.irt.pred)
 fwrite(comp.sum, file.irt.comp)
@@ -1008,3 +1049,21 @@ comp.sum.ex <- comp.sum[, ..comp.ex.cols]
 
 fwrite(pred.sum.ex, file.irt.pred.ex)
 fwrite(comp.sum.ex, file.irt.comp.ex)
+
+
+# file.irt.pred.ex <- "../results/willingness/irt/predictions.csv"
+# file.irt.comp.ex <- "../results/willingness/irt/comparisons.csv"
+# file.irt.pred.ex <- "../results/willingness/irt/predictions.agg.csv"
+# file.irt.comp.ex <- "../results/willingness/irt/comparisons.agg.csv"
+# file.irt.pred.ex <- "../results/urgency/irt/predictions.csv"
+# file.irt.comp.ex <- "../results/urgency/irt/comparisons.csv"
+# file.irt.pred.ex <- "../results/urgency/irt/predictions.agg.csv"
+# file.irt.comp.ex <- "../results/urgency/irt/comparisons.agg.csv"
+# pred.sum.ex <- fread(file.irt.pred.ex)
+# pred.ex.newcols <- stri_replace_all_fixed(names(pred.sum.ex), "prop", "prob")
+# setnames(pred.sum.ex, pred.ex.newcols)
+# comp.sum.ex <- fread(file.irt.comp.ex)
+# comp.ex.newcols <- stri_replace_all_fixed(names(comp.sum.ex), "prop", "prob")
+# setnames(comp.sum.ex, comp.ex.newcols)
+# fwrite(pred.sum.ex, file.irt.pred.ex)
+# fwrite(comp.sum.ex, file.irt.comp.ex)

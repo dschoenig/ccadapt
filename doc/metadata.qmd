@@ -1,0 +1,195 @@
+---
+title: Metadata
+date: last-modified
+citeproc: true
+bibliography: /home/danielschoenig/cloud/phd/literature/bibliographies/phd_all.json
+csl: /home/danielschoenig/cloud/phd/literature/styles/apa.csl
+cache: true
+format:
+  pdf: 
+    toc: true
+    fig-pos: H
+    fig-width: 7
+    fig-dpi: 150
+    fig-format: png
+    documentclass: scrartcl
+    papersize: letter
+    mainfont: IBM Plex Serif
+    sansfont: IBM Plex Sans
+    monofont: IBM Plex Mono
+    latex-tinytex: false
+    pdf-engine: xelatex
+    header-includes:
+      - \usepackage{setspace}
+      - \onehalfspacing
+      - \usepackage{eulervm}
+      - \usepackage{unicode-math}
+      - \usepackage[format=plain]{caption}
+      - \setkomafont{caption}{\footnotesize}
+      - \setkomafont{captionlabel}{\footnotesize\bfseries}
+---
+
+
+# Variables
+
+## Variable description
+
+File: `var/variables.csv`
+
+`id`
+:   Integer identifier of the variable (corresponds to the column number   in the limesurvey output).
+
+code
+:   Unique alphanumeric code for each variable.
+
+name
+:   Full name of the variable (as provided in the limesurvey output).
+
+main
+:   Name of the main question (substring of `name`).
+
+sub
+:   Name of the subquestion (substring of `name`). Empty if there are no subquestions.
+
+type
+:   Type of the variable. Either `categorical`, `continuous`, or `qualitative`.
+
+cat.scale
+:   If the `type` is `categorical`, `cat.scale` indicates the scale of possible answers (i.e. the levels) that correspond to the variable. More information on the scales is provided in the file `cat.levels.csv`.
+
+cat.ref
+:   If the `type` is `categorical`, `cat.ref` indicates the reference level of the variable. If, a priori, there was no natural choice for the reference level (as in the case of gender), it was chosen based on response frequency.
+
+cat.ord
+:   If the `type` is `categorical`, `cat.ord` indicates (`TRUE` or `FALSE`) whether the categories of the variable are ordered.
+
+cont.mean
+:   If the `type` is `continuous`, `cont.mean` indicates the mean of the responses across the sample.
+
+cont.sd
+:   If the `type` is `continuous`, `cont.sd` indicates the standard deviation of the responses across the sample.
+
+category.*
+:   Indicates whether the variable belongs, respectively, to the group of variables related to *personal stakes*, *threat appraisal*, *coping appraisal*, *control*, or *adaptation*. The groups *personal stakes*, *threat appraisal*, and *coping appraisal* are not mutually exclusive (one variable can belong to several groups). However, if a variable belongs to either either the group `control` or `adaptation`, it cannot be part of another group. The `control` variables correspond to demographic control variables, and the `adaptation` variables correspond to adaptive behaviours. 
+
+question.main
+:   String of the main question, as formulated in the English language survey.
+
+question.sub
+:   String of the subquestion, as formulated in the English language survey.
+
+
+## Levels for categorical variables
+
+File: `var/cat.levels.csv`
+
+cat.scale
+:   Identifies the scale (lower-case letter).
+
+level.id
+:   Identifies the position of the level within the corresponding scale (integer).
+
+level
+:   String of the level, as formulated in the English language survey.
+	
+
+# Results
+
+## Variable selection
+
+File: `willingness/varsel/var.sel.csv`, `urgency/varsel/var.sel.csv`
+
+resp
+:   Identity of the adaptation variable (for which willingness or urgency to adapt has been evaluated), corresponding to the codes in the variable table. `Count` represents the sum of all ten binary adaption variables.
+
+size 
+:   Ranking of the explanatory variable given in `expl`. This ranking also corresponds to the number of variables present in the model (i.e. model size). For example, a size of `5` means that the variable given in `expl` is the fifth-most important variable, and it starts to be part of the model once the model contains 5 variables in total (and it will also be contained in all models of a larger size). A `size` of `Inf` correspnds to the full model (i.e. the model that contains all possible variables), and a `size` of `0` corresponds to a model that contains only an intercept term (and no explanatory variables).
+
+size.sel
+:   Size of the model chosen according to the following decision rule: An acceptance threshold is established that is equivalent to 90% of the performance improvement that the best model provides over the null model. Then, the smallest model that is not more than one standard error below this threshold (i.e. whose performance is "indistinguishable" from this threshold or cleary better) is selected. In other words, we are willing to sacrifice 10% of relative performance in order to obtain a substantially smaller model.
+
+selected
+:   Has the variable given in `expl` been selected for the specific adapatation action given in `resp` (`TRUE`) or not (`FALSE`)?
+
+count.sel
+:   How often has the variable given in `expl` been selected across *all* adaptation variables?
+
+expl
+:   Identity of the explanatory variable, corresponding to the codes in `var/variables.csv`.
+
+category
+:   Group that the explanatory variable belongs to (either `personal_stakes`, `threat_appraisal`, `coping_appraisal`, `control`). If an explanatory variable belongs to more than one category, its `category` is given as `multiple`.
+
+diff
+:   Performance difference of the submodel against the best model (difference in ELPD).
+
+diff.lq
+:   Lower uncertainty bound of the performance difference, corresponding to an uncertainty interval that is 2 standard errors wide.
+
+diff.uq
+:   Upper uncertainty bound of the performance difference, corresponding to an uncertainty interval that is 2 standard errors wide.
+
+
+## Item-response model: marginals
+
+Files: `willingness/irt/predictions.csv`, `willingness/irt/predictions.agg.csv`,`urgency/irt/predictions.csv`, `urgency/irt/predictions.agg.csv`
+
+var.code
+:   Identity of the explanatory variable for which the marginal effect is calculated. Corresponds to the codes in `var/variables.csv`.
+
+adapt.code
+:   Identity of the adaptation variable for which the marginal effect is calculated. Corresponds to the codes in `var/variables.csv`.
+
+var.level
+:   Level (or value) of the explanatory variable for which the marginal effect is calculated.
+
+prob.median, prob.q5, prob.q25, prob.q75, prob.q95
+:    Predicted response (i.e. willingness or urgency to adapt) for the adaptation variable if the explanatory variable is set to `var.level`. Provided are the median, as well as the 5th, 25th, 75th, and 95th percentiles. The 50% equal-tailed Bayesian credible interval is situated between the 25th and 75th percentiles. The 90% interval is situated between the 5th and 95th percentiles.
+
+n
+:   For *categorical* predictors: Number of responses for the given level of the explanatory variable. For *continuoues* predictors: Number of responses closest to the given value of the explanatory variable.
+
+
+## Item-response model: comparisons
+
+Files: `willingness/irt/comparisons.csv`, `willingness/irt/comparisons.agg.csv`,`urgency/irt/comparisons.csv`, `urgency/irt/comparisons.agg..csv`
+
+var.code
+:   Identity of the explanatory variable for which marginal effects are compared. Corresponds to the codes in `var/variables.csv`.
+
+adapt.code
+:   Identity of the adaptation variable for which the marginal effects are compared. Corresponds to the codes in `var/variables.csv`.
+
+var.level.cont
+:   [Continuous predictors only] The value of the explanatory variable at which the slope was evaluated.
+
+var.level1
+:   [Categorical predictors only] The first of two levels of the explanatory variable that are compared against each other.
+
+var.level2
+:   [Categorical predictors only] The second of two levels of the explanatory variable that are compared against each other.
+
+prob.slope.diff.median
+:   [Continuous predictors only] Median slope (also called "effect"), that is the (instantaneous) change of willingness (or urgency) to adapt, calculated at `var.level.cont`. The slope is expressed in percentage points per variable unit.
+
+prob.slope.diff.ci.u
+:   [Continuous predictors only] Lower limit of the 90% credibility interval for the slope.
+
+prob.slope.diff.ci.u
+:   [Continuous predictors only] Lower limit of the 90% credibility interval for the slope.
+
+prob.diff.median
+:   [Categorical predictors only] Median difference in willingness (or urgency) to adapt, calculated between `var.level1` and `var.level1`. The difference is expressed in percentage points.
+
+prob.diff.ci.u
+:   [Categorical predictors only] Lower limit of the 90% credibility interval for the difference in willingness (or urgency) to adapt.
+
+prob.diff.ci.u
+:   [Categorical predictors only] Upper limit of the 90% credibility interval for the difference in willingness (or urgency) to adapt.
+
+cert.diff.pos
+:   For *categorical* predictors: Certainty that `var.level1` *increases* the willingness (or urgency) to adapt, compared to `var.level2`. For continuous predictors: Certainty that the slope is positive.
+
+cert.diff.neg 
+:   For *categorical* predictors: Certainty that `var.level1` *decreases* the willingness (or urgency) to adapt, compared to `var.level2`. For continuous predictors: Certainty that the slope is negative.
+

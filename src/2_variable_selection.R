@@ -13,7 +13,7 @@ source("utilities.R")
 options(mc.cores = 4)
 
 resp.type <- as.character(args[1])
-# resp.type <- "willingness"
+resp.type <- "urgency"
 
 message(paste0("Response type: `", resp.type, "`"))
 
@@ -88,7 +88,7 @@ if(resp.type == "categorical") {
   vars.adapt <- c(variables[category.adaptation == TRUE, sort(code)], "Count")
 }
 
-# vars.adapt <- vars.adapt[1:2]
+# vars.adapt <- vars.adapt[4]
 
 files.var.sel <- paste0(file.var.sel.prefix, vars.adapt, ".rds")
 var.sel.exists <- file.exists(files.var.sel)
@@ -181,7 +181,6 @@ setcolorder(sel.res.sum, c("resp", "size", "size.sel", "expl", "selected", "coun
 sel.res.sum[, resp := factor(resp, levels = vars.adapt)]
 setorder(sel.res.sum, resp, size)
 
-fwrite(sel.res.sum, file.var.sel.res.csv)
 saveRDS(sel.res.sum, file.var.sel.res)
 
 
@@ -256,6 +255,14 @@ ref.lines[, type := factor(type, levels = c("Best model",
                                             "Acceptance threshold"))] 
 
 
+sel.res.ex <- copy(sel.res.p)
+sel.res.ex <-
+  sel.res.ex[,
+             .(resp, size, size.sel, selected, count.sel, expl,
+               category = cat.lab.mult,
+               diff, diff.lq, diff.uq)]
+
+fwrite(sel.res.ex, file.var.sel.res.csv)
 
 cairo_pdf(file.var.sel.plot, onefile = TRUE, width = 11, height = 8.5)
 

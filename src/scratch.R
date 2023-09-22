@@ -39,8 +39,8 @@ source("paths.R")
 source("utilities.R")
 
 
-mod1 <- readRDS(file.irt.mod.2pl)
-mod2 <- readRDS(file.irt.mod.2pl.nl)
+mod1 <- readRDS("../results/willingness/irt/mod.2pl.rds")
+mod2 <- readRDS("../results/willingness/irt/mod.2pl_oldrule.rds")
 
 loo(mod1, mod2)
 
