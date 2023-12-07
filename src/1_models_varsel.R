@@ -15,9 +15,9 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
 
-# mod.id <- 12
-# resp.type <- "willingness"
-# n.threads <- 4
+mod.id <- 12
+resp.type <- "willingness"
+n.threads <- 4
 
 # mod.id <- 1
 # resp.type <- "categorical"
@@ -88,7 +88,7 @@ if(mod.id == length(vars.adapt) + 2) {
   survey.fit[,
              Count_fire := apply(.SD, 1, sum, na.rm = TRUE),
              .SDcols = c("D01", "D02", "D03", "D04", "D05", "D07")]
-  vars.adapt <- c(vars.adapt, "Count")
+  vars.adapt <- c(vars.adapt, "Count_fire")
   vars.pred <- names(survey.fit)[!names(survey.fit) %in% c(vars.adapt, "id")]
 }
 file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
@@ -257,7 +257,7 @@ if(nobs.fit > threshold.small) {
       as.formula()
   }
 
-  if(var.resp != "Count") {
+  if(!var.resp %in% c("Count", "Count_fire")) {
 
     int.prior <- paste0("normal(", round(qlogis(resp.mean), 2), ", 1)")
 
