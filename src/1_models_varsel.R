@@ -15,6 +15,11 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
 
+
+mod.id <- 12
+resp.type <- "willingness"
+n.threads <- 4
+
 # mod.id <- 1
 # resp.type <- "categorical"
 # n.threads <- 4
@@ -72,16 +77,23 @@ vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
 if(mod.id <= length(vars.adapt)) {
   var.resp <- vars.adapt[mod.id]
   vars.pred <- names(survey.fit)[!names(survey.fit) %in% c(vars.adapt, "id")]
-  file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
-  file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
-} else {
+} 
+if(mod.id == length(vars.adapt) + 1) {
   var.resp <- "Count"
   survey.fit[, Count := apply(.SD, 1, sum, na.rm = TRUE), .SDcols = vars.adapt]
   vars.adapt <- c(vars.adapt, "Count")
   vars.pred <- names(survey.fit)[!names(survey.fit) %in% c(vars.adapt, "id")]
-  file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
-  file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
 }
+if(mod.id == length(vars.adapt) + 2) {
+  var.resp <- "Count_fire"
+  survey.fit[,
+             Count_fire := apply(.SD, 1, sum, na.rm = TRUE),
+             .SDcols = c("D01", "D02", "D03", "D04", "D05", "D07")]
+  vars.adapt <- c(vars.adapt, "Count")
+  vars.pred <- names(survey.fit)[!names(survey.fit) %in% c(vars.adapt, "id")]
+}
+file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
+file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
 
 nobs.orig <- nrow(survey.fit)
 survey.fit <- survey.fit[!is.na(resp),, env = list(resp = var.resp)]
@@ -161,10 +173,10 @@ message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel)
 #              prior(normal(0, 3), class = "Intercept")
 
 if(! resp.type %in% c("categorical", "categorical.sd")) {
-  if(var.resp != "Count") {
-    mod.fam <- brmsfamily("bernoulli", "logit")
-  } else {
+  if(var.resp %in% c("Count", "Count_fire")) {
     mod.fam <- brmsfamily("poisson")
+  } else {
+    mod.fam <- brmsfamily("bernoulli", "logit")
   }
 } else {
   mod.fam <- brmsfamily("cumulative", "logit")
