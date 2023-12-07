@@ -15,9 +15,9 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
 
-mod.id <- 12
-resp.type <- "willingness"
-n.threads <- 4
+# mod.id <- 12
+# resp.type <- "willingness"
+# n.threads <- 4
 
 # mod.id <- 1
 # resp.type <- "categorical"
