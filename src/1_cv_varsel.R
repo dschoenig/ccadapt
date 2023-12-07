@@ -65,14 +65,19 @@ vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
 
 if(mod.id <= length(vars.adapt)) {
   var.resp <- vars.adapt[mod.id]
-  file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
-  file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
-} else {
-  var.resp <- "Count"
-  vars.adapt <- c(vars.adapt, "Count")
-  file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
-  file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
 }
+if(mod.id == length(vars.adapt) + 1) {
+  var.resp <- "Count"
+}
+if(mod.id == length(vars.adapt) + 2) {
+  var.resp <- "Count_fire"
+}
+file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
+file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
+
+
+message(paste0("Performing variable selection for adaptation action `", var.resp, "` …"))
+message(paste0("Results will be saved to ", file.var.sel))
 
 mod.sel <- readRDS(file.mod.sel)
 
@@ -80,7 +85,7 @@ summary(mod.sel)
 
 n.terms.max <- round(0.25 * (length(names(mod.sel$data))-1))
 
-if(var.resp == "Count" | resp.type == "categorical") {
+if(var.resp %in% c("Count", "Count_fire") | resp.type == "categorical") {
   mod.ref <- get_refmodel(mod.sel, latent = TRUE)
 } else {
   mod.ref <- get_refmodel(mod.sel)

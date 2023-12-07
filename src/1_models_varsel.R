@@ -15,10 +15,9 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
 
-
-mod.id <- 12
-resp.type <- "willingness"
-n.threads <- 4
+# mod.id <- 12
+# resp.type <- "willingness"
+# n.threads <- 4
 
 # mod.id <- 1
 # resp.type <- "categorical"
@@ -160,8 +159,9 @@ if(nobs.fit > floor(threshold.fit * nobs.orig)) {
 
 ## SELECTION MODEL WITH HORSESHOE PRIOR ################################
 
-message(paste0("Performing variable selection for adaptation action `", var.resp, "` …"))
-message(paste0("Results will be saved to ", file.mod.sel, " and ", file.var.sel))
+message(paste0("Fitting model for adaptation action `", var.resp, "` …"))
+message(paste0("Results will be saved to ", file.mod.sel))
+
 
 
 
