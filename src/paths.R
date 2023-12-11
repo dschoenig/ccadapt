@@ -26,6 +26,13 @@ file.var.sel.w.res.csv <- paste0(path.results.w.varsel, "var.sel.csv")
 file.var.sel.w.plot <- paste0(path.results.w, "plots/varsel/var.sel.pdf")
 file.irt.w.mod.2pl <- paste0(path.results.w.irt, "mod.2pl.rds")
 file.irt.w.mod.2pl.nl <- paste0(path.results.w.irt, "mod.2pl.nl.rds")
+# For adaptation related to fire
+file.survey.irt.w.fire <- paste0(path.data.proc, "survey.irt.w.fire.rds")
+file.var.sel.w.res.fire <- paste0(path.results.w.varsel, "var.sel.res.fire.rds")
+file.var.sel.w.res.fire.csv <- paste0(path.results.w.varsel, "var.sel.fire.csv")
+file.var.sel.w.plot.fire <- paste0(path.results.w, "plots/varsel/var.sel.fire.pdf")
+file.irt.w.mod.2pl.fire <- paste0(path.results.w.irt, "mod.2pl.fire.rds")
+file.irt.w.mod.2pl.nl.fire <- paste0(path.results.w.irt, "mod.2pl.nl.fire.rds")
 
 path.results.wo <- "../results/willingness.ord/"
 path.results.wo.varsel <- paste0(path.results.wo, "varsel/")

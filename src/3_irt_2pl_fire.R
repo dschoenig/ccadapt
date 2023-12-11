@@ -1,3 +1,4 @@
+
 args <- commandArgs(trailingOnly = TRUE)
 
 library(data.table)
@@ -13,31 +14,31 @@ resp.type <- as.character(args[2])
 k.max <- 10
 
 # cont.nl <- FALSE
-# resp.type = "urgency"
+# resp.type = "willingness"
 
 
 if(resp.type == "willingness") {
-  file.var.sel.res <- file.var.sel.w.res
+  file.var.sel.res <- file.var.sel.w.res.fire
   file.survey.fit <- file.survey.fit.w
-  file.survey.irt <- file.survey.irt.w
-  file.irt.mod.2pl <- file.irt.w.mod.2pl
-  file.irt.mod.2pl.nl <- file.irt.w.mod.2pl.nl
+  file.survey.irt <- file.survey.irt.w.fire
+  file.irt.mod.2pl <- file.irt.w.mod.2pl.fire
+  file.irt.mod.2pl.nl <- file.irt.w.mod.2pl.nl.fire
   path.results.irt <- path.results.w.irt
 }
 if(resp.type == "urgency") {
-  file.var.sel.res <- file.var.sel.u.res
+  file.var.sel.res <- file.var.sel.u.res.fire
   file.survey.fit <- file.survey.fit.u
-  file.survey.irt <- file.survey.irt.u
-  file.irt.mod.2pl <- file.irt.u.mod.2pl
-  file.irt.mod.2pl.nl <- file.irt.u.mod.2pl.nl
+  file.survey.irt <- file.survey.irt.u.fire
+  file.irt.mod.2pl <- file.irt.u.mod.2pl.fire
+  file.irt.mod.2pl.nl <- file.irt.u.mod.2pl.nl.fire
   path.results.irt <- path.results.u.irt
 }
 if(resp.type == "categorical") {
-  file.var.sel.res <- file.var.sel.c.res
+  file.var.sel.res <- file.var.sel.c.res.fire
   file.survey.fit <- file.survey.fit.c
-  file.survey.irt <- file.survey.irt.c
-  file.irt.mod.2pl <- file.irt.c.mod.2pl
-  file.irt.mod.2pl.nl <- file.irt.c.mod.2pl.nl
+  file.survey.irt <- file.survey.irt.c.fire
+  file.irt.mod.2pl <- file.irt.c.mod.2pl.fire
+  file.irt.mod.2pl.nl <- file.irt.c.mod.2pl.nl.fire
   path.results.irt <- path.results.c.irt
 }
 
@@ -46,7 +47,7 @@ survey.fit <- readRDS(file.survey.fit)
 variables <- readRDS(file.variables.proc)
 sel.res.sum <- readRDS(file.var.sel.res)
 
-vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07")
+vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
 
 vars.pred <-
   sel.res.sum[size <= size.sel & !is.na(expl),

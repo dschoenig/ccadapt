@@ -13,27 +13,27 @@ source("utilities.R")
 options(mc.cores = 4)
 
 resp.type <- as.character(args[1])
-# resp.type <- "urgency"
+resp.type <- "willingness"
 
 message(paste0("Response type: `", resp.type, "`"))
 
 if(resp.type == "willingness") {
   file.var.sel.prefix <- file.var.sel.w.prefix
-  file.var.sel.res <- file.var.sel.w.res
-  file.var.sel.res.csv <- file.var.sel.w.res.csv
-  file.var.sel.plot <- file.var.sel.w.plot
+  file.var.sel.res <- file.var.sel.w.res.fire
+  file.var.sel.res.csv <- file.var.sel.w.res.fire.csv
+  file.var.sel.plot <- file.var.sel.w.plot.fire
 }
 if(resp.type == "urgency") {
   file.var.sel.prefix <- file.var.sel.u.prefix
-  file.var.sel.res <- file.var.sel.u.res
-  file.var.sel.res.csv <- file.var.sel.u.res.csv
-  file.var.sel.plot <- file.var.sel.u.plot
+  file.var.sel.res <- file.var.sel.u.res.fire
+  file.var.sel.res.csv <- file.var.sel.u.res.fire.csv
+  file.var.sel.plot <- file.var.sel.u.plot.fire
 }
 if(resp.type == "categorical") {
   file.var.sel.prefix <- file.var.sel.c.prefix
-  file.var.sel.res <- file.var.sel.c.res
-  file.var.sel.res.csv <- file.var.sel.c.res.csv
-  file.var.sel.plot <- file.var.sel.c.plot
+  file.var.sel.res <- file.var.sel.c.res.fire
+  file.var.sel.res.csv <- file.var.sel.c.res.fire.csv
+  file.var.sel.plot <- file.var.sel.c.plot.fire
 }
 
 
@@ -83,9 +83,9 @@ plot_theme <-
 variables <- readRDS(file.variables.proc)
 
 if(resp.type == "categorical") {
-  vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
+  vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07")
 } else {
-  vars.adapt <- c(variables[category.adaptation == TRUE, sort(code)], "Count")
+  vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07", "Count_fire")
 }
 
 # vars.adapt <- vars.adapt[4]
