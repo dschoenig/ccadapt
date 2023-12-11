@@ -47,7 +47,7 @@ survey.fit <- readRDS(file.survey.fit)
 variables <- readRDS(file.variables.proc)
 sel.res.sum <- readRDS(file.var.sel.res)
 
-vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
+vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07")
 
 vars.pred <-
   sel.res.sum[size <= size.sel & !is.na(expl),
