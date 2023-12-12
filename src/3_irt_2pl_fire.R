@@ -1,4 +1,3 @@
-
 args <- commandArgs(trailingOnly = TRUE)
 
 library(data.table)
@@ -13,8 +12,8 @@ cont.nl <- as.logical(args[1])
 resp.type <- as.character(args[2])
 k.max <- 10
 
-# cont.nl <- FALSE
-# resp.type = "willingness"
+cont.nl <- FALSE
+resp.type = "willingness"
 
 
 if(resp.type == "willingness") {

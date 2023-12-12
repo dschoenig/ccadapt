@@ -11,7 +11,7 @@ source("utilities.R")
 
 options(mc.cores = 4)
 
-resp.type <- "urgency"
+resp.type <- "willingness"
 cont.nl <- FALSE
 # resp.type <- "urgency"
 # pred.scales <- c("prob", "linpred")
@@ -28,21 +28,21 @@ q.ci.u <- 1-q.ci.l
 
 
 # # For testing
-# cont.pred.n <- 21
+# cont.pred.n <- 5
 # slope.res <- "coarse"
 # draw.ids <- sample(1:1e4, 100)
 
 if(resp.type == "willingness") {
-  file.survey.irt <- file.survey.irt.w
-  file.irt.mod.2pl <- file.irt.w.mod.2pl
-  file.irt.mod.2pl.nl <- file.irt.w.mod.2pl.nl
+  file.survey.irt <- file.survey.irt.w.fire
+  file.irt.mod.2pl <- file.irt.w.mod.2pl.fire
+  file.irt.mod.2pl.nl <- file.irt.w.mod.2pl.nl.fire
   path.irt.plots <- path.irt.w.plots
   path.results.irt <- path.results.w.irt
 }
 if(resp.type == "urgency") {
-  file.survey.irt <- file.survey.irt.u
-  file.irt.mod.2pl <- file.irt.u.mod.2pl
-  file.irt.mod.2pl.nl <- file.irt.u.mod.2pl.nl
+  file.survey.irt <- file.survey.irt.u.fire
+  file.irt.mod.2pl <- file.irt.u.mod.2pl.fire
+  file.irt.mod.2pl.nl <- file.irt.u.mod.2pl.nl.fire
   path.irt.plots <- path.irt.u.plots
   path.results.irt <- path.results.u.irt
 }
@@ -55,10 +55,10 @@ if(cont.nl == TRUE) {
   suffix.nl <- ""
 }
 
-file.irt.pred <- paste0(path.results.irt, "predictions.", mar.type, suffix.nl, ".csv")
-file.irt.comp <- paste0(path.results.irt, "comparisons.", mar.type, suffix.nl, ".csv")
-file.irt.pred.ex <- paste0(path.results.irt, "predictions", suffix.nl, ".csv")
-file.irt.comp.ex <- paste0(path.results.irt, "comparisons", suffix.nl, ".csv")
+file.irt.pred <- paste0(path.results.irt, "predictions.", mar.type, suffix.nl, ".fire.csv")
+file.irt.comp <- paste0(path.results.irt, "comparisons.", mar.type, suffix.nl, ".fire.csv")
+file.irt.pred.ex <- paste0(path.results.irt, "predictions", suffix.nl, ".fire.csv")
+file.irt.comp.ex <- paste0(path.results.irt, "comparisons", suffix.nl, ".fire.csv")
 
 
 variables <- readRDS(file.variables.proc)
@@ -124,9 +124,11 @@ vars.pred <-
             ]
 
 items.ref <- levels(survey.irt$item)
-items.code <- variables[category.adaptation == 1, code]
-items.code <- factor(items.code, levels = items.code)
-names(items.code) <- items.ref
+items.ref <- factor(items.ref, levels = items.ref)
+names(items.ref) <- items.ref
+# items.code <- variables[category.adaptation == 1, code]
+# items.code <- factor(items.code, levels = items.code)
+# names(items.code) <- items.ref
 
 
 
@@ -155,12 +157,13 @@ n.sum.l <- list()
 for(p in seq_along(pred.scales)) {
   if(pred.scales[p] == "prob") plot.type <- "prob"
   if(pred.scales[p] == "linpred") plot.type <- "lp"
-  plot.file <- paste0(path.irt.plots, plot.type, ".", mar.type, suffix.nl, ".pdf")
+  plot.file <- paste0(path.irt.plots, plot.type, ".", mar.type, suffix.nl, ".fire.pdf")
   cairo_pdf(plot.file, onefile = TRUE, width = 8.5, height = 11)
 }
 
 # vars.irt <- vars.irt[1:2]
-# vars.irt <- "F14"
+# vars.irt <- "A03"
+# vars.irt <- "F15"
 # vars.irt <- "A22"
 # vars.irt <- c("A03", "A06", "A22")
 # vars.irt <- c("A03", "F15")
@@ -483,7 +486,7 @@ for(i in seq_along(vars.irt)) {
 
 
         slope.var.lev[, draw := as.integer(draw)]
-        slope.var.lev[, item.code := items.code[as.character(item)]]
+        slope.var.lev[, item.code := items.ref[as.character(item)]]
         slope.var.lev[, code.mar := var.foc]
 
         slope.var.lev[,
@@ -530,14 +533,13 @@ for(i in seq_along(vars.irt)) {
                  by = c("item", var.foc)
                  ][,
                    .(code.mar = var.foc,
-                     item.code = items.code[as.character(item)],
+                     item.code = items.ref[as.character(item)],
                      lev = var.sel,
                      n),
                    env = list(var.sel = var.foc)
                    ]
     var.n[, lev := factor(lev, levels = levels(pred.var$lev))]
     setorder(var.n, code.mar, item.code, lev)
-
 
     pred.sum.l[[i]] <-
       pred.var[order(code.mar, item.code, lev),
@@ -612,7 +614,7 @@ for(i in seq_along(vars.irt)) {
                    by = c("item", "lev")
                    ][,
                      .(code.mar = var.foc,
-                       item.code = items.code[as.character(item)],
+                       item.code = items.ref[as.character(item)],
                        lev,
                        n),
                      ]
@@ -642,7 +644,7 @@ for(i in seq_along(vars.irt)) {
 
     if(var.type == "categorical") {
 
-      item.lev <- levels(pred.var$item)
+      item.lev <- as.character(sort(unique(pred.var$item)))
 
       pred.p <- list()
       prob.p <- list()
@@ -756,7 +758,7 @@ for(i in seq_along(vars.irt)) {
 
     if(var.type == "continuous") {
 
-      item.lev <- levels(pred.var$item)
+      item.lev <- as.character(sort(unique(pred.var$item)))
 
       pred.p <- list()
       prob.p <- list()
@@ -940,7 +942,7 @@ for(i in seq_along(vars.irt)) {
       
     } # end continuous
 
-    for(f in 1:5) { 
+    for(f in 1:3) { 
 
       plot.idx <- (1:2)+((f-1)*2)
 
@@ -948,7 +950,7 @@ for(i in seq_along(vars.irt)) {
         wrap_plots(c(pred.p[plot.idx], prob.p[plot.idx]), byrow = FALSE, ncol = 2) +
           plot_annotation(title = var.foc,
                           subtitle = var.desc,
-                          caption = paste0(var.foc, " [", f, "/5]"),
+                          caption = paste0(var.foc, " [", f, "/3]"),
                           theme = plot_theme +
                                   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5,
                                                              unit = "inch")))
