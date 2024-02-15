@@ -100,7 +100,7 @@ if(cv.type == "loo") {
 }
 
 if(cv.type == "kfold") {
-  mod.var.sel <- cv_varsel(mod.ref, method = "kfold", K = 10, nterms_max = n.terms.max, parallel = TRUE)
+  mod.var.sel <- cv_varsel(mod.ref, cv_method = "kfold", K = 10, nterms_max = n.terms.max, parallel = TRUE)
 }
 
 summary(mod.var.sel)
