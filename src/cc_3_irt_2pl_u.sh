@@ -7,6 +7,6 @@
 #SBATCH --mail-type=ALL
 #SBATCH --job-name=2pl_u
 
-module load StdEnv/2020 gcc/9.3.0 r/4.2.2
+module load StdEnv/2023 gcc/12.3 r/4.3.1
 
 Rscript 3_irt_2pl.R FALSE urgency

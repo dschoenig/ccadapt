@@ -8,6 +8,6 @@
 #SBATCH --mail-type=ALL
 #SBATCH --job-name=varsel_w
 
-module load StdEnv/2020 gcc/9.3.0 r/4.2.2
+module load StdEnv/2023 gcc/12.3 r/4.3.1
 
 Rscript 1_models_varsel.R $SLURM_ARRAY_TASK_ID willingness 4
