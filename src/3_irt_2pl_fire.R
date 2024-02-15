@@ -11,6 +11,7 @@ source("utilities.R")
 cont.nl <- as.logical(args[1])
 resp.type <- as.character(args[2])
 k.max <- 10
+dim.poly <- 3
 
 cont.nl <- FALSE
 resp.type = "willingness"
@@ -44,6 +45,7 @@ if(resp.type == "categorical") {
 
 survey.fit <- readRDS(file.survey.fit)
 variables <- readRDS(file.variables.proc)
+cat.levels <- readRDS(file.cat.levels.proc)
 sel.res.sum <- readRDS(file.var.sel.res)
 
 vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07")
@@ -65,6 +67,25 @@ survey.irt <-
 
 
 survey.irt <- survey.irt[!is.na(resp)]
+
+
+# Polynomial contrasts for Likert scales
+
+var.lik <-
+  variables[code %in% vars.pred & cat.ord == TRUE &
+            cat.scale %in% c("d", "i", "l", "n", "m"),
+            code]
+for(i in seq_along(var.lik)) {
+  var.scale <- variables[code == var.lik[i], cat.scale]
+  var.lev <- cat.levels[cat.scale == var.scale][order(level.id), level]
+  survey.fit[,
+             var.ord := factor(var.ord,
+                               levels = var.lev, 
+                               ordered = TRUE),
+             env = list(var.ord = var.lik[i])]
+  contrasts(survey.fit[[var.lik[i]]], how.many = dim.poly) <- contr.poly(7)
+}
+
 
 saveRDS(survey.irt, file.survey.irt)
 
