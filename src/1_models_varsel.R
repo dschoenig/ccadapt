@@ -15,7 +15,7 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
 
-# mod.id <- 12
+# mod.id <- 1
 # resp.type <- "willingness"
 # n.threads <- 4
 
@@ -29,6 +29,7 @@ n.threads <- as.numeric(args[3])
 # resp.type <- "categorical"
 # n.threads <- 4
 
+dim.poly <- 3
 threshold.fit <- 0
 threshold.small <- 0
 
@@ -70,6 +71,7 @@ if(resp.type == "categorical.sd") {
 
 variables <- readRDS(file.variables.proc)
 survey.fit <- readRDS(file.survey.fit)
+cat.levels <- readRDS(file.cat.levels.proc)
 
 vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
 
@@ -105,6 +107,23 @@ vars.vary <-
 vars.pred <- vars.pred[vars.pred %in% vars.vary]
 survey.fit <- survey.fit[, ..vars.vary]
 
+
+# Set polynomial contrasts for Likert scales
+
+var.lik <-
+  variables[code %in% vars.pred & cat.ord == TRUE &
+            cat.scale %in% c("d", "i", "l", "n", "m"),
+            code]
+for(i in seq_along(var.lik)) {
+  var.scale <- variables[code == var.lik[i], cat.scale]
+  var.lev <- cat.levels[cat.scale == var.scale][order(level.id), level]
+  survey.fit[,
+             var.ord := factor(var.ord,
+                               levels = var.lev, 
+                               ordered = TRUE),
+             env = list(var.ord = var.lik[i])]
+  contrasts(survey.fit[[var.lik[i]]], how.many = 3) <- contr.poly(7)
+}
 
 
 ## SIMPLIFY FACTOR LEVELS #############################################
@@ -157,12 +176,20 @@ if(nobs.fit > floor(threshold.fit * nobs.orig)) {
 }
 
 
+
+
 ## SELECTION MODEL WITH HORSESHOE PRIOR ################################
 
 message(paste0("Fitting model for adaptation action `", var.resp, "` …"))
 message(paste0("Results will be saved to ", file.mod.sel))
 
 
+vars.pred.cat <- variables[code %in% vars.pred & type == "categorical", code]
+vars.pred.cont <- variables[code %in% vars.pred & type == "continuous", code]
+vars.pred.cont.term <- character()
+for(i in seq_along(vars.pred.cont)) {
+  vars.pred.cont.term[i] <- paste0("poly(", vars.pred.cont[i], ", 3)")
+}
 
 
 # form.sel <- 
@@ -186,7 +213,10 @@ if(nobs.fit > threshold.small) {
 
   if(resp.type %in% "categorical.sd") {
     form.sel <- 
-      paste0(var.resp, " ~ (1 | ", paste0(vars.pred, collapse = " + "), ")") |>
+      paste0(var.resp,
+             " ~ (1 | ",
+             paste0(c(vars.pred.cont.term, vars.pred.cat), collapse = " + "),
+             ")") |>
       as.formula()
     # ncat <- length(unique(survey.fit[[var.resp]]))
     # prior.sel <-
@@ -202,7 +232,9 @@ if(nobs.fit > threshold.small) {
       prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "sd", dpar = paste0("mu", catmu))
   } else {
     form.sel <- 
-      paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
+      paste0(var.resp,
+             " ~ 1 + ",
+             paste0(c(vars.pred.cont.term, vars.pred.cat), collapse = " + ")) |>
       as.formula()
     if(resp.type != "categorical") {
       prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
@@ -241,6 +273,8 @@ if(nobs.fit > threshold.small) {
         control = list(adapt_delta = 0.99),
         # backend = "cmdstanr",
         prior = prior.sel)
+
+  prior_summary(mod.sel) |> as.data.table()
 
 
 } else { # Model for few observations
