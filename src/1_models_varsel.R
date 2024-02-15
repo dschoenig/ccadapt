@@ -108,12 +108,13 @@ vars.pred <- vars.pred[vars.pred %in% vars.vary]
 survey.fit <- survey.fit[, ..vars.vary]
 
 
-# Set polynomial contrasts for Likert scales
+# Order Likert scales ascending
 
 var.lik <-
   variables[code %in% vars.pred & cat.ord == TRUE &
             cat.scale %in% c("d", "i", "l", "n", "m"),
             code]
+
 for(i in seq_along(var.lik)) {
   var.scale <- variables[code == var.lik[i], cat.scale]
   var.lev <- cat.levels[cat.scale == var.scale][order(level.id), level]
@@ -122,11 +123,10 @@ for(i in seq_along(var.lik)) {
                                levels = var.lev, 
                                ordered = TRUE),
              env = list(var.ord = var.lik[i])]
-  contrasts(survey.fit[[var.lik[i]]], how.many = 3) <- contr.poly(7)
 }
 
 
-## SIMPLIFY FACTOR LEVELS #############################################
+## HANDLE CATEGORICAL PREDICTORS ######################################
 
 # Purely to avoid parsing errors in projpred
 
@@ -166,6 +166,16 @@ if(sum(is.na(recode.key$level.mod)) > 0) {
   stop("Variable recoding introduced `NA`s.")
 }
 
+
+# Set polynomial contrasts for Likert scales
+
+for(i in seq_along(var.lik)) {
+  contrasts(survey.fit[[var.lik[i]]], how.many = dim.poly) <- contr.poly(7)
+}
+
+
+
+
 nobs.fit <- nrow(survey.fit)
 
 if(nobs.fit > floor(threshold.fit * nobs.orig)) {
@@ -188,7 +198,7 @@ vars.pred.cat <- variables[code %in% vars.pred & type == "categorical", code]
 vars.pred.cont <- variables[code %in% vars.pred & type == "continuous", code]
 vars.pred.cont.term <- character()
 for(i in seq_along(vars.pred.cont)) {
-  vars.pred.cont.term[i] <- paste0("poly(", vars.pred.cont[i], ", 3)")
+  vars.pred.cont.term[i] <- paste0("poly(", vars.pred.cont[i], ", ", dim.poly, ")")
 }
 
 
@@ -272,10 +282,10 @@ if(nobs.fit > threshold.small) {
         refresh = 100,
         control = list(adapt_delta = 0.99),
         # backend = "cmdstanr",
+        # empty = TRUE,
         prior = prior.sel)
 
-  prior_summary(mod.sel) |> as.data.table()
-
+  # prior_summary(mod.sel) |> data.table() |> _[1:30]
 
 } else { # Model for few observations
 
