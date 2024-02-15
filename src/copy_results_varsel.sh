@@ -86,17 +86,45 @@
 
 
 
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D01.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D02.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D03.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D04.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D05.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D06.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D07.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D08.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D09.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D10.rds ../results/urgency/varsel/
-scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.Count.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D01.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D02.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D03.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D04.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D05.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D06.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D07.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D08.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D09.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.D10.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.Count.rds ../results/willingness/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/var.sel.Count_fire.rds ../results/willingness/varsel/
+
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D01.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D02.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D03.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D04.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D05.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D06.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D07.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D08.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D09.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.D10.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.Count.rds ../results/willingness/varsel/
+scp schoed@narval.computecanada.ca:scratch/ccadapt/results/willingness/varsel/mod.sel.Count_fire.rds ../results/willingness/varsel/
+
+
+
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D01.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D02.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D03.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D04.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D05.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D06.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D07.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D08.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D09.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.D10.rds ../results/urgency/varsel/
+# scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/var.sel.Count.rds ../results/urgency/varsel/
 
 # scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/mod.sel.D01.rds ../results/urgency/varsel/
 # scp schoed@narval.computecanada.ca:scratch/ccadapt/results/urgency/varsel/mod.sel.D02.rds ../results/urgency/varsel/

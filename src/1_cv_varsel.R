@@ -15,11 +15,11 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 cv.type <- as.character(args[3])
 n.threads <- as.numeric(args[4])
-
+nloo <- 100
 
 # mod.id <- 1
-# resp.type <- "categorical"
-# cv.type <- "loo"
+# resp.type <- "willingness"
+# cv.type <- "nloo"
 # n.threads <- 4
 
 # mod.id <- 1
@@ -94,6 +94,11 @@ if(var.resp %in% c("Count", "Count_fire") | resp.type == "categorical") {
 
 cl <- makeCluster(n.threads)
 registerDoParallel(cl)
+
+
+if(cv.type == "nloo") {
+  mod.var.sel <- cv_varsel(mod.ref, nloo = nloo, nterms_max = n.terms.max, parallel = TRUE)
+}
 
 if(cv.type == "loo") {
   mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max, parallel = TRUE)
