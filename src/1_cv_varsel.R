@@ -15,11 +15,12 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 cv.type <- as.character(args[3])
 n.threads <- as.numeric(args[4])
+method <- "L1"
 nloo <- 100
 
 # mod.id <- 1
 # resp.type <- "willingness"
-# cv.type <- "kfold"
+# cv.type <- "loo"
 # n.threads <- 4
 
 # mod.id <- 1
@@ -58,7 +59,6 @@ if(resp.type == "categorical.sd") {
   path.results.varsel <- path.results.cs.varsel
 }
 
-
 variables <- readRDS(file.variables.proc)
 
 vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
@@ -81,6 +81,7 @@ message(paste0("Results will be saved to ", file.var.sel))
 
 mod.sel <- readRDS(file.mod.sel)
 
+
 summary(mod.sel)
 
 n.terms.max <- round(0.25 * (length(names(mod.sel$data))-1))
@@ -97,17 +98,76 @@ registerDoParallel(cl)
 
 
 if(cv.type == "nloo") {
-  mod.var.sel <- cv_varsel(mod.ref, nloo = nloo, nterms_max = n.terms.max, parallel = TRUE)
+  mod.var.sel <- cv_varsel(mod.ref, method = method, nloo = nloo, nterms_max = n.terms.max, parallel = TRUE)
 }
 
 if(cv.type == "loo") {
-  mod.var.sel <- cv_varsel(mod.ref, nterms_max = n.terms.max, parallel = TRUE)
+  mod.var.sel <- cv_varsel(mod.ref, method = method, nterms_max = n.terms.max, parallel = TRUE)
 }
 
 if(cv.type == "kfold") {
-  mod.var.sel <- cv_varsel(mod.ref, cv_method = "kfold", K = 10, nterms_max = n.terms.max, parallel = TRUE)
+  mod.var.sel <- cv_varsel(mod.ref, method = method, cv_method = "kfold", K = 10, nterms_max = n.terms.max, parallel = TRUE)
 }
 
 summary(mod.var.sel)
 
 saveRDS(mod.var.sel, file.var.sel)
+
+
+
+# Try to create folds such that each category is present in at least two
+# folds (avoids error in k-fold CV). Fails if some categories are only
+# present once.
+# 
+# mod.data <- as.data.table(mod.sel$data)
+# mod.data[,.id := 1:.N]
+# vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
+# vars.cat <- intersect(names(mod.data), variables[type == "categorical", code])
+# vars.cat <- vars.cat[vars.cat %notin% vars.adapt]
+# k <- 10
+# idx.fold.l <- rep(list(NULL), k)
+# idx.fold.all <- integer()
+# n.obsi <- nrow(mod.data)
+# k.n <- integer()
+# for(i in seq_along(vars.cat)) {
+#   print(i)
+#   mod.data.sub <- copy(mod.data)
+#   var.lev <- unique(mod.data.sub[[vars.cat[i]]])
+#   for(j in seq_along(idx.fold.l)){
+#     mod.data.sub[.id %in% idx.fold.l[[j]], fold := j]
+#   }
+#   cat.sat <- 
+#     mod.data.sub[!is.na(fold),
+#                  .(n = length(unique(fold))),
+#                  by = c(vars.cat[i])
+#                  ][n > 1,
+#                    as.character(var),
+#                    env = list(var = vars.cat[i])]
+#   if(length(cat.sat) < length(var.lev)) {
+#     mod.data.sub <-
+#       mod.data.sub[var %notin% cat.sat,, env = list(var = vars.cat[i])]
+#     fold.sam <- sample(1:k, 2)
+#     id.fold <-
+#         mod.data.sub[,
+#                      .(.id = sample(.id, 2), fold = fold.sam),
+#                      by = c(vars.cat[i])]
+#     for(f in fold.sam) {
+#       idx.fold.l[[f]] <- unique(c(idx.fold.l[[f]], id.fold[fold == f, .id]))
+#     }
+#     idx.fold.all <- unique(c(idx.fold.all, id.fold[, .id]))
+#   }
+# }
+
+# idx.fold.l <- lapply(idx.fold.l, unique)
+
+# for(j in seq_along(idx.fold.l)){
+#   mod.data[.id %in% idx.fold.l[[j]], fold := j]
+# }
+
+# test.var <- logical(length(vars.cat))
+# for(i in seq_along(vars.cat)) {
+#   test.var[i] <-
+#     mod.data[,
+#              .(n = length(unique(fold))),
+#              by = c(vars.cat[i])][, all(n > 1)]
+# }
