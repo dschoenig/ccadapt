@@ -19,7 +19,7 @@ nloo <- 100
 
 # mod.id <- 1
 # resp.type <- "willingness"
-# cv.type <- "nloo"
+# cv.type <- "kfold"
 # n.threads <- 4
 
 # mod.id <- 1
