@@ -170,8 +170,8 @@ if(sum(is.na(recode.key$level.mod)) > 0) {
 
 # Set polynomial contrasts for Likert scales
 
-for(i in seq_along(var.lik)) {
-  contrasts(survey.fit[[var.lik[i]]], how.many = dim.poly) <- contr.poly(7)
+for(i in seq_along(vars.pred.lik)) {
+  contrasts(survey.fit[[vars.pred.lik[i]]], how.many = dim.poly) <- contr.poly(7)
 }
 
 
