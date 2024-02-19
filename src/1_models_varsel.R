@@ -11,9 +11,9 @@ library(doRNG)
 source("paths.R")
 source("utilities.R")
 
-# mod.id <- as.integer(args[1])
-# resp.type <- as.character(args[2])
-# n.threads <- as.numeric(args[3])
+mod.id <- as.integer(args[1])
+resp.type <- as.character(args[2])
+n.threads <- as.numeric(args[3])
 
 # mod.id <- 1
 # resp.type <- "willingness"
