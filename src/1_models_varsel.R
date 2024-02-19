@@ -11,9 +11,9 @@ library(doRNG)
 source("paths.R")
 source("utilities.R")
 
-mod.id <- as.integer(args[1])
-resp.type <- as.character(args[2])
-n.threads <- as.numeric(args[3])
+# mod.id <- as.integer(args[1])
+# resp.type <- as.character(args[2])
+# n.threads <- as.numeric(args[3])
 
 # mod.id <- 1
 # resp.type <- "willingness"
@@ -110,19 +110,19 @@ survey.fit <- survey.fit[, ..vars.vary]
 
 # Order Likert scales ascending
 
-var.lik <-
+vars.pred.lik <-
   variables[code %in% vars.pred & cat.ord == TRUE &
             cat.scale %in% c("d", "i", "l", "n", "m"),
             code]
 
-for(i in seq_along(var.lik)) {
-  var.scale <- variables[code == var.lik[i], cat.scale]
+for(i in seq_along(vars.pred.lik)) {
+  var.scale <- variables[code == vars.pred.lik[i], cat.scale]
   var.lev <- cat.levels[cat.scale == var.scale][order(level.id), level]
   survey.fit[,
              var.ord := factor(var.ord,
                                levels = var.lev, 
                                ordered = TRUE),
-             env = list(var.ord = var.lik[i])]
+             env = list(var.ord = vars.pred.lik[i])]
 }
 
 
@@ -151,7 +151,8 @@ for(i in seq_along(vars.recode)) {
     nlev <- length(levels(var.val))
     var.recode[, level.mod := factor(letters[level.num], levels = letters[1:nlev], ordered = var.ord)]
     survey.fit[,
-               var.sel := factor(letters[as.numeric(var.sel)], levels = letters[1:nlev], ordered = var.ord),
+               var.sel := factor(letters[as.numeric(var.sel)],
+                                 levels = letters[1:nlev], ordered = var.ord),
                env = list(var.sel = var.foc)]
     var.recode[, level.survey := as.character(level.survey)]
     recode.key.l[[i]] <- var.recode
@@ -175,7 +176,6 @@ for(i in seq_along(var.lik)) {
 
 
 
-
 nobs.fit <- nrow(survey.fit)
 
 if(nobs.fit > floor(threshold.fit * nobs.orig)) {
@@ -187,20 +187,39 @@ if(nobs.fit > floor(threshold.fit * nobs.orig)) {
 
 
 
-
 ## SELECTION MODEL WITH HORSESHOE PRIOR ################################
 
 message(paste0("Fitting model for adaptation action `", var.resp, "` …"))
 message(paste0("Results will be saved to ", file.mod.sel))
 
 
-vars.pred.cat <- variables[code %in% vars.pred & type == "categorical", code]
-vars.pred.cont <- variables[code %in% vars.pred & type == "continuous", code]
-vars.pred.cont.term <- character()
-for(i in seq_along(vars.pred.cont)) {
-  vars.pred.cont.term[i] <- paste0("poly(", vars.pred.cont[i], ", ", dim.poly, ")")
+vars.pred.cat <- variables[code %in% vars.pred &
+                           type == "categorical" &
+                           cat.ord == FALSE,
+                           code]
+vars.pred.cont <- variables[code %in% vars.pred &
+                            type == "continuous",
+                            code]
+
+vars.pred.lik.poly <- character()
+for(i in seq_along(vars.pred.lik)) {
+  var.lik <- survey.fit[[vars.pred.lik[i]]]
+  cont.mat <- contrasts(var.lik)[var.lik,1:dim.poly]
+  poly.names <- paste0(vars.pred.lik[i], "_p", 1:dim.poly)
+  vars.pred.lik.poly <- c(vars.pred.lik.poly, poly.names)
+  survey.fit[, (poly.names) := as.data.table(cont.mat)]
 }
 
+vars.pred.cont.poly <- character()
+for(i in seq_along(vars.pred.cont)) {
+  var.cont <- survey.fit[[vars.pred.cont[i]]]
+  poly.mat <- poly(var.cont, degree = dim.poly)
+  poly.names <- paste0(vars.pred.cont[i], "_p", 1:dim.poly)
+  vars.pred.cont.poly <- c(vars.pred.cont.poly, poly.names)
+  survey.fit[, (poly.names) := as.data.table(poly.mat)]
+}
+
+vars.pred.all <- c(vars.pred.cont.poly, vars.pred.lik.poly, vars.pred.cat)
 
 # form.sel <- 
 #   paste0("resp ~ 1 + (1 | ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), ")") |>
@@ -225,7 +244,7 @@ if(nobs.fit > threshold.small) {
     form.sel <- 
       paste0(var.resp,
              " ~ (1 | ",
-             paste0(c(vars.pred.cont.term, vars.pred.cat), collapse = " + "),
+             paste0(vars.pred.all, collapse = " + "),
              ")") |>
       as.formula()
     # ncat <- length(unique(survey.fit[[var.resp]]))
@@ -244,7 +263,7 @@ if(nobs.fit > threshold.small) {
     form.sel <- 
       paste0(var.resp,
              " ~ 1 + ",
-             paste0(c(vars.pred.cont.term, vars.pred.cat), collapse = " + ")) |>
+             paste0(vars.pred.all, collapse = " + ")) |>
       as.formula()
     if(resp.type != "categorical") {
       prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
@@ -352,7 +371,6 @@ if(nobs.fit > threshold.small) {
   }
 
 }
-
 
 dir.create(path.results.varsel, recursive = TRUE, showWarnings = FALSE)
 
