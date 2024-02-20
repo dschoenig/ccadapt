@@ -15,8 +15,9 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 cv.type <- as.character(args[3])
 n.threads <- as.numeric(args[4])
-method <- "L1"
-nloo <- 100
+method <- "forward"
+parallel <- TRUE
+nloo <- 10
 
 # mod.id <- 1
 # resp.type <- "willingness"
@@ -84,7 +85,7 @@ mod.sel <- readRDS(file.mod.sel)
 
 summary(mod.sel)
 
-n.terms.max <- round(0.25 * (length(names(mod.sel$data))-1))
+n.terms.max <- round(0.125 * (length(names(mod.sel$data))-1))
 
 if(var.resp %in% c("Count", "Count_fire") | resp.type == "categorical") {
   mod.ref <- get_refmodel(mod.sel, latent = TRUE)
@@ -98,15 +99,22 @@ registerDoParallel(cl)
 
 
 if(cv.type == "nloo") {
-  mod.var.sel <- cv_varsel(mod.ref, method = method, nloo = nloo, nterms_max = n.terms.max, parallel = TRUE)
+  mod.var.sel <- cv_varsel(mod.ref, method = method,
+                           nloo = nloo, nterms_max = n.terms.max, parallel = parallel)
 }
 
 if(cv.type == "loo") {
-  mod.var.sel <- cv_varsel(mod.ref, method = method, nterms_max = n.terms.max, parallel = TRUE)
+
+  mod.var.sel <- cv_varsel(mod.ref, method = method,
+                           # nterms_max = n.terms.max, parallel = TRUE)
+                           nterms_max = n.terms.max, parallel = parallel)
+
 }
 
 if(cv.type == "kfold") {
-  mod.var.sel <- cv_varsel(mod.ref, method = method, cv_method = "kfold", K = 10, nterms_max = n.terms.max, parallel = TRUE)
+  mod.var.sel <- cv_varsel(mod.ref, method = method,
+                           cv_method = "kfold", K = 10,
+                           nterms_max = n.terms.max, parallel = parallel)
 }
 
 summary(mod.var.sel)
