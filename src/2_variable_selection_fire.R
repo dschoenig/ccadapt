@@ -293,16 +293,18 @@ ref.lines <-
                   .(type = rep("Full model", .N), yint = diff, col = "black"),
                   by = "resp"],
         sel.res.p[,
-                  .(type = rep("Best model", .N), yint = max(diff), col = "black"),
-                  by = "resp"],
-        sel.res.p[size == 0,
-                  .(type = rep("Acceptance threshold", .N), yint = diff.pct * diff, col = "red"),
-                  by = "resp"])
+                  .(type = rep("Best model", .N), yint = max(diff), col = "red"),
+                  by = "resp"]
+        # , sel.res.p[size == 0,
+        #           .(type = rep("Acceptance threshold", .N), yint = diff.pct * diff, col = "red"),
+        #           by = "resp"]
+  )
 
 ref.lines[, type := factor(type, levels = c("Best model",
                                             "Full model",
-                                            "Null model",
-                                            "Acceptance threshold"))] 
+                                            "Null model"
+                                            # , "Acceptance threshold"
+                                            ))] 
 
 
 sel.res.ex <- copy(sel.res.p)
@@ -314,7 +316,7 @@ sel.res.ex <-
 
 fwrite(sel.res.ex, file.var.sel.res.csv)
 
-cairo_pdf(file.var.sel.plot, onefile = TRUE, width = 11, height = 8.5)
+cairo_pdf(file.var.sel.plot, onefile = TRUE, width = 11, height = 5.65)
 
 
 ggplot(sel.res.p[size < Inf]) +
@@ -329,12 +331,18 @@ ggplot(sel.res.p[size < Inf]) +
                           ymin = ymin,
                           ymax = ymax),
             fill = "grey90") +
-  geom_hline(data = ref.lines[type != "Acceptance threshold"],
+  geom_hline(data = ref.lines[type != "Best model"],
              mapping = aes(yintercept = yint, linetype = type),
              linewidth = 0.2) +
-  geom_hline(data = ref.lines[type == "Acceptance threshold"],
+  geom_hline(data = ref.lines[type == "Best model"],
              mapping = aes(yintercept = yint),
              linewidth = 0.2, color = 2) +
+  # geom_hline(data = ref.lines[type != "Acceptance threshold"],
+  #            mapping = aes(yintercept = yint, linetype = type),
+  #            linewidth = 0.2) +
+  # geom_hline(data = ref.lines[type == "Acceptance threshold"],
+  #            mapping = aes(yintercept = yint),
+  #            linewidth = 0.2, color = 2) +
   geom_line(aes(x = size,
                 y = diff,
                 group = resp),
@@ -388,13 +396,15 @@ ggplot(sel.res.p[size < Inf]) +
   scale_y_continuous(expand = expansion(c(0.275, 0.1), 0)) +
   scale_linetype_manual(values = c("Null model" = "dotted",
                                    "Full model" = "dashed",
-                                   "Best model" = "solid",
-                                   "Acceptance threshold" = "solid"),
+                                   "Best model" = "solid"
+                                   # ,"Acceptance threshold" = "solid"
+                                   ),
                         drop = FALSE) +
   scale_fill_brewer(type = "qual", palette = "Set1",
                     aesthetics = c("fill", "colour"),
                     drop = FALSE) +
-  guides(linetype = guide_legend(order = 1, override.aes = list(colour = c(1, 1, 1, 2)))) +
+  guides(linetype = guide_legend(order = 1, override.aes = list(colour = c(2, 1, 1)))) +
+  # guides(linetype = guide_legend(order = 1, override.aes = list(colour = c(1, 1, 1, 2)))) +
   facet_wrap(vars(resp), ncol = 3, scales = "free_y") +
   labs(x = "Model size (number of terms)",
        y = "Model performance (difference in ELPD vs. best model)",
