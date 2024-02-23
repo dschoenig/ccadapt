@@ -13,7 +13,6 @@ resp.type <- as.character(args[2])
 k.max <- 10
 dim.poly <- 3
 
-cont.nl <- FALSE
 resp.type = "willingness"
 
 
@@ -49,17 +48,63 @@ cat.levels <- readRDS(file.cat.levels.proc)
 sel.res.sum <- readRDS(file.var.sel.res)
 
 vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07")
-
-vars.pred <-
+vars.pred <- names(survey.fit)[!names(survey.fit) %in% c(vars.adapt, "id")]
+vars.sel <-
   sel.res.sum[size <= size.sel & !is.na(expl),
               sort(unique(expl))]
 
-vars.pred.cat <- variables[code %in% vars.pred & type == "categorical", code]
-vars.pred.cont <- variables[code %in% vars.pred & type == "continuous", code]
+
+# Polynomial contrasts for Likert scales
+
+vars.pred.lik <-
+  variables[code %in% vars.pred & cat.ord == TRUE &
+            cat.scale %in% c("d", "i", "l", "n", "m"),
+            code]
+for(i in seq_along(vars.pred.lik)) {
+  var.scale <- variables[code == vars.pred.lik[i], cat.scale]
+  var.lev <- cat.levels[cat.scale == var.scale][order(level.id), level]
+  survey.fit[,
+             var.ord := factor(var.ord,
+                               levels = var.lev, 
+                               ordered = TRUE),
+             env = list(var.ord = vars.pred.lik[i])]
+  contrasts(survey.fit[[vars.pred.lik[i]]], how.many = dim.poly) <- contr.poly(7)
+}
+
+
+
+vars.pred.cat <- variables[code %in% vars.pred &
+                           type == "categorical" &
+                           cat.ord == FALSE,
+                           code]
+vars.pred.cont <- variables[code %in% vars.pred &
+                            type == "continuous",
+                            code]
+
+vars.pred.lik.poly <- character()
+for(i in seq_along(vars.pred.lik)) {
+  var.lik <- survey.fit[[vars.pred.lik[i]]]
+  cont.mat <- contrasts(var.lik)[var.lik,1:dim.poly]
+  poly.names <- paste0(vars.pred.lik[i], "_p", 1:dim.poly)
+  vars.pred.lik.poly <- c(vars.pred.lik.poly, poly.names)
+  survey.fit[, (poly.names) := as.data.table(cont.mat)]
+}
+
+vars.pred.cont.poly <- character()
+for(i in seq_along(vars.pred.cont)) {
+  var.cont <- survey.fit[[vars.pred.cont[i]]]
+  poly.mat <- poly(var.cont, degree = dim.poly)
+  poly.names <- paste0(vars.pred.cont[i], "_p", 1:dim.poly)
+  vars.pred.cont.poly <- c(vars.pred.cont.poly, poly.names)
+  survey.fit[, (poly.names) := as.data.table(poly.mat)]
+}
+
+
+vars.pred.all <- c(vars.pred.cont.poly, vars.pred.lik.poly, vars.pred.cat)
 
 survey.irt <- 
-  survey.fit[ , c("id", vars.adapt, vars.pred), with = FALSE] |>
-  melt(id.vars = c("id", vars.pred),
+  survey.fit[ , c("id", vars.adapt, vars.sel), with = FALSE] |>
+  melt(id.vars = c("id", vars.sel),
        measure.vars = vars.adapt,
        variable.name = "item",
        value.name = "resp",
@@ -69,24 +114,6 @@ survey.irt <-
 survey.irt <- survey.irt[!is.na(resp)]
 
 
-# Polynomial contrasts for Likert scales
-
-var.lik <-
-  variables[code %in% vars.pred & cat.ord == TRUE &
-            cat.scale %in% c("d", "i", "l", "n", "m"),
-            code]
-for(i in seq_along(var.lik)) {
-  var.scale <- variables[code == var.lik[i], cat.scale]
-  var.lev <- cat.levels[cat.scale == var.scale][order(level.id), level]
-  survey.fit[,
-             var.ord := factor(var.ord,
-                               levels = var.lev, 
-                               ordered = TRUE),
-             env = list(var.ord = var.lik[i])]
-  contrasts(survey.fit[[var.lik[i]]], how.many = dim.poly) <- contr.poly(7)
-}
-
-
 saveRDS(survey.irt, file.survey.irt)
 
 
@@ -94,57 +121,20 @@ saveRDS(survey.irt, file.survey.irt)
 
 if(resp.type != "categorical") {
 
-  if(cont.nl == TRUE) {
-
-    vars.pred.cont.term <- character(0)
-    for(i in seq_along(vars.pred.cont)) {
-      var.k <- min(length(unique(survey.irt[[vars.pred.cont[i]]])), k.max)
-      vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i],
-                                       ", by = item, k = ", var.k, ", bs = 'tp')")
-    }
-
-    form.eta <- 
-      paste0("eta ~ ",
-             paste0(c(vars.pred.cont.term, vars.pred.cat), collapse = " + "),
-             " + (1 + ", paste0(vars.pred.cat, collapse = " + "), " |i| item)",
-             " + (1 | id)") |>
-      as.formula()
-
-    if(length(vars.pred.cont.term) > 0) {
-      prior.irt.2pl <-
-        prior("normal(0, 5)", class = "b", nlpar = "eta") +
-        prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
-        prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
-        prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
-        prior("normal(0, 3)", class = "sds", nlpar = "eta") +
-        prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
-    } else {
-      prior.irt.2pl <-
-        prior("normal(0, 5)", class = "b", nlpar = "eta") +
-        prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
-        prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
-        prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
-        prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
-    }
-
-  } else {
-
-    form.eta <- 
-      paste0("eta ~ ",
-             paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "),
-             " + (1 + ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), " |i| item)",
-             " + (1 | id)") |>
-      as.formula()
+  form.eta <- 
+    paste0("eta ~ ",
+           paste0(vars.sel, collapse = " + "),
+           " + (1 + ", paste0(vars.sel, collapse = " + "), " |i| item)",
+           " + (1 | id)") |>
+    as.formula()
 
 
-    prior.irt.2pl <-
-      prior("normal(0, 5)", class = "b", nlpar = "eta") +
-      prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
-      prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
-      prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
-      prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
-
-  }
+  prior.irt.2pl <-
+    prior("normal(0, 5)", class = "b", nlpar = "eta") +
+    prior("normal(0, 1)", class = "b", nlpar = "logalpha") +
+    prior("normal(0, 3)", class = "sd", group = "id", nlpar = "eta") +
+    prior("normal(0, 3)", class = "sd", group = "item", nlpar = "eta") +
+    prior("normal(0, 1)", class = "sd", group = "item", nlpar = "logalpha")
 
 
   form.logalpha <- logalpha ~ 1 + (1 |i| item)
@@ -161,60 +151,22 @@ if(resp.type != "categorical") {
 
 } else { # Categorical model
 
- if(cont.nl == TRUE) {
-
-   vars.pred.cont.term <- character(0)
-   for(i in seq_along(vars.pred.cont)) {
-     var.k <- min(length(unique(survey.irt[[vars.pred.cont[i]]])), k.max)
-     vars.pred.cont.term[i] <- paste0("s(", vars.pred.cont[i],
-                                      ", by = item, k = ", var.k, ", bs = 'tp')")
-   }
-
-   form.eta <- 
-     paste0("resp ~ ",
-            paste0(c(vars.pred.cont.term, vars.pred.cat), collapse = " + "),
-            " + (1 + ", paste0(vars.pred.cat, collapse = " + "), " |i| item)",
-            " + (1 | id)") |>
-     as.formula()
-
-   if(length(vars.pred.cont.term) > 0) {
-     prior.irt.2pl <-
-       prior("normal(0, 5)", class = "Intercept") +
-       prior("normal(0, 5)", class = "b") +
-       prior("normal(0, 3)", class = "sd", group = "id") +
-       prior("normal(0, 3)", class = "sd", group = "item") +
-       prior("normal(0, 3)", class = "sds") +
-       prior("normal(0, 1)", class = "Intercept", dpar = "disc") +
-       prior("normal(0, 1)", class = "sd", group = "item", dpar = "disc")
-   } else {
-     prior.irt.2pl <-
-       prior("normal(0, 5)", class = "Intercept") +
-       prior("normal(0, 5)", class = "b") +
-       prior("normal(0, 3)", class = "sd", group = "id") +
-       prior("normal(0, 3)", class = "sd", group = "item") +
-       prior("normal(0, 1)", class = "Intercept", dpar = "disc") +
-       prior("normal(0, 1)", class = "sd", group = "item", dpar = "disc")
-   }
-
- } else {
-
-   form.eta <- 
-     paste0("resp ~ ",
-            paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "),
-            " + (1 + ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), " |i| item)",
-            " + (1 | id)") |>
-     as.formula()
+  form.eta <- 
+    paste0("resp ~ ",
+           paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "),
+           " + (1 + ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), " |i| item)",
+           " + (1 | id)") |>
+    as.formula()
 
 
-   prior.irt.2pl <-
-     prior("normal(0, 5)", class = "Intercept") +
-     prior("normal(0, 5)", class = "b") +
-     prior("normal(0, 3)", class = "sd", group = "id") +
-     prior("normal(0, 3)", class = "sd", group = "item") +
-     prior("normal(0, 1)", class = "Intercept", dpar = "disc") +
-     prior("normal(0, 1)", class = "sd", group = "item", dpar = "disc")
+  prior.irt.2pl <-
+    prior("normal(0, 5)", class = "Intercept") +
+    prior("normal(0, 5)", class = "b") +
+    prior("normal(0, 3)", class = "sd", group = "id") +
+    prior("normal(0, 3)", class = "sd", group = "item") +
+    prior("normal(0, 1)", class = "Intercept", dpar = "disc") +
+    prior("normal(0, 1)", class = "sd", group = "item", dpar = "disc")
 
-  }
 
   form.disc <- disc ~ 1 + (1 |i| item)
 

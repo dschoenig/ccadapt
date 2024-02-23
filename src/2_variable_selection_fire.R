@@ -86,6 +86,11 @@ if(resp.type == "categorical") {
   vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07")
 } else {
   vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07", "Count_fire")
+  vars.adapt.p <- c("D01", "D02", "D03", "D04", "D05", "D07", "Count")
+  vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07")
+  vars.adapt.p <- c("D01", "D02", "D03", "D04", "D05", "D07")
+  vars.adapt.p <- factor(vars.adapt.p, levels = vars.adapt.p)
+  names(vars.adapt.p) <- vars.adapt
 }
 
 # vars.adapt <- vars.adapt[4]
@@ -103,12 +108,15 @@ for(i in seq_along(vars.adapt)) {
 
 
 
+ci.alpha <- 2 * pnorm(-1)
+ci.type <- "upper"
+diff.pct <- 0
 # ci.alpha <- 2 * pnorm(-1)
 # ci.type <- "lower"
 # diff.pct <- 0.5
-ci.alpha <- 2 * pnorm(-1)
-ci.type <- "upper"
-diff.pct <- 0.1
+# ci.alpha <- 2 * pnorm(-1)
+# ci.type <- "upper"
+# diff.pct <- 0.1
 sel.res.sum.l <- list()
 sel.res.size <- integer()
 sel.res.vars <- integer()
@@ -187,8 +195,34 @@ saveRDS(sel.res.sum, file.var.sel.res)
 ## PREPARE FOR PLOTTING ###############################################
 
 
+vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
+vars.pred <- variables[code %notin% vars.adapt, code]
+
+
+vars.pred.lik <-
+  variables[code %in% vars.pred & cat.ord == TRUE &
+            cat.scale %in% c("d", "i", "l", "n", "m"),
+            code]
+vars.pred.cont <- variables[code %in% vars.pred &
+                            type == "continuous",
+                            code]
+
+poly.names <- c("L", "Q", "C")
+var.codes.poly <-
+  CJ(code = c(vars.pred.lik, vars.pred.cont),
+     poly.id = 1:3)
+var.codes.poly[, code.poly := paste0(code, "_p", poly.id)]
+var.codes.poly[, poly.name := poly.names[poly.id]]
+var.codes.poly[, code.name := paste0(code, " ", poly.name)]
+
+var.sel <- 
+  c(var.codes.poly[code.poly %in% sel.res.sum[!is.na(expl), unique(expl)],
+                   unique(code)],
+    vars.pred) |>
+  unique()
+
 var.cat <-
-  variables[code %in% sel.res.sum[!is.na(expl), unique(expl)]] |>
+  variables[code %in% var.sel] |>
     melt(id.vars = "code",
          measure.vars =
            measure(category, pattern = "category.(.*)"),
@@ -197,9 +231,16 @@ var.cat <-
       .SD[cat == 1,
           .(cat.double = fifelse(.N > 1, TRUE, FALSE),
             cat1 = category[1], cat2 = category[2])],
-      by = .(expl = code)]
+      by = .(code)]
 
-sel.res.p <- merge(sel.res.sum, var.cat, all.x = TRUE, by = "expl", sort = FALSE)
+var.cat.poly <- merge(var.cat, var.codes.poly, all.x = TRUE)
+var.cat.poly[is.na(code.poly), code.poly := code]
+setnames(var.cat.poly, "code.poly", "expl")
+
+sel.res.p <-
+  merge(sel.res.sum, var.cat.poly, all.x = TRUE, by = "expl", sort = FALSE) |>
+  _[size <= 25 | size == Inf]
+sel.res.p[, resp := vars.adapt.p[as.character(resp)]]
 sel.res.p[, cat.mult := ifelse(cat.double, "multiple", cat1)]
 
 cat.lev <- c("personal_stakes", "threat_appraisal", "coping_appraisal", "control")
@@ -222,10 +263,12 @@ cat.labels <-
             .(cat1.lab,
               cat2.lab,
               cat.lab.mult,
-              expl = ifelse(is.na(expl),
-                            NA,
-                            # paste0(expl, "   ")),
-                            paste0(expl, " ")),
+              expl,
+              code.name,
+              # expl = ifelse(is.na(expl),
+              #               NA,
+              #               # paste0(expl, "   ")),
+              #               paste0(expl, " ")),
               size,
               size.sel,
               count.sel,
@@ -233,6 +276,13 @@ cat.labels <-
             by = "resp"
             ][!is.na(expl)] |>
   copy()
+
+cat.labels[is.na(code.name), code.name := expl]
+code.width <- max(stri_width(cat.labels$code.name)) + 1
+
+cat.labels[,
+           code.name := stri_pad_right(code.name,
+                                       width = code.width)]
 
 ref.lines <-
   rbind(
@@ -265,6 +315,7 @@ sel.res.ex <-
 fwrite(sel.res.ex, file.var.sel.res.csv)
 
 cairo_pdf(file.var.sel.plot, onefile = TRUE, width = 11, height = 8.5)
+
 
 ggplot(sel.res.p[size < Inf]) +
   geom_rect(data = sel.res.p[,
@@ -306,7 +357,7 @@ ggplot(sel.res.p[size < Inf]) +
   geom_text(data = cat.labels[size <= size.sel],
             aes(x = size,
                 y = y,
-                label = expl,
+                label = code.name,
                 color = cat.lab.mult),
             # family = base.family,
             family = "IBMPlexMono",
@@ -318,7 +369,7 @@ ggplot(sel.res.p[size < Inf]) +
   geom_text(data = cat.labels[size > size.sel & count.sel >= 1],
             aes(x = size,
                 y = y,
-                label = expl),
+                label = code.name),
             # family = base.family,
             family = "IBMPlexMono",
             fontface = "bold",
@@ -328,7 +379,7 @@ ggplot(sel.res.p[size < Inf]) +
   geom_text(data = cat.labels[size > size.sel & count.sel == 0],
             aes(x = size,
                 y = y,
-                label = expl),
+                label = code.name),
             # family = base.family,
             family = "IBMPlexMono",
             size = base.size/4,
