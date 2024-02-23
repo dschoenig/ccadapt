@@ -9,4 +9,4 @@
 
 module load StdEnv/2023 gcc/12.3 r/4.3.1
 
-Rscript 3_irt_2pl_fire.R FALSE willingness
+Rscript 3_irt_2pl_fire.R willingness

@@ -8,12 +8,11 @@ source("paths.R")
 source("utilities.R")
 
 
-cont.nl <- as.logical(args[1])
-resp.type <- as.character(args[2])
+resp.type <- as.character(args[1])
 k.max <- 10
 dim.poly <- 3
 
-resp.type = "willingness"
+# resp.type = "willingness"
 
 
 if(resp.type == "willingness") {
