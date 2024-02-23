@@ -190,12 +190,13 @@ mod.irt.2pl <-
       warmup = 7500,
       iter = 10000,
       refresh = 25,
+      control = list(adapt_delta = 0.99),
       backend = "cmdstanr",
       prior = prior.irt.2pl)
 
 dir.create(path.results.irt, recursive = TRUE, showWarnings = FALSE)
 
-file.result <- ifelse(cont.nl, file.irt.mod.2pl.nl, file.irt.mod.2pl)
+file.result <- file.irt.mod.2pl
 
 message(paste0("Exporting results to ", file.result, " …"))
 
