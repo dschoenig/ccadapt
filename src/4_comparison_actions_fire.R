@@ -12,7 +12,6 @@ source("utilities.R")
 options(mc.cores = 4)
 
 resp.type <- "willingness"
-cont.nl <- FALSE
 # resp.type <- "urgency"
 # pred.scales <- c("prob", "linpred")
 pred.scales <- c("prob")
@@ -21,39 +20,23 @@ ci.et.width <- 0.9
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
 
-
-# # For testing
-# cont.pred.n <- 5
-# slope.res <- "coarse"
-# draw.ids <- sample(1:1e4, 100)
-
 if(resp.type == "willingness") {
-  file.survey.irt <- file.survey.irt.w
-  file.irt.mod.2pl <- file.irt.w.mod.2pl
-  file.irt.mod.2pl.nl <- file.irt.w.mod.2pl.nl
+  file.survey.irt <- file.survey.irt.w.fire
+  file.irt.mod.2pl <- file.irt.w.mod.2pl.fire
   path.irt.plots <- path.irt.w.plots
   path.results.irt <- path.results.w.irt
 }
 if(resp.type == "urgency") {
-  file.survey.irt <- file.survey.irt.u
-  file.irt.mod.2pl <- file.irt.u.mod.2pl
-  file.irt.mod.2pl.nl <- file.irt.u.mod.2pl.nl
+  file.survey.irt <- file.survey.irt.u.fire
+  file.irt.mod.2pl <- file.irt.u.mod.2pl.fire
   path.irt.plots <- path.irt.u.plots
   path.results.irt <- path.results.u.irt
 }
 
-if(cont.nl == TRUE) {
-  file.irt.mod <- file.irt.mod.2pl.nl
-  suffix.nl <- ".nl."
-} else {
-  file.irt.mod <- file.irt.mod.2pl
-  suffix.nl <- "."
-}
-
-file.irt.pred <- paste0(path.results.irt, "actions.predictions", suffix.nl, "csv")
-file.irt.comp <- paste0(path.results.irt, "actions.comparisons", suffix.nl, "csv")
-file.irt.pred.ex <- paste0(path.results.irt, "actions.predictions", suffix.nl, "csv")
-file.irt.comp.ex <- paste0(path.results.irt, "actions.comparisons", suffix.nl, "csv")
+file.irt.pred <- paste0(path.results.irt, "actions.predictions.fire.csv")
+file.irt.comp <- paste0(path.results.irt, "actions.comparisons.fire.csv")
+file.irt.pred.ex <- paste0(path.results.irt, "actions.predictions.fire.csv")
+file.irt.comp.ex <- paste0(path.results.irt, "actions.comparisons.fire.csv")
 
 
 variables <- readRDS(file.variables.proc)
@@ -215,7 +198,7 @@ message("Creating plots …")
 for(p in seq_along(pred.scales)) {
   if(pred.scales[p] == "prob") plot.type <- "prob"
   if(pred.scales[p] == "linpred") plot.type <- "lp"
-  plot.file <- paste0(path.irt.plots, "actions.", plot.type, suffix.nl, "pdf")
+  plot.file <- paste0(path.irt.plots, "actions.", plot.type, ".fire.pdf")
   cairo_pdf(plot.file, onefile = TRUE, width = 8.5, height = 11)
 }
 

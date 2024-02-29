@@ -152,8 +152,8 @@ if(resp.type != "categorical") {
 
   form.eta <- 
     paste0("resp ~ ",
-           paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "),
-           " + (1 + ", paste0(c(vars.pred.cont, vars.pred.cat), collapse = " + "), " |i| item)",
+           paste0(vars.sel, collapse = " + "),
+           " + (1 + ", paste0(vars.sel, collapse = " + "), " |i| item)",
            " + (1 | id)") |>
     as.formula()
 
