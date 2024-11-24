@@ -3,7 +3,7 @@ library(stringi)
 
 source("paths.R")
 
-# Cleaning steps that have already been done by Timothée (email from 2022-04-26):
+# Cleaning steps that have already been done (email from 2022-04-26):
   # *   Suppression du répondants id = 152, 157, 159, 405, 410 (car ce sont des tests que j’ai faits)
   # *   Suppression du répondant id = 32 (car il a répondu avoir 5,000,000 ha... Plusieurs données étranges : quelqu'un qui dépend à 100% de la forêt, qui a tous ses boisés en co-propriété, qui s'identifie comme peuple autochtone, qui a des postures très environnementales, ...). Je dirais que c'est quelqu'un qui a répondu un peu sur un mode "activisme environnemental".
   # *   Retiré les colonnes inutiles (ex : Seed, « date initiated », « date finished », « introA », « introB », etc.)
@@ -14,6 +14,11 @@ source("paths.R")
   # *   Suppression des variables "time" chronométrant le temps mis à répondre à chaque question (colonnes HV et suivantes)
 
 survey.raw <- fread(file.survey.raw)
+
+
+
+## TREATMENT OF RAW SURVEY DATA ########################################
+
 
 # Relevant columns for analysis
 q.idx <- 5:208
@@ -95,6 +100,7 @@ var.cat <-
     "woodlotVisit" = "v"
   )
 
+# Scales used for categorical variables
 cat.levels <-
   list(a = c("No",
              "Yes"),
@@ -222,6 +228,7 @@ cat.levels <-
              "Every day",
              "Other"))
 
+# Reference category for each scale
 cat.ref <- c(a = "No",
              b = "1",
              c = "No",
@@ -245,12 +252,16 @@ cat.ref <- c(a = "No",
              u = "Retired",
              v = "Every week")
 
+# Ordered categorical variables
 cat.ord <- c("b", "d", "i", "k", "l", "m", "n") 
 
+# Table to hold categories and levels
 cat.levels.dt <-
   lapply(cat.levels, \(x) data.table(level.id = 1:length(x), level = x)) |>
   rbindlist(idcol = "cat.scale")
 
+
+# Prepare variable table
 
 variables <- fread(file.variables)
 
@@ -267,7 +278,7 @@ variables[code %in% c("B04", "B09", "B20"),
           cat.ref := "Yes"]
 
 
-# deal with NAs and dependent questions
+# Deal with NAs and dependent questions
 dependencies <-
   data.table(
     main =
@@ -313,10 +324,13 @@ dependencies <-
     )
 
 
+# Identify variables by code
 survey <-
   copy(survey.raw[, variables$id, with = FALSE]) |>
   setnames(variables$code)
 
+
+# Add information on continuous variables to variable table
 var.cont.scale <-
   survey[,
          .(code = names(.SD),
@@ -326,7 +340,7 @@ var.cont.scale <-
 variables <-
   merge(variables, var.cont.scale, all = TRUE, sort = FALSE)
 
-
+# Order variable columns
 setcolorder(variables, c("id", "code", "section",
                          "name", "main", "sub",
                          "type",
@@ -339,7 +353,8 @@ setcolorder(variables, c("id", "code", "section",
                          "category.adaptation",
                          "question.main", "question.sub"))
 
-# Variable types
+
+# Process variable types
 
 codes.qual <- variables[type == "qualitative", code]
 for(i in seq_along(codes.qual)) {
@@ -362,6 +377,9 @@ for(i in seq_along(codes.cat)) {
            ordered = variables[code == codes.cat[i], cat.ord])
 }
 
+
+# Export preocessed data
+
 saveRDS(survey, file.survey.proc)
 saveRDS(variables, file.variables.proc)
 saveRDS(cat.levels.dt, file.cat.levels.proc)
@@ -372,12 +390,11 @@ fwrite(cat.levels.dt, file.cat.levels.proc.csv)
 
 
 
-# Prepare data for variable selection and IRT model
+## PREPARE DATA FOR VARIABLE SELECTION AND IRT MODEL ###################
 
 
 # Omit questions that ask for additional information given specific
 # responses to other questions
-
 var.omit <-
   c("A43",
     # … see conditioning below.
@@ -412,7 +429,6 @@ var.omit <-
 variables.full <- variables[!(code %in% var.omit)]
 
 # Of these variables, select only variables that have a category assigned
-
 var.sel <- 
   variables.full[!(is.na(category.personal_stakes) |
                    is.na(category.threat_appraisal) |
@@ -421,7 +437,7 @@ var.sel <-
                    is.na(category.adaptation))]
 
 
-# Subset responses to survey
+# Subset based on answers provided by respondents
 survey.sub <-
   with(survey,
        which(
@@ -433,13 +449,12 @@ survey.sub <-
              # … only respondants that take part in decision making in the future.
             ))
 
-
-
 survey.fit <-
   survey[survey.sub, var.sel$code, with = FALSE]
 
 
 # Exclude variables that do not vary between respondents
+
 vars.fit <- names(survey.fit)
 vars.vary <-
   vars.fit[survey.fit[, which(survey.fit[, lapply(.SD, \(x) length(unique(x)))] > 1)]]
@@ -447,6 +462,9 @@ vars.vary <-
 survey.fit <- survey.fit[, ..vars.vary]
 
 survey.fit[, id := 1:.N]
+
+
+# Export survey subset
 
 saveRDS(survey.fit, file.survey.fit)
 
@@ -495,209 +513,6 @@ if(nrow(var.cont) > 0) {
   }
 }
 
+# Export survey data for analysis of adaptation willingness analysis
+
 saveRDS(survey.fit.w, file.survey.fit.w)
-
-
-
-# Willingness, ordered version
-
-adapt.code <- variables[category.adaptation == TRUE, code]
-pred.code <- names(survey.fit)[!names(survey.fit) %in% adapt.code]
-
-survey.fit.wo <- copy(survey.fit)
-
-survey.fit.wo[,
-             (adapt.code) := lapply(.SD,
-                                    \(x) as.numeric(x %in% c("Yes, within the next 5 years",
-                                                             "Yes, in 6 to 10 years"))),
-             .SDcols = adapt.code]
-
-
-var.cont <-
-  var.sel[code %in% pred.code & type == "continuous",
-          .(code, cont.mean, cont.sd)]
-# var.cont <- var.sel[type == "continuous", .(code, cont.mean, cont.sd)]
-if(nrow(var.cont) > 0) {
-  for(i in 1:nrow(var.cont)) {
-    survey.fit.wo[[var.cont$code[i]]] <-
-      (survey.fit.wo[[var.cont$code[i]]] - var.cont$cont.mean[i]) /
-      var.cont$cont.sd[i]
-  }
-}
-
-saveRDS(survey.fit.wo, file.survey.fit.wo)
-
-
-# Urgency to adapt: Binary coding of adaptation variables
-
-adapt.code <- variables[category.adaptation == TRUE, code]
-pred.code <- names(survey.fit)[!names(survey.fit) %in% adapt.code]
-
-# idx.adapt <-
-#   survey.fit.w[,
-#                .(adapt.any = apply(.SD, 1, \(x) sum(x) > 0)),
-#                .SDcols = adapt.code,
-#                by = "id"
-#                ][adapt.any == TRUE, id]
-# survey.fit.u <- copy(survey.fit[id %in% idx.adapt])
-survey.fit.u <- copy(survey.fit)
-
-survey.fit.u[,
-             (adapt.code) := lapply(.SD,
-                                    \(x) fcase(x == "Yes, within the next 5 years", 1,
-                                               x ==  "Yes, in 6 to 10 years", 0,
-                                               default = 0)),
-             .SDcols = adapt.code]
-
-
-# Reorder factor variables (reference level first)
-
-var.ord <- names(which(unlist(lapply(survey.fit.u, is.ordered))))
-survey.fit.u[, (var.ord) := lapply(.SD,
-                                   \(x) factor(x,
-                                               ordered = FALSE,
-                                               levels = levels(x))),
-             .SDcols = var.ord]
-                   
-var.cat <-
-  var.sel[code %in% pred.code & type == "categorical",
-          .(code, cat.ref)]
-for(i in 1:nrow(var.cat)) {
-  survey.fit.u[[var.cat$code[i]]] <-
-    relevel(survey.fit.u[[var.cat$code[i]]], var.cat$cat.ref[i])
-}
-
-var.cont <-
-  var.sel[code %in% pred.code & type == "continuous",
-          .(code, cont.mean, cont.sd)]
-# var.cont <- var.sel[type == "continuous", .(code, cont.mean, cont.sd)]
-if(nrow(var.cont) > 0) {
-  for(i in 1:nrow(var.cont)) {
-    survey.fit.u[[var.cont$code[i]]] <-
-      (survey.fit.u[[var.cont$code[i]]] - var.cont$cont.mean[i]) /
-      var.cont$cont.sd[i]
-  }
-}
-
-saveRDS(survey.fit.u, file.survey.fit.u)
-
-
-
-# Categorical response
-
-adapt.code <- variables[category.adaptation == TRUE, code]
-pred.code <- names(survey.fit)[!names(survey.fit) %in% adapt.code]
-
-survey.fit.c <- copy(survey.fit)
-
-survey.fit.c[,
-             (adapt.code) := lapply(.SD,
-                                    \(x) fcase(x == "Yes, within the next 5 years", as.character(x),
-                                               x ==  "Yes, in 6 to 10 years", as.character(x),
-                                               x ==  "Unlikely", as.character(x),
-                                               default = "No")),
-             .SDcols = adapt.code]
-
-
-survey.fit.c[,
-             (adapt.code) := lapply(.SD,
-                                    \(x) factor(x,
-                                                levels = c("No",
-                                                           "Unlikely",
-                                                           "Yes, in 6 to 10 years",
-                                                           "Yes, within the next 5 years"),
-                                                ordered = TRUE)),
-             .SDcols = adapt.code]
-
-# Reorder other factor variables (reference level first)
-
-var.ord <- names(which(unlist(lapply(survey.fit.c, is.ordered))))
-var.ord <- var.ord[!var.ord %in% adapt.code]
-
-survey.fit.c[, (var.ord) := lapply(.SD,
-                                   \(x) factor(x,
-                                               ordered = FALSE,
-                                               levels = levels(x))),
-             .SDcols = var.ord]
-                   
-var.cat <-
-  var.sel[code %in% pred.code & type == "categorical",
-          .(code, cat.ref)]
-for(i in 1:nrow(var.cat)) {
-  survey.fit.c[[var.cat$code[i]]] <-
-    relevel(survey.fit.c[[var.cat$code[i]]], var.cat$cat.ref[i])
-}
-
-var.cont <-
-  var.sel[code %in% pred.code & type == "continuous",
-          .(code, cont.mean, cont.sd)]
-# var.cont <- var.sel[type == "continuous", .(code, cont.mean, cont.sd)]
-if(nrow(var.cont) > 0) {
-  for(i in 1:nrow(var.cont)) {
-    survey.fit.c[[var.cont$code[i]]] <-
-      (survey.fit.c[[var.cont$code[i]]] - var.cont$cont.mean[i]) /
-      var.cont$cont.sd[i]
-  }
-}
-
-saveRDS(survey.fit.c, file.survey.fit.c)
-
-
-# Categorical response, ordered
-
-adapt.code <- variables[category.adaptation == TRUE, code]
-pred.code <- names(survey.fit)[!names(survey.fit) %in% adapt.code]
-
-survey.fit.c <- copy(survey.fit)
-
-# Reorder factor variables (reference level first)
-
-var.ord <- names(which(unlist(lapply(survey.fit.c, is.ordered))))
-survey.fit.c[, (var.ord) := lapply(.SD,
-                                   \(x) factor(x,
-                                               ordered = FALSE,
-                                               levels = levels(x))),
-             .SDcols = var.ord]
-                   
-var.cat <-
-  var.sel[code %in% pred.code & type == "categorical",
-          .(code, cat.ref)]
-for(i in 1:nrow(var.cat)) {
-  survey.fit.c[[var.cat$code[i]]] <-
-    relevel(survey.fit.c[[var.cat$code[i]]], var.cat$cat.ref[i])
-}
-
-var.cont <-
-  var.sel[code %in% pred.code & type == "continuous",
-          .(code, cont.mean, cont.sd)]
-# var.cont <- var.sel[type == "continuous", .(code, cont.mean, cont.sd)]
-if(nrow(var.cont) > 0) {
-  for(i in 1:nrow(var.cont)) {
-    survey.fit.c[[var.cont$code[i]]] <-
-      (survey.fit.c[[var.cont$code[i]]] - var.cont$cont.mean[i]) /
-      var.cont$cont.sd[i]
-  }
-}
-
-saveRDS(survey.fit.c, file.survey.fit.c)
-
-
-
-survey.n <- 
-  list(willingness = survey.fit.w[, c(adapt.code, "id"), with = FALSE],
-       urgency = survey.fit.u[, c(adapt.code, "id"), with = FALSE]) |>
-  rbindlist(idcol = "type") |>
-  melt(
-       id.vars = c("type", "id"),
-       measure.vars = adapt.code,
-       variable.name = "resp") |>
-  _[!is.na(value),
-    .(n = .N),
-    by = c("type", "resp")] |>
-rbind(data.table(type = factor(c("willingness", "urgency")),
-                 resp = factor(rep("Count", 2)),
-                 n = c(nrow(survey.fit.w), nrow(survey.fit.u))))
-survey.n[, type := factor(type, levels = c("willingness", "urgency"))]
-setorder(survey.n, type, resp)
-
-saveRDS(survey.n, file.survey.n)

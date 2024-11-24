@@ -1,3 +1,5 @@
+args <- commandArgs(trailingOnly = TRUE)
+
 library(data.table)
 library(brms)
 library(stringi)
@@ -9,51 +11,48 @@ library(patchwork)
 source("paths.R")
 source("utilities.R")
 
-options(mc.cores = 4)
 
-resp.type <- "willingness"
-cont.nl <- FALSE
-# resp.type <- "urgency"
-# pred.scales <- c("prob", "linpred")
+resp.type <- as.character(args[1])
+n.threads <- as.numeric(args[2])
+
+options(mc.cores = n.threads)
+
+
+# PARAMETERS
+# `pred.scales`:
+#     Character vector indicating at which scales the predictions are to be
+#     evaluated. Options are `prob` for willingness (i.e. ψ), or `linpred` for
+#     the linear predictor of ψ.
+# `draw.ids`:
+#     Integer vector indicating the posterior draws to use for evaluation.
+#     `NULL` corresponds to all draws.
+# `ci.et.width`:
+#     Width of the equal-tailed credible intervals included in the output for
+#     pairwise comparisons of covariate levels.
+
 pred.scales <- c("prob")
 draw.ids <- NULL
-ci.et.width <- 0.9
+ci.et.width <- 0.8
+
+
 q.ci.l <- (1-ci.et.width)/2
 q.ci.u <- 1-q.ci.l
 
-
-# # For testing
-# cont.pred.n <- 5
-# slope.res <- "coarse"
-# draw.ids <- sample(1:1e4, 100)
-
 if(resp.type == "willingness") {
-  file.survey.irt <- file.survey.irt.w.fire
-  file.irt.mod.2pl <- file.irt.w.mod.2pl.fire
-  file.irt.mod.2pl.nl <- file.irt.w.mod.2pl.nl.fire
+  file.survey.irt <- file.survey.irt.w
+  file.irt.mod.2pl <- file.irt.w.mod.2pl
   path.irt.plots <- path.irt.w.plots
   path.results.irt <- path.results.w.irt
 }
-if(resp.type == "urgency") {
-  file.survey.irt <- file.survey.irt.u.fire
-  file.irt.mod.2pl <- file.irt.u.mod.2pl.fire
-  file.irt.mod.2pl.nl <- file.irt.u.mod.2pl.nl.fire
-  path.irt.plots <- path.irt.u.plots
-  path.results.irt <- path.results.u.irt
-}
 
-if(cont.nl == TRUE) {
-  file.irt.mod <- file.irt.mod.2pl.nl
-  suffix.nl <- "nl."
-} else {
-  file.irt.mod <- file.irt.mod.2pl
-  suffix.nl <- "."
-}
+file.irt.pred <- paste0(path.results.irt, "actions.predictions.csv")
+file.irt.comp <- paste0(path.results.irt, "actions.comparisons.csv")
+file.irt.pred.ex <- paste0(path.results.irt, "actions.predictions.csv")
+file.irt.comp.ex <- paste0(path.results.irt, "actions.comparisons.csv")
 
-file.irt.pred <- paste0(path.results.irt, "actions.predictions", suffix.nl, "fire.csv")
-file.irt.comp <- paste0(path.results.irt, "actions.comparisons", suffix.nl, "fire.csv")
-file.irt.pred.ex <- paste0(path.results.irt, "actions.predictions", suffix.nl, "fire.csv")
-file.irt.comp.ex <- paste0(path.results.irt, "actions.comparisons", suffix.nl, "fire.csv")
+
+
+## LOAD DATA AND MODEL #################################################
 
 
 variables <- readRDS(file.variables.proc)
@@ -61,6 +60,10 @@ cat.levels <- readRDS(file.cat.levels.proc)
 
 survey.irt <- readRDS(file.survey.irt)
 mod.irt <- readRDS(file.irt.mod.2pl)
+
+
+
+## SETUP FOR PLOTS #####################################################
 
 
 base.size <- 9
@@ -106,6 +109,10 @@ guide_fill <-
                            key.height = 3))
 
 
+## PREDICTIONS #########################################################
+
+# Predictions at the scale of ψ and its linear predictor
+
 survey.pred <- copy(survey.irt)
 survey.pred[, obs := 1:.N]
 
@@ -141,6 +148,8 @@ pred.var <-
 pred.var[, draw := as.integer(draw)]
 setorder(pred.var, item, draw)
 
+
+# Compare and summarize predictions by item
 
 item.lev <- sort(unique(pred.var$item))
     
@@ -182,16 +191,20 @@ setorder(var.comp.dt, comp.id)
 pred.sum <-
   pred.var[,
            .(
-                linpred.median = median(linpred),
-                linpred.q5 = quantile(linpred, 0.05),
-                linpred.q25 = quantile(linpred, 0.25),
-                linpred.q75 = quantile(linpred, 0.75),
-                linpred.q95 = quantile(linpred, 0.95),
-                prob.median = median(prob),
-                prob.q5 = quantile(prob, 0.05),
-                prob.q25 = quantile(prob, 0.25),
-                prob.q75 = quantile(prob, 0.75),
-                prob.q95 = quantile(prob, 0.95)),
+             linpred.median = median(linpred),
+             linpred.q5 = quantile(linpred, 0.05),
+             linpred.q10 = quantile(linpred, 0.1),
+             linpred.q25 = quantile(linpred, 0.25),
+             linpred.q75 = quantile(linpred, 0.75),
+             linpred.q90 = quantile(linpred, 0.90),
+             linpred.q95 = quantile(linpred, 0.95),
+             prob.median = median(prob),
+             prob.q5 = quantile(prob, 0.05),
+             prob.q10 = quantile(prob, 0.10),
+             prob.q25 = quantile(prob, 0.25),
+             prob.q75 = quantile(prob, 0.75),
+             prob.q90 = quantile(prob, 0.90),
+             prob.q95 = quantile(prob, 0.95)),
            by = c("item")
            ]
 
@@ -210,12 +223,15 @@ comp.sum <-
 
 
 
+## PLOTS ###############################################################
+
+
 message("Creating plots …")
 
 for(p in seq_along(pred.scales)) {
   if(pred.scales[p] == "prob") plot.type <- "prob"
   if(pred.scales[p] == "linpred") plot.type <- "lp"
-  plot.file <- paste0(path.irt.plots, "actions.", plot.type, suffix.nl, "fire.pdf")
+  plot.file <- paste0(path.irt.plots, "actions.", plot.type, ".pdf")
   cairo_pdf(plot.file, onefile = TRUE, width = 8.5, height = 11)
 }
 
@@ -275,7 +291,7 @@ for(p in seq_along(pred.scales)) {
       geom_vline(xintercept = ref.line, linewidth = 0.3, linetype = "dashed") + 
       coord_fixed(ratio = (plim[2] - plim[1])/length(ylab),
                   xlim = plim) +
-      scale_y_discrete(limits = rev) +
+      scale_y_discrete(limits = rev(ylab)) +
       labs(y = NULL, x = pred.desc,
            subtitle = NULL) +
       plot_theme +
@@ -293,7 +309,7 @@ for(p in seq_along(pred.scales)) {
                                  limits = c(0, 1)) +
     coord_fixed() +
     # scale_x_discrete(drop = FALSE) +
-    scale_y_discrete(limits = rev) +
+    scale_y_discrete(limits = rev, drop = FALSE) +
     # facet_wrap(vars(item), ncol = 2) +
     labs(x = NULL, y = NULL, fill = fill.desc) +
     plot_theme +
@@ -318,8 +334,12 @@ for(p in seq_along(pred.scales)) {
 
 }
 
-
 graphics.off()
+
+
+
+## EXPORT RESULT TABLES ################################################
+
 
 setnames(pred.sum, c("item"), c("adapt.code"))
 setorder(pred.sum, adapt.code)
@@ -342,15 +362,11 @@ pred.ex.cols <- names(pred.sum)
 pred.ex.cols <- pred.ex.cols[grep("linpred", pred.ex.cols, invert = TRUE)]
 
 pred.sum.ex <- pred.sum[, ..pred.ex.cols]
-# pred.ex.newcols <- stri_replace_all_fixed(names(pred.sum.ex), "prob", "prop")
-# setnames(pred.sum.ex, pred.ex.newcols)
 
 comp.ex.cols <- names(comp.sum)
 comp.ex.cols <- comp.ex.cols[grep("linpred", comp.ex.cols, invert = TRUE)]
 
 comp.sum.ex <- comp.sum[, ..comp.ex.cols]
-# comp.ex.newcols <- stri_replace_all_fixed(names(comp.sum.ex), "prob", "prop")
-# setnames(comp.sum.ex, comp.ex.newcols)
 
 fwrite(pred.sum.ex, file.irt.pred.ex)
 fwrite(comp.sum.ex, file.irt.comp.ex)

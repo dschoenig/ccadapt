@@ -10,10 +10,8 @@ library(ggrepel)
 source("paths.R")
 source("utilities.R")
 
-options(mc.cores = 4)
-
 resp.type <- as.character(args[1])
-# resp.type <- "urgency"
+
 
 message(paste0("Response type: `", resp.type, "`"))
 
@@ -23,19 +21,9 @@ if(resp.type == "willingness") {
   file.var.sel.res.csv <- file.var.sel.w.res.csv
   file.var.sel.plot <- file.var.sel.w.plot
 }
-if(resp.type == "urgency") {
-  file.var.sel.prefix <- file.var.sel.u.prefix
-  file.var.sel.res <- file.var.sel.u.res
-  file.var.sel.res.csv <- file.var.sel.u.res.csv
-  file.var.sel.plot <- file.var.sel.u.plot
-}
-if(resp.type == "categorical") {
-  file.var.sel.prefix <- file.var.sel.c.prefix
-  file.var.sel.res <- file.var.sel.c.res
-  file.var.sel.res.csv <- file.var.sel.c.res.csv
-  file.var.sel.plot <- file.var.sel.c.plot
-}
 
+
+## SETUP ###############################################################
 
 base.size <- 9 
 base.family <- "IBMPlexSansCondensed"
@@ -78,17 +66,17 @@ plot_theme <-
         strip.background = element_rect(fill = NA, colour = NA)
   )
 
-
-
 variables <- readRDS(file.variables.proc)
 
-if(resp.type == "categorical") {
-  vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
-} else {
-  vars.adapt <- c(variables[category.adaptation == TRUE, sort(code)], "Count")
-}
+vars.adapt <- c("D01", "D02", "D03", "D04", "D05", "D07")
+vars.adapt.p <- c("D01", "D02", "D03", "D04", "D05", "D07")
+vars.adapt.p <- factor(vars.adapt.p, levels = vars.adapt.p)
+names(vars.adapt.p) <- vars.adapt
 
-# vars.adapt <- vars.adapt[4]
+
+
+## PERFORM VARIABLE SELECTION FOR EACH ADAPTATION ACTION ###############
+
 
 files.var.sel <- paste0(file.var.sel.prefix, vars.adapt, ".rds")
 var.sel.exists <- file.exists(files.var.sel)
@@ -101,17 +89,33 @@ for(i in seq_along(vars.adapt)) {
   sel.res.adapt[[i]] <- readRDS(files.var.sel[i])
 }
 
+# PARAMETERS
+# The following duplicates the functionality of `projpred::suggest_size()` for
+# more control over variable selection and (particularly) plotting. See
+# `?projpred::suggest_size()` and `?projpred::summary.vsel()` for details.
+#
+# `ci.alpha`:
+#     Corresponds to `alpha` in `summary.vsel()`. Nominal coverage of the
+#     confidence interval. `2 * pnorm(1)` corresponds to a coverage of 1 SE to
+#     either side.
+# `ci.type`:
+#     Corresponds to `type` in `suggest_size()`. Whether the upper or lower bound
+#     of the CI is used to determine equivalence.
+# `diff.pct`:
+#     Corresponds to `pct` in `suggest_size()`. Proportion of the relative null
+#     model performance one is willing to sacrifice.
 
-
-# ci.alpha <- 2 * pnorm(-1)
-# ci.type <- "lower"
-# diff.pct <- 0.5
+# The following settings choose the smallest model for which the difference to
+# the best model (in terms of ELPD) is within one standard deviation of zero.
 ci.alpha <- 2 * pnorm(-1)
 ci.type <- "upper"
-diff.pct <- 0.1
+diff.pct <- 0
+
 sel.res.sum.l <- list()
 sel.res.size <- integer()
 sel.res.vars <- integer()
+
+# Select smallest model indistinguishable from best model (using ELPD)
 for(i in seq_along(vars.adapt)) {
   nfeat_baseline <-
     projpred:::get_nfeat_baseline(sel.res.adapt[[i]],
@@ -184,11 +188,38 @@ setorder(sel.res.sum, resp, size)
 saveRDS(sel.res.sum, file.var.sel.res)
 
 
+
 ## PREPARE FOR PLOTTING ###############################################
 
 
+vars.adapt <- variables[category.adaptation == TRUE, sort(code)]
+vars.pred <- variables[code %notin% vars.adapt, code]
+
+
+vars.pred.lik <-
+  variables[code %in% vars.pred & cat.ord == TRUE &
+            cat.scale %in% c("d", "i", "l", "n", "m"),
+            code]
+vars.pred.cont <- variables[code %in% vars.pred &
+                            type == "continuous",
+                            code]
+
+poly.names <- c("L", "Q", "C")
+var.codes.poly <-
+  CJ(code = c(vars.pred.lik, vars.pred.cont),
+     poly.id = 1:3)
+var.codes.poly[, code.poly := paste0(code, "_p", poly.id)]
+var.codes.poly[, poly.name := poly.names[poly.id]]
+var.codes.poly[, code.name := paste0(code, " ", poly.name)]
+
+var.sel <- 
+  c(var.codes.poly[code.poly %in% sel.res.sum[!is.na(expl), unique(expl)],
+                   unique(code)],
+    vars.pred) |>
+  unique()
+
 var.cat <-
-  variables[code %in% sel.res.sum[!is.na(expl), unique(expl)]] |>
+  variables[code %in% var.sel] |>
     melt(id.vars = "code",
          measure.vars =
            measure(category, pattern = "category.(.*)"),
@@ -197,9 +228,16 @@ var.cat <-
       .SD[cat == 1,
           .(cat.double = fifelse(.N > 1, TRUE, FALSE),
             cat1 = category[1], cat2 = category[2])],
-      by = .(expl = code)]
+      by = .(code)]
 
-sel.res.p <- merge(sel.res.sum, var.cat, all.x = TRUE, by = "expl", sort = FALSE)
+var.cat.poly <- merge(var.cat, var.codes.poly, all.x = TRUE)
+var.cat.poly[is.na(code.poly), code.poly := code]
+setnames(var.cat.poly, "code.poly", "expl")
+
+sel.res.p <-
+  merge(sel.res.sum, var.cat.poly, all.x = TRUE, by = "expl", sort = FALSE) |>
+  _[size <= 25 | size == Inf]
+sel.res.p[, resp := vars.adapt.p[as.character(resp)]]
 sel.res.p[, cat.mult := ifelse(cat.double, "multiple", cat1)]
 
 cat.lev <- c("personal_stakes", "threat_appraisal", "coping_appraisal", "control")
@@ -222,10 +260,8 @@ cat.labels <-
             .(cat1.lab,
               cat2.lab,
               cat.lab.mult,
-              expl = ifelse(is.na(expl),
-                            NA,
-                            # paste0(expl, "   ")),
-                            paste0(expl, " ")),
+              expl,
+              code.name,
               size,
               size.sel,
               count.sel,
@@ -233,6 +269,13 @@ cat.labels <-
             by = "resp"
             ][!is.na(expl)] |>
   copy()
+
+cat.labels[is.na(code.name), code.name := expl]
+code.width <- max(stri_width(cat.labels$code.name)) + 1
+
+cat.labels[,
+           code.name := stri_pad_right(code.name,
+                                       width = code.width)]
 
 ref.lines <-
   rbind(
@@ -243,16 +286,13 @@ ref.lines <-
                   .(type = rep("Full model", .N), yint = diff, col = "black"),
                   by = "resp"],
         sel.res.p[,
-                  .(type = rep("Best model", .N), yint = max(diff), col = "black"),
-                  by = "resp"],
-        sel.res.p[size == 0,
-                  .(type = rep("Acceptance threshold", .N), yint = diff.pct * diff, col = "red"),
+                  .(type = rep("Best model", .N), yint = max(diff), col = "red"),
                   by = "resp"])
 
 ref.lines[, type := factor(type, levels = c("Best model",
                                             "Full model",
-                                            "Null model",
-                                            "Acceptance threshold"))] 
+                                            "Null model"
+                                            ))] 
 
 
 sel.res.ex <- copy(sel.res.p)
@@ -264,7 +304,12 @@ sel.res.ex <-
 
 fwrite(sel.res.ex, file.var.sel.res.csv)
 
-cairo_pdf(file.var.sel.plot, onefile = TRUE, width = 11, height = 8.5)
+
+
+## PLOT VARIABLE SELECTION GRAPHS ######################################
+
+
+cairo_pdf(file.var.sel.plot, onefile = TRUE, width = 11, height = 5.65)
 
 ggplot(sel.res.p[size < Inf]) +
   geom_rect(data = sel.res.p[,
@@ -278,10 +323,10 @@ ggplot(sel.res.p[size < Inf]) +
                           ymin = ymin,
                           ymax = ymax),
             fill = "grey90") +
-  geom_hline(data = ref.lines[type != "Acceptance threshold"],
+  geom_hline(data = ref.lines[type != "Best model"],
              mapping = aes(yintercept = yint, linetype = type),
              linewidth = 0.2) +
-  geom_hline(data = ref.lines[type == "Acceptance threshold"],
+  geom_hline(data = ref.lines[type == "Best model"],
              mapping = aes(yintercept = yint),
              linewidth = 0.2, color = 2) +
   geom_line(aes(x = size,
@@ -306,7 +351,7 @@ ggplot(sel.res.p[size < Inf]) +
   geom_text(data = cat.labels[size <= size.sel],
             aes(x = size,
                 y = y,
-                label = expl,
+                label = code.name,
                 color = cat.lab.mult),
             # family = base.family,
             family = "IBMPlexMono",
@@ -318,7 +363,7 @@ ggplot(sel.res.p[size < Inf]) +
   geom_text(data = cat.labels[size > size.sel & count.sel >= 1],
             aes(x = size,
                 y = y,
-                label = expl),
+                label = code.name),
             # family = base.family,
             family = "IBMPlexMono",
             fontface = "bold",
@@ -328,7 +373,7 @@ ggplot(sel.res.p[size < Inf]) +
   geom_text(data = cat.labels[size > size.sel & count.sel == 0],
             aes(x = size,
                 y = y,
-                label = expl),
+                label = code.name),
             # family = base.family,
             family = "IBMPlexMono",
             size = base.size/4,
@@ -337,13 +382,15 @@ ggplot(sel.res.p[size < Inf]) +
   scale_y_continuous(expand = expansion(c(0.275, 0.1), 0)) +
   scale_linetype_manual(values = c("Null model" = "dotted",
                                    "Full model" = "dashed",
-                                   "Best model" = "solid",
-                                   "Acceptance threshold" = "solid"),
+                                   "Best model" = "solid"
+                                   # ,"Acceptance threshold" = "solid"
+                                   ),
                         drop = FALSE) +
   scale_fill_brewer(type = "qual", palette = "Set1",
                     aesthetics = c("fill", "colour"),
                     drop = FALSE) +
-  guides(linetype = guide_legend(order = 1, override.aes = list(colour = c(1, 1, 1, 2)))) +
+  guides(linetype = guide_legend(order = 1, override.aes = list(colour = c(2, 1, 1)))) +
+  # guides(linetype = guide_legend(order = 1, override.aes = list(colour = c(1, 1, 1, 2)))) +
   facet_wrap(vars(resp), ncol = 3, scales = "free_y") +
   labs(x = "Model size (number of terms)",
        y = "Model performance (difference in ELPD vs. best model)",
@@ -353,10 +400,3 @@ ggplot(sel.res.p[size < Inf]) +
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "inch"))
 
 dev.off()
-
-sel.res.sum[size <= size.sel & !is.na(expl) & resp != "Count",
-            sort(unique(expl))]
-
-
-# sel.res.sum[size <= size.sel & !is.na(expl),
-#             sort(unique(expl))]

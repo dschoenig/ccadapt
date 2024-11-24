@@ -15,23 +15,16 @@ mod.id <- as.integer(args[1])
 resp.type <- as.character(args[2])
 n.threads <- as.numeric(args[3])
 
-# mod.id <- 1
-# resp.type <- "willingness"
-# n.threads <- 4
-
-# mod.id <- 1
-# resp.type <- "categorical"
-# n.threads <- 4
-
-# resp.type <- "urgency"
-# resp.type <- "willingness"
-# resp.type <- "willingness.ord"
-# resp.type <- "categorical"
-# n.threads <- 4
+# PARAMETERS
+# `dim.poly`:
+#     Degree of orthogonal polynomials for Likert items and continuous
+#     variables.
+# `threshold.fit`:
+#     Minimum number of observations required for model fit.
 
 dim.poly <- 3
 threshold.fit <- 0
-threshold.small <- 0
+
 
 options(mc.cores = n.threads)
 
@@ -43,30 +36,9 @@ if(resp.type == "willingness") {
   file.survey.fit <- file.survey.fit.w
   path.results.varsel <- path.results.w.varsel
 }
-if(resp.type == "willingness.ord") {
-  file.mod.sel.prefix <- file.mod.sel.wo.prefix
-  file.var.sel.prefix <- file.var.sel.wo.prefix
-  file.survey.fit <- file.survey.fit.wo
-  path.results.varsel <- path.results.wo.varsel
-}
-if(resp.type == "urgency") {
-  file.mod.sel.prefix <- file.mod.sel.u.prefix
-  file.var.sel.prefix <- file.var.sel.u.prefix
-  file.survey.fit <- file.survey.fit.u
-  path.results.varsel <- path.results.u.varsel
-}
-if(resp.type == "categorical") {
-  file.mod.sel.prefix <- file.mod.sel.c.prefix
-  file.var.sel.prefix <- file.var.sel.c.prefix
-  file.survey.fit <- file.survey.fit.c
-  path.results.varsel <- path.results.c.varsel
-}
-if(resp.type == "categorical.sd") {
-  file.mod.sel.prefix <- file.mod.sel.cs.prefix
-  file.var.sel.prefix <- file.var.sel.cs.prefix
-  file.survey.fit <- file.survey.fit.c
-  path.results.varsel <- path.results.cs.varsel
-}
+
+
+## SETUP ###############################################################
 
 
 variables <- readRDS(file.variables.proc)
@@ -79,20 +51,6 @@ if(mod.id <= length(vars.adapt)) {
   var.resp <- vars.adapt[mod.id]
   vars.pred <- names(survey.fit)[!names(survey.fit) %in% c(vars.adapt, "id")]
 } 
-if(mod.id == length(vars.adapt) + 1) {
-  var.resp <- "Count"
-  survey.fit[, Count := apply(.SD, 1, sum, na.rm = TRUE), .SDcols = vars.adapt]
-  vars.adapt <- c(vars.adapt, "Count")
-  vars.pred <- names(survey.fit)[!names(survey.fit) %in% c(vars.adapt, "id")]
-}
-if(mod.id == length(vars.adapt) + 2) {
-  var.resp <- "Count_fire"
-  survey.fit[,
-             Count_fire := apply(.SD, 1, sum, na.rm = TRUE),
-             .SDcols = c("D01", "D02", "D03", "D04", "D05", "D07")]
-  vars.adapt <- c(vars.adapt, "Count_fire")
-  vars.pred <- names(survey.fit)[!names(survey.fit) %in% c(vars.adapt, "id")]
-}
 file.mod.sel <- paste0(file.mod.sel.prefix, var.resp, ".rds")
 file.var.sel <- paste0(file.var.sel.prefix, var.resp, ".rds")
 
@@ -131,12 +89,7 @@ for(i in seq_along(vars.pred.lik)) {
 # Purely to avoid parsing errors in projpred
 
 vars.recode <- names(survey.fit)
-if(! resp.type %in% c("categorical", "categorical.sd")) {
-  vars.recode <- vars.recode[!vars.recode %in% c(vars.adapt, "id")]
-} else {
-  vars.recode <- vars.recode[!vars.recode %in% c(vars.adapt, "id")]
-  # vars.recode <- vars.recode[!vars.recode %in% c("id")]
-}
+vars.recode <- vars.recode[!vars.recode %in% c(vars.adapt, "id")]
 
 recode.key.l <- list()
 for(i in seq_along(vars.recode)) {
@@ -228,151 +181,40 @@ vars.pred.all <- c(vars.pred.cont.poly, vars.pred.lik.poly, vars.pred.cat)
 # prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "sd") +
 #              prior(normal(0, 3), class = "Intercept")
 
-if(! resp.type %in% c("categorical", "categorical.sd")) {
-  if(var.resp %in% c("Count", "Count_fire")) {
-    mod.fam <- brmsfamily("poisson")
-  } else {
-    mod.fam <- brmsfamily("bernoulli", "logit")
-  }
-} else {
-  mod.fam <- brmsfamily("cumulative", "logit")
-}
 
-if(nobs.fit > threshold.small) {
+mod.fam <- brmsfamily("bernoulli", "logit")
 
-  if(resp.type %in% "categorical.sd") {
-    form.sel <- 
-      paste0(var.resp,
-             " ~ (1 | ",
-             paste0(vars.pred.all, collapse = " + "),
-             ")") |>
-      as.formula()
-    # ncat <- length(unique(survey.fit[[var.resp]]))
-    # prior.sel <-
-      # prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
-      # prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "sd", dpar = paste0("mu", 2:ncat))
-    catmu <-
-      c("Idonotknowthisaction",
-        "Unlikely",
-        "Yesin6to10years",
-        "Yeswithinthenext5years")
-    prior.sel <-
-      prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", catmu)) +
-      prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "sd", dpar = paste0("mu", catmu))
-  } else {
-    form.sel <- 
-      paste0(var.resp,
-             " ~ 1 + ",
-             paste0(vars.pred.all, collapse = " + ")) |>
-      as.formula()
-    if(resp.type != "categorical") {
-      prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-                   prior(normal(0, 3), class = "Intercept")
-    } else {
-      # ncat <- length(unique(survey.fit[[var.resp]]))
-      # prior.sel <-
-      #   prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", 2:ncat)) +
-      #   prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "b", dpar = paste0("mu", 2:ncat))
-      # catmu <-
-      #   c("Idonotknowthisaction",
-      #     "Unlikely",
-      #     "Yesin6to10years",
-      #     "Yeswithinthenext5years")
-      # prior.sel <-
-      #   prior_string("normal(0, 3)", class = "Intercept", dpar = paste0("mu", catmu)) +
-      #   prior_string("horseshoe(df = 3, par_ratio = 0.1)", class = "b", dpar = paste0("mu", catmu))
-      prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-                   prior(normal(0, 3), class = "Intercept")
-    }
-  }
+form.sel <- 
+  paste0(var.resp,
+          " ~ 1 + ",
+          paste0(vars.pred.all, collapse = " + ")) |>
+  as.formula()
+prior.sel <-
+  prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
+  prior(normal(0, 3), class = "Intercept")
 
-  mod.sel <-
-    brm(formula = form.sel,
-        data = survey.fit,
-        family = mod.fam,
-        silent = 0,
-        chains = 4,
-        cores = 4,
-        # threads = 1,
-        threads = floor(n.threads / 4),
-        warmup = 7500,
-        iter = 10000,
-        thin = 2,
-        refresh = 100,
-        control = list(adapt_delta = 0.99),
-        # backend = "cmdstanr",
-        # empty = TRUE,
-        prior = prior.sel)
-
-  # prior_summary(mod.sel) |> data.table() |> _[1:30]
-
-} else { # Model for few observations
-
-  resp.mean <- mean(survey.fit[[var.resp]])
-
-  if(resp.type %in% "categorical.sd") {
-    form.sel <- 
-      paste0(var.resp, " ~ 1 + (1 | ", paste0(vars.pred, collapse = " + "), ")") |>
-      as.formula()
-  } else {
-    form.sel <- 
-      paste0(var.resp, " ~ 1 + ", paste0(vars.pred, collapse = " + ")) |>
-      as.formula()
-  }
-
-  if(!var.resp %in% c("Count", "Count_fire")) {
-
-    int.prior <- paste0("normal(", round(qlogis(resp.mean), 2), ", 1)")
-
-    prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-                 prior_string(int.prior, class = "Intercept")
-
-    mod.sel <-
-      brm(formula = form.sel,
-          data = survey.fit,
-          family = mod.fam,
-          silent = 0,
-          chains = 4,
-          cores = 4,
-          # init = 0,
-          warmup = 7500,
-          iter = 10000,
-          thin = 2,
-          refresh = 100,
-          control = list(adapt_delta = 0.9975,
-                         max_treedepth = 12),
-          backend = "cmdstanr",
-          prior = prior.sel)
-
-  } else {
+names(survey.fit)
 
 
-    int.prior <- paste0("normal(", round(log(resp.mean), 2), ", 1)")
+mod.sel <-
+  brm(formula = form.sel,
+      data = survey.fit,
+      family = mod.fam,
+      silent = 0,
+      chains = 4,
+      cores = 4,
+      # threads = 1,
+      threads = floor(n.threads / 4),
+      warmup = 7500,
+      iter = 10000,
+      thin = 2,
+      refresh = 100,
+      control = list(adapt_delta = 0.99),
+      # backend = "cmdstanr",
+      # empty = TRUE,
+      prior = prior.sel)
 
-    prior.sel <- prior(horseshoe(df = 3, par_ratio = 0.1), class = "b") +
-                 prior_string(int.prior, class = "Intercept")
-
-    mod.sel <-
-      brm(formula = form.sel,
-          data = survey.fit,
-          family = mod.fam,
-          silent = 0,
-          chains = 4,
-          cores = 4,
-          # init = 0,
-          warmup = 7500,
-          iter = 10000,
-          thin = 2,
-          refresh = 100,
-          control = list(adapt_delta = 0.9975,
-                         max_treedepth = 12),
-          # backend = "cmdstanr",
-          prior = prior.sel)
-  }
-
-}
 
 dir.create(path.results.varsel, recursive = TRUE, showWarnings = FALSE)
 
 saveRDS(mod.sel, file.mod.sel)
-
