@@ -122,8 +122,8 @@ of items *I* and total number of respondents *P*:
 $$
 \begin{aligned}
 y_{ip} \sim & \ \mathrm{Bernoulli}\left(\psi_{ip}\right) \\
-\ln{\alpha_{ip}} = & \ a_0 + a_i \\
-\mathrm{logit}\,\psi_{ip} = & \ \eta_0 + \alpha_{ip} \eta_{ip} \\
+\mathrm{ln}\ \alpha_{ip} = & \ a_0 + a_i \\
+\mathrm{logit}\ \psi_{ip} = & \ \eta_0 + \alpha_{ip} \eta_{ip} \\
 \eta_{ip} = & \ \theta_p + \xi_i + \sum^I_{i=1}\sum^J_{j=1} b_{0j} x_{ijp} + b_{ij} x_{ijp} \\
 \left(a_1, ..., a_I, \xi_1, ..., \xi_I, b_{11}, ..., b_{IJ}\right) \sim & \ \mathrm{MVN} \left(0, \mathbf{\Sigma}\right) \\
 \mathbf{\Sigma} = & \  \mathbf{D \Omega D} \\
