@@ -121,13 +121,13 @@ of items *I* and total number of respondents *P*:
 
 $$
 \begin{aligned}
-y_{ip} \sim & \ \mathrm{Bernoulli}\left(\psi_{ip}\right) \\
-\mathrm{ln}\ \alpha_{ip} = & \ a_0 + a_i \\
-\mathrm{logit}\ \psi_{ip} = & \ \eta_0 + \alpha_{ip} \eta_{ip} \\
-\eta_{ip} = & \ \theta_p + \xi_i + \sum^I_{i=1}\sum^J_{j=1} b_{0j} x_{ijp} + b_{ij} x_{ijp} \\
-\left(a_1, ..., a_I, \xi_1, ..., \xi_I, b_{11}, ..., b_{IJ}\right) \sim & \ \mathrm{MVN} \left(0, \mathbf{\Sigma}\right) \\
-\mathbf{\Sigma} = & \  \mathbf{D \Omega D} \\
-\mathbf{D} = & \ \mathrm{diag}\left(\sigma_{a_1}, ..., \sigma_{a_I}, \sigma_{\xi_1}, ..., \sigma_{\xi_I}, \sigma_{b_{11}}, ..., \sigma_{b_{IJ}}\right) \\
+y_{ip} \sim & \mathrm{Bernoulli}\left(\psi_{ip}\right) \\
+\mathrm{ln}\ \alpha_{ip} = & a_0 + a_i \\
+\mathrm{logit}\ \psi_{ip} = & \eta_0 + \alpha_{ip} \eta_{ip} \\
+\eta_{ip} = & \theta_p + \xi_i + \sum^I_{i=1}\sum^J_{j=1} b_{0j} x_{ijp} + b_{ij} x_{ijp} \\
+\left(a_1, ..., a_I, \xi_1, ..., \xi_I, b_{11}, ..., b_{IJ}\right) \sim & \mathrm{MVN} \left(0, \mathbf{\Sigma}\right) \\
+\mathbf{\Sigma} = &  \mathbf{D \Omega D} \\
+\mathbf{D} = & \mathrm{diag}\left(\sigma_{a_1}, ..., \sigma_{a_I}, \sigma_{\xi_1}, ..., \sigma_{\xi_I}, \sigma_{b_{11}}, ..., \sigma_{b_{IJ}}\right) \\
 \end{aligned}
 $$
 
@@ -153,14 +153,14 @@ chose less diffuse priors for a<sub>0</sub> and a<sub>i</sub> than for
 the coefficients in η.
 
 $$ \begin{aligned}
-a_0 \sim & \ \mathrm{Normal}\left(0, 1\right) \\
-\eta_0 \sim & \ \mathrm{Normal}\left(0, 5\right) \\
-\theta_p \sim & \ \mathrm{Normal} \left(0, 3\right) \\
-b_{0j} \sim & \ \mathrm{Normal} \left(0, 3\right) \\
-\sigma_{a_i} \sim & \ \mathrm{HalfNormal}\left(0, 1\right) \\
-\sigma_{\xi_i} \sim & \ \mathrm{HalfNormal}\left(0, 3\right) \\
-\sigma_{b_{ij}} \sim & \ \mathrm{HalfNormal}\left(0, 3\right) \\
-\mathbf{\Omega} \sim & \ \mathrm{LKJ}\left(1\right)
+a_0 \sim & \mathrm{Normal}\left(0, 1\right) \\
+\eta_0 \sim & \mathrm{Normal}\left(0, 5\right) \\
+\theta_p \sim & \mathrm{Normal} \left(0, 3\right) \\
+b_{0j} \sim & \mathrm{Normal} \left(0, 3\right) \\
+\sigma_{a_i} \sim & \mathrm{HalfNormal}\left(0, 1\right) \\
+\sigma_{\xi_i} \sim & \mathrm{HalfNormal}\left(0, 3\right) \\
+\sigma_{b_{ij}} \sim & \mathrm{HalfNormal}\left(0, 3\right) \\
+\mathbf{\Omega} \sim & \mathrm{LKJ}\left(1\right)
 \end{aligned}
 $$
 
